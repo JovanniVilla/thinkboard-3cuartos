@@ -1,20 +1,23 @@
-import ratelimit from "../config/upstash.js";
+import { rateLimit } from "express-rate-limit";
+import { RedisStore } from "rate-limit-redis";
+import Redis from "ioredis";
+import dotenv from "dotenv";
 
-const rateLimiter = async (req, res, next) => {
-  try {
-    const { success } = await ratelimit.limit("my-rate-limit");
+dotenv.config();
 
-    if (!success) {
-      return res.status(429).json({
-        message: "Too many requests, please try again later",
-      });
-    }
+const redisClient = new Redis(process.env.REDIS_URI || "redis://localhost:6379");
 
-    next();
-  } catch (error) {
-    console.log("Rate limit error", error);
-    next(error);
-  }
-};
+const rateLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minuto
+  max: 100, // Límite de 100 peticiones por minuto
+  standardHeaders: true,
+  legacyHeaders: false,
+  store: new RedisStore({
+    sendCommand: (...args) => redisClient.call(...args),
+  }),
+  message: {
+    message: "Too many requests, please try again later",
+  },
+});
 
 export default rateLimiter;
