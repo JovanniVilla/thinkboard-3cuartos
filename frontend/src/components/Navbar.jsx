@@ -6,7 +6,10 @@ const Navbar = () => {
     <header className="bg-base-300 border-b border-base-content/10">
       <div className="mx-auto max-w-6xl p-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-primary font-mono tracking-tight">ThinkBoard</h1>
+          <Link to="/" className="flex items-center gap-3">
+            <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+            <h1 className="text-3xl font-bold text-primary font-mono tracking-tight">ThinkBoard</h1>
+          </Link>
           <div className="flex items-center gap-2">
             <Link to={"/board-settings"} className="btn btn-ghost btn-sm" title="Configuración del tablero">
               <Settings2Icon className="size-5" />
