@@ -4,7 +4,10 @@ import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 
-const NoteCard = ({ note, setNotes }) => {
+const NoteCard = ({ note, setNotes, statuses = [] }) => {
+  const statusConfig = statuses.find((s) => s.name === note.status);
+  const statusColor = statusConfig?.color || "#6B7280";
+
   const handleDelete = async (e, id) => {
     e.preventDefault(); // get rid of the navigation behaviour
 
@@ -27,7 +30,21 @@ const NoteCard = ({ note, setNotes }) => {
       border-t-4 border-solid border-[#00FF9D]"
     >
       <div className="card-body">
-        <h3 className="card-title text-base-content">{note.title}</h3>
+        <div className="flex items-start justify-between gap-2">
+          <h3 className="card-title text-base-content">{note.title}</h3>
+          {note.status && (
+            <span
+              className="badge badge-sm font-medium flex-shrink-0 mt-0.5"
+              style={{
+                backgroundColor: statusColor + "25",
+                color: statusColor,
+                borderColor: statusColor + "60",
+              }}
+            >
+              {note.status}
+            </span>
+          )}
+        </div>
         <p className="text-base-content/70 line-clamp-3">{note.content}</p>
         <div className="card-actions justify-between items-center mt-4">
           <span className="text-sm text-base-content/60">

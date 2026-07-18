@@ -3,11 +3,14 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router";
 import api from "../lib/axios";
+import { useStatuses } from "../lib/useStatuses";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const { statuses } = useStatuses();
 
   const navigate = useNavigate();
 
@@ -24,6 +27,7 @@ const CreatePage = () => {
       await api.post("/notes", {
         title,
         content,
+        status: status || statuses[0]?.name || "Pendiente",
       });
 
       toast.success("Note created successfully!");
@@ -79,6 +83,24 @@ const CreatePage = () => {
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                   />
+                </div>
+
+                <div className="form-control mb-4">
+                  <label className="label">
+                    <span className="label-text">Estado</span>
+                  </label>
+                  <select
+                    className="select select-bordered"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                  >
+                    <option value="">— Seleccionar estado —</option>
+                    {statuses.map((s) => (
+                      <option key={s._id} value={s.name}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="card-actions justify-end">

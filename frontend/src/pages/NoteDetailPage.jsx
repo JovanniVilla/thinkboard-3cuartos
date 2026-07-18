@@ -4,11 +4,13 @@ import { Link, useNavigate, useParams } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import { ArrowLeftIcon, LoaderIcon, Trash2Icon } from "lucide-react";
+import { useStatuses } from "../lib/useStatuses";
 
 const NoteDetailPage = () => {
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const { statuses } = useStatuses();
 
   const navigate = useNavigate();
 
@@ -111,6 +113,27 @@ const NoteDetailPage = () => {
                   value={note.content}
                   onChange={(e) => setNote({ ...note, content: e.target.value })}
                 />
+              </div>
+
+              <div className="form-control mb-4">
+                <label className="label">
+                  <span className="label-text">Estado</span>
+                </label>
+                <select
+                  className="select select-bordered"
+                  value={note.status || "Pendiente"}
+                  onChange={(e) => setNote({ ...note, status: e.target.value })}
+                >
+                  {statuses.map((s) => (
+                    <option key={s._id} value={s.name}>
+                      {s.name}
+                    </option>
+                  ))}
+                  {/* Fallback if statuses haven't loaded yet */}
+                  {statuses.length === 0 && (
+                    <option value={note.status || "Pendiente"}>{note.status || "Pendiente"}</option>
+                  )}
+                </select>
               </div>
 
               <div className="card-actions justify-end">

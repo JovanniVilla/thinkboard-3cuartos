@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Settings2Icon } from "lucide-react";
 
 const Navbar = () => {
   return (
@@ -7,7 +7,10 @@ const Navbar = () => {
       <div className="mx-auto max-w-6xl p-4">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-primary font-mono tracking-tight">ThinkBoard</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Link to={"/board-settings"} className="btn btn-ghost btn-sm" title="Configuración del tablero">
+              <Settings2Icon className="size-5" />
+            </Link>
             <Link to={"/create"} className="btn btn-primary">
               <PlusIcon className="size-5" />
               <span>New Note</span>
