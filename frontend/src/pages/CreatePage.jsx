@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router";
 import api from "../lib/axios";
 import { useStatuses } from "../lib/useStatuses";
+import StatusSelect from "../components/StatusSelect";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -89,18 +90,12 @@ const CreatePage = () => {
                   <label className="label">
                     <span className="label-text">Estado</span>
                   </label>
-                  <select
-                    className="select select-bordered"
+                  <StatusSelect
+                    statuses={statuses}
                     value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                  >
-                    <option value="">— Seleccionar estado —</option>
-                    {statuses.map((s) => (
-                      <option key={s._id} value={s.name}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={setStatus}
+                    placeholder="— Seleccionar estado —"
+                  />
                 </div>
 
                 <div className="card-actions justify-end">

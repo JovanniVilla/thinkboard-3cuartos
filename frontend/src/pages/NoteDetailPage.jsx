@@ -5,6 +5,7 @@ import api from "../lib/axios";
 import toast from "react-hot-toast";
 import { ArrowLeftIcon, LoaderIcon, Trash2Icon } from "lucide-react";
 import { useStatuses } from "../lib/useStatuses";
+import StatusSelect from "../components/StatusSelect";
 
 const NoteDetailPage = () => {
   const [note, setNote] = useState(null);
@@ -119,21 +120,11 @@ const NoteDetailPage = () => {
                 <label className="label">
                   <span className="label-text">Estado</span>
                 </label>
-                <select
-                  className="select select-bordered"
+                <StatusSelect
+                  statuses={statuses}
                   value={note.status || "Pendiente"}
-                  onChange={(e) => setNote({ ...note, status: e.target.value })}
-                >
-                  {statuses.map((s) => (
-                    <option key={s._id} value={s.name}>
-                      {s.name}
-                    </option>
-                  ))}
-                  {/* Fallback if statuses haven't loaded yet */}
-                  {statuses.length === 0 && (
-                    <option value={note.status || "Pendiente"}>{note.status || "Pendiente"}</option>
-                  )}
-                </select>
+                  onChange={(val) => setNote({ ...note, status: val })}
+                />
               </div>
 
               <div className="card-actions justify-end">
