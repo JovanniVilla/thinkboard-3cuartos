@@ -1,6 +1,6 @@
 import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon } from "lucide-react";
 import { Link } from "react-router";
-import { formatDate } from "../lib/utils";
+import { formatDate, stripMarkdown } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 
@@ -142,6 +142,8 @@ const NoteListView = ({
               const userConfig = users.find((u) => u.name === note.user);
               const userColor = userConfig?.color || "#6B7280";
 
+              const cleanContent = stripMarkdown(note.content);
+
               return (
                 <tr
                   key={note._id}
@@ -157,7 +159,7 @@ const NoteListView = ({
                     </Link>
                   </td>
                   <td className="text-base-content/70 max-w-xs truncate hidden md:table-cell">
-                    <span title={note.content}>{note.content}</span>
+                    <span title={cleanContent}>{cleanContent}</span>
                   </td>
                   <td>
                     <span

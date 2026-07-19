@@ -1,6 +1,6 @@
 import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon } from "lucide-react";
 import { Link } from "react-router";
-import { formatDate } from "../lib/utils";
+import { formatDate, stripMarkdown } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 
@@ -38,6 +38,8 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
     }
   };
 
+  const cleanContent = stripMarkdown(note.content);
+
   return (
     <Link
       to={`/note/${note._id}`}
@@ -62,7 +64,7 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
           )}
         </div>
 
-        {/* Priority & Content snippet */}
+        {/* Priority badge */}
         <div className="flex items-center gap-2">
           {note.priority && (
             <span
@@ -80,7 +82,7 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
           )}
         </div>
 
-        <p className="text-sm text-base-content/70 line-clamp-3">{note.content}</p>
+        <p className="text-sm text-base-content/70 line-clamp-3 leading-relaxed">{cleanContent}</p>
 
         {/* Footer: User avatar, Date, Actions */}
         <div className="pt-3 border-t border-base-content/10 flex items-center justify-between text-xs text-base-content/60">

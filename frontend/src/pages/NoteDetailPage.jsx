@@ -9,6 +9,7 @@ import { useUsers } from "../lib/useUsers";
 import StatusSelect from "../components/StatusSelect";
 import PrioritySelect from "../components/PrioritySelect";
 import UserSelect from "../components/UserSelect";
+import MarkdownEditor from "../components/MarkdownEditor";
 
 const NoteDetailPage = () => {
   const [note, setNote] = useState(null);
@@ -88,9 +89,10 @@ const NoteDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-base-200">
+    <div className="min-h-screen bg-base-200 pb-12">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-3xl mx-auto">
+          {/* Top Actions Bar */}
           <div className="flex items-center justify-between mb-6">
             <Link to="/" className="btn btn-ghost gap-1">
               <ArrowLeftIcon className="h-5 w-5" />
@@ -103,75 +105,73 @@ const NoteDetailPage = () => {
           </div>
 
           <div className="card bg-base-100 shadow-sm border border-base-content/10">
-            <div className="card-body">
-              <h2 className="card-title text-2xl mb-4">Editar Tarea</h2>
+            <div className="card-body p-6 sm:p-8 space-y-6">
+              {/* Header section where Task Title is dominant! */}
+              <div className="space-y-1">
+                <div className="text-xs font-bold uppercase tracking-wider text-base-content/40">
+                  EDITANDO TAREA
+                </div>
+                <input
+                  type="text"
+                  placeholder="Título de la tarea"
+                  className="text-2xl sm:text-3xl font-extrabold text-base-content w-full bg-transparent border-0 border-b border-base-content/15 focus:border-primary pb-2 focus:outline-none placeholder:text-base-content/30 transition-colors"
+                  value={note.title}
+                  onChange={(e) => setNote({ ...note, title: e.target.value })}
+                />
+              </div>
 
-              <div className="space-y-4">
+              {/* Status, Priority, User Selectors */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-base-200/50 rounded-xl border border-base-content/10">
                 <div className="form-control">
-                  <label className="label">
-                    <span className="label-text font-semibold">Título</span>
+                  <label className="label pt-0 pb-1">
+                    <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/60">Estado</span>
                   </label>
-                  <input
-                    type="text"
-                    placeholder="Título de la tarea"
-                    className="input input-bordered w-full"
-                    value={note.title}
-                    onChange={(e) => setNote({ ...note, title: e.target.value })}
+                  <StatusSelect
+                    statuses={statuses}
+                    value={note.status || "Pendiente"}
+                    onChange={(val) => setNote({ ...note, status: val })}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text font-semibold">Estado</span>
-                    </label>
-                    <StatusSelect
-                      statuses={statuses}
-                      value={note.status || "Pendiente"}
-                      onChange={(val) => setNote({ ...note, status: val })}
-                    />
-                  </div>
-
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text font-semibold">Prioridad</span>
-                    </label>
-                    <PrioritySelect
-                      priorities={priorities}
-                      value={note.priority || "Media"}
-                      onChange={(val) => setNote({ ...note, priority: val })}
-                    />
-                  </div>
-
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text font-semibold">Asignado a</span>
-                    </label>
-                    <UserSelect
-                      users={users}
-                      value={note.user || "Sin asignar"}
-                      onChange={(val) => setNote({ ...note, user: val })}
-                    />
-                  </div>
-                </div>
-
                 <div className="form-control">
-                  <label className="label">
-                    <span className="label-text font-semibold">Contenido / Descripción</span>
+                  <label className="label pt-0 pb-1">
+                    <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/60">Prioridad</span>
                   </label>
-                  <textarea
-                    placeholder="Escribe los detalles de la tarea aquí..."
-                    className="textarea textarea-bordered h-32 w-full"
-                    value={note.content}
-                    onChange={(e) => setNote({ ...note, content: e.target.value })}
+                  <PrioritySelect
+                    priorities={priorities}
+                    value={note.priority || "Media"}
+                    onChange={(val) => setNote({ ...note, priority: val })}
                   />
                 </div>
 
-                <div className="card-actions justify-end pt-2">
-                  <button type="button" className="btn btn-primary" disabled={saving} onClick={handleSave}>
-                    {saving ? "Guardando..." : "Guardar Cambios"}
-                  </button>
+                <div className="form-control">
+                  <label className="label pt-0 pb-1">
+                    <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/60">Asignado a</span>
+                  </label>
+                  <UserSelect
+                    users={users}
+                    value={note.user || "Sin asignar"}
+                    onChange={(val) => setNote({ ...note, user: val })}
+                  />
                 </div>
+              </div>
+
+              {/* Markdown Editor for Content */}
+              <div className="space-y-2">
+                <label className="label pt-0 pb-1">
+                  <span className="label-text font-bold text-base text-base-content">Contenido / Descripción (Markdown)</span>
+                </label>
+                <MarkdownEditor
+                  value={note.content}
+                  onChange={(val) => setNote({ ...note, content: val })}
+                  placeholder="Escribe los detalles de la tarea en Markdown (puedes usar listas, **negrita**, tablas, etc.)"
+                />
+              </div>
+
+              <div className="card-actions justify-end pt-4 border-t border-base-content/10">
+                <button type="button" className="btn btn-primary px-8 gap-2" disabled={saving} onClick={handleSave}>
+                  {saving ? "Guardando..." : "Guardar Cambios"}
+                </button>
               </div>
             </div>
           </div>

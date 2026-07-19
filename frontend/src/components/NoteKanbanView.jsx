@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon } from "lucide-react";
 import { Link } from "react-router";
-import { formatDate } from "../lib/utils";
+import { formatDate, stripMarkdown } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 
@@ -156,6 +156,8 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                     const userConfig = users.find((u) => u.name === note.user);
                     const userColor = userConfig?.color || "#6B7280";
 
+                    const cleanContent = stripMarkdown(note.content);
+
                     return (
                       <div
                         key={note._id}
@@ -210,8 +212,8 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                             </div>
                           )}
 
-                          <p className="text-xs text-base-content/70 line-clamp-3">
-                            {note.content}
+                          <p className="text-xs text-base-content/70 line-clamp-3 leading-relaxed">
+                            {cleanContent}
                           </p>
 
                           {/* Footer: Assignee & Date */}
