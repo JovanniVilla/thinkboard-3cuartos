@@ -1,13 +1,25 @@
-import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon } from "lucide-react";
 import { Link } from "react-router";
 import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 
+const getInitials = (name = "") => {
+  if (!name || name === "Sin asignar") return "?";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+};
+
 const NoteListView = ({
   notes = [],
   setNotes,
   statuses = [],
+  priorities = [],
+  users = [],
   sortBy,
   setSortBy,
   sortOrder,
@@ -15,7 +27,7 @@ const NoteListView = ({
 }) => {
   const handleDelete = async (e, id) => {
     e.preventDefault();
-    if (!window.confirm("¿Estás seguro de que quieres eliminar esta nota/tarea?")) return;
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
 
     try {
       await api.delete(`/notes/${id}`);
@@ -70,7 +82,7 @@ const NoteListView = ({
                 </div>
               </th>
               <th
-                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5 max-w-md"
+                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5 max-w-xs hidden md:table-cell"
                 onClick={() => handleHeaderClick("content")}
               >
                 <div className="flex items-center gap-1">
@@ -89,6 +101,24 @@ const NoteListView = ({
               </th>
               <th
                 className="cursor-pointer hover:bg-base-200 transition-colors py-3.5"
+                onClick={() => handleHeaderClick("priority")}
+              >
+                <div className="flex items-center gap-1">
+                  <span>Prioridad</span>
+                  {renderSortIndicator("priority")}
+                </div>
+              </th>
+              <th
+                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5"
+                onClick={() => handleHeaderClick("user")}
+              >
+                <div className="flex items-center gap-1">
+                  <span>Usuario</span>
+                  {renderSortIndicator("user")}
+                </div>
+              </th>
+              <th
+                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5 hidden sm:table-cell"
                 onClick={() => handleHeaderClick("createdAt")}
               >
                 <div className="flex items-center gap-1">
@@ -106,6 +136,12 @@ const NoteListView = ({
               const statusConfig = statuses.find((s) => s.name === note.status);
               const statusColor = statusConfig?.color || "#6B7280";
 
+              const priorityConfig = priorities.find((p) => p.name === note.priority);
+              const priorityColor = priorityConfig?.color || "#3B82F6";
+
+              const userConfig = users.find((u) => u.name === note.user);
+              const userColor = userConfig?.color || "#6B7280";
+
               return (
                 <tr
                   key={note._id}
@@ -120,22 +156,54 @@ const NoteListView = ({
                       {note.title}
                     </Link>
                   </td>
-                  <td className="text-base-content/70 max-w-md truncate">
+                  <td className="text-base-content/70 max-w-xs truncate hidden md:table-cell">
                     <span title={note.content}>{note.content}</span>
                   </td>
                   <td>
                     <span
                       className="badge badge-sm font-medium whitespace-nowrap"
                       style={{
-                        backgroundColor: statusColor + "25",
+                        backgroundColor: statusColor + "20",
                         color: statusColor,
-                        borderColor: statusColor + "60",
+                        borderColor: statusColor + "50",
                       }}
                     >
                       {note.status || "Pendiente"}
                     </span>
                   </td>
-                  <td className="text-xs text-base-content/60 whitespace-nowrap">
+                  <td>
+                    <span
+                      className="badge badge-xs font-bold gap-1 px-2 py-2 whitespace-nowrap"
+                      style={{
+                        backgroundColor: priorityColor + "15",
+                        color: priorityColor,
+                        borderColor: priorityColor + "40",
+                      }}
+                    >
+                      <ZapIcon className="size-3" />
+                      {note.priority || "Media"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="flex items-center gap-2 max-w-[140px]" title={note.user || "Sin asignar"}>
+                      {note.user && note.user !== "Sin asignar" ? (
+                        <span
+                          className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] shadow-sm flex-shrink-0"
+                          style={{ backgroundColor: userColor }}
+                        >
+                          {getInitials(note.user)}
+                        </span>
+                      ) : (
+                        <span className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 flex-shrink-0">
+                          <UserIcon className="size-3.5" />
+                        </span>
+                      )}
+                      <span className="truncate text-xs font-medium text-base-content/80">
+                        {note.user || "Sin asignar"}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="text-xs text-base-content/60 whitespace-nowrap hidden sm:table-cell">
                     {formatDate(new Date(note.createdAt))}
                   </td>
                   <td className="text-right whitespace-nowrap">

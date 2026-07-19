@@ -5,6 +5,8 @@ import path from "path";
 
 import notesRoutes from "./routes/notesRoutes.js";
 import statusRoutes from "./routes/statusRoutes.js";
+import priorityRoutes from "./routes/priorityRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 import { connectDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
 
@@ -33,6 +35,8 @@ app.use(rateLimiter);
 
 app.use("/api/notes", notesRoutes);
 app.use("/api/status", statusRoutes);
+app.use("/api/priorities", priorityRoutes);
+app.use("/api/users", userRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));

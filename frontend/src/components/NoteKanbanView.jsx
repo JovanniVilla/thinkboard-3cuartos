@@ -1,18 +1,28 @@
 import { useState } from "react";
-import { PenSquareIcon, Trash2Icon, PlusIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon } from "lucide-react";
 import { Link } from "react-router";
 import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 
-const NoteKanbanView = ({ notes = [], setNotes, statuses = [] }) => {
+const getInitials = (name = "") => {
+  if (!name || name === "Sin asignar") return "?";
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+};
+
+const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], users = [] }) => {
   const [draggingNoteId, setDraggingNoteId] = useState(null);
   const [dragOverStatus, setDragOverStatus] = useState(null);
 
   const handleDelete = async (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!window.confirm("¿Estás seguro de que quieres eliminar esta nota/tarea?")) return;
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
 
     try {
       await api.delete(`/notes/${id}`);
@@ -56,25 +66,21 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [] }) => {
       return;
     }
 
-    // Optimistic update locally
     const previousStatus = note.status;
     setNotes((prev) =>
       prev.map((n) => (n._id === noteId ? { ...n, status: targetStatusName } : n))
     );
     setDraggingNoteId(null);
 
-    // Call API
     try {
       await api.put(`/notes/${noteId}`, {
-        title: note.title,
-        content: note.content,
+        ...note,
         status: targetStatusName,
       });
       toast.success(`Movido a "${targetStatusName}"`);
     } catch (error) {
       console.error("Error updating status via drag drop:", error);
       toast.error("Error al mover la tarea");
-      // Revert optimistic update on failure
       setNotes((prev) =>
         prev.map((n) => (n._id === noteId ? { ...n, status: previousStatus } : n))
       );
@@ -143,54 +149,97 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [] }) => {
                     </span>
                   </div>
                 ) : (
-                  columnNotes.map((note) => (
-                    <div
-                      key={note._id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, note)}
-                      onDragEnd={handleDragEnd}
-                      className={`card bg-base-200/70 hover:bg-base-200 border border-base-content/10 transition-all duration-150 cursor-grab active:cursor-grabbing shadow-sm hover:shadow ${
-                        draggingNoteId === note._id ? "opacity-40 scale-95" : ""
-                      }`}
-                    >
-                      <div className="card-body p-3.5 space-y-2">
-                        <div className="flex items-start justify-between gap-2">
-                          <Link
-                            to={`/note/${note._id}`}
-                            className="font-semibold text-sm text-base-content hover:text-primary transition-colors line-clamp-2 block"
-                          >
-                            {note.title}
-                          </Link>
-                          <div className="flex items-center gap-0.5 opacity-60 hover:opacity-100 transition-opacity flex-shrink-0">
+                  columnNotes.map((note) => {
+                    const priorityConfig = priorities.find((p) => p.name === note.priority);
+                    const priorityColor = priorityConfig?.color || "#3B82F6";
+
+                    const userConfig = users.find((u) => u.name === note.user);
+                    const userColor = userConfig?.color || "#6B7280";
+
+                    return (
+                      <div
+                        key={note._id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, note)}
+                        onDragEnd={handleDragEnd}
+                        className={`card bg-base-200/70 hover:bg-base-200 border border-base-content/10 transition-all duration-150 cursor-grab active:cursor-grabbing shadow-sm hover:shadow ${
+                          draggingNoteId === note._id ? "opacity-40 scale-95" : ""
+                        }`}
+                      >
+                        <div className="card-body p-3.5 space-y-2">
+                          <div className="flex items-start justify-between gap-2">
                             <Link
                               to={`/note/${note._id}`}
-                              className="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-primary"
-                              title="Editar"
+                              className="font-semibold text-sm text-base-content hover:text-primary transition-colors line-clamp-2 block"
                             >
-                              <PenSquareIcon className="size-3.5" />
+                              {note.title}
                             </Link>
-                            <button
-                              type="button"
-                              className="btn btn-ghost btn-xs btn-square text-error hover:bg-error/10"
-                              onClick={(e) => handleDelete(e, note._id)}
-                              title="Eliminar"
-                            >
-                              <Trash2Icon className="size-3.5" />
-                            </button>
+                            <div className="flex items-center gap-0.5 opacity-60 hover:opacity-100 transition-opacity flex-shrink-0">
+                              <Link
+                                to={`/note/${note._id}`}
+                                className="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-primary"
+                                title="Editar"
+                              >
+                                <PenSquareIcon className="size-3.5" />
+                              </Link>
+                              <button
+                                type="button"
+                                className="btn btn-ghost btn-xs btn-square text-error hover:bg-error/10"
+                                onClick={(e) => handleDelete(e, note._id)}
+                                title="Eliminar"
+                              >
+                                <Trash2Icon className="size-3.5" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Priority badge */}
+                          {note.priority && (
+                            <div className="flex items-center">
+                              <span
+                                className="badge badge-xs font-bold gap-1 px-2 py-2"
+                                style={{
+                                  backgroundColor: priorityColor + "15",
+                                  color: priorityColor,
+                                  borderColor: priorityColor + "40",
+                                }}
+                              >
+                                <ZapIcon className="size-3" />
+                                {note.priority}
+                              </span>
+                            </div>
+                          )}
+
+                          <p className="text-xs text-base-content/70 line-clamp-3">
+                            {note.content}
+                          </p>
+
+                          {/* Footer: Assignee & Date */}
+                          <div className="pt-2 border-t border-base-content/10 flex items-center justify-between text-[11px] text-base-content/60">
+                            <div className="flex items-center gap-1.5 truncate" title={`Asignado a: ${note.user || "Sin asignar"}`}>
+                              {note.user && note.user !== "Sin asignar" ? (
+                                <span
+                                  className="w-5 h-5 rounded-full flex items-center justify-center font-bold text-white text-[9px] shadow-sm flex-shrink-0"
+                                  style={{ backgroundColor: userColor }}
+                                >
+                                  {getInitials(note.user)}
+                                </span>
+                              ) : (
+                                <span className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 flex-shrink-0">
+                                  <UserIcon className="size-3" />
+                                </span>
+                              )}
+                              <span className="truncate max-w-[100px] font-medium text-base-content/80">
+                                {note.user || "Sin asignar"}
+                              </span>
+                            </div>
+
+                            <span>{formatDate(new Date(note.createdAt))}</span>
                           </div>
                         </div>
-
-                        <p className="text-xs text-base-content/70 line-clamp-3">
-                          {note.content}
-                        </p>
-
-                        <div className="pt-2 border-t border-base-content/10 flex items-center justify-between text-[11px] text-base-content/50">
-                          <span>{formatDate(new Date(note.createdAt))}</span>
-                          <span className="italic">Arrastra para mover</span>
-                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>

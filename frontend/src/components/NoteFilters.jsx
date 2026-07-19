@@ -10,23 +10,33 @@ const NoteFilters = ({
   setSearchQuery,
   selectedStatus,
   setSelectedStatus,
+  selectedPriority,
+  setSelectedPriority,
+  selectedUser,
+  setSelectedUser,
   sortBy,
   setSortBy,
   sortOrder,
   setSortOrder,
   statuses = [],
+  priorities = [],
+  users = [],
   totalNotes = 0,
   filteredCount = 0,
 }) => {
   const isFiltered =
     searchQuery.trim() !== "" ||
     selectedStatus !== "" ||
+    selectedPriority !== "" ||
+    selectedUser !== "" ||
     sortBy !== "createdAt" ||
     sortOrder !== "desc";
 
   const handleReset = () => {
     setSearchQuery("");
     setSelectedStatus("");
+    setSelectedPriority("");
+    setSelectedUser("");
     setSortBy("createdAt");
     setSortOrder("desc");
   };
@@ -37,7 +47,8 @@ const NoteFilters = ({
 
   return (
     <div className="bg-base-100 rounded-xl p-4 shadow-sm border border-base-content/10 mb-6 space-y-4">
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+      {/* Top Row: Search input & Status/Priority/User filters */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
         {/* Search Input */}
         <div className="relative flex-1">
           <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-base-content/40" />
@@ -60,14 +71,15 @@ const NoteFilters = ({
           )}
         </div>
 
-        {/* Status Filter */}
+        {/* Filters */}
         <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-base-content/60 uppercase tracking-wider flex-shrink-0">
+          <div className="flex items-center gap-1 text-xs font-semibold text-base-content/60 uppercase tracking-wider flex-shrink-0">
             <FilterIcon className="size-3.5" />
-            <span>Estado:</span>
+            <span>Filtros:</span>
           </div>
+
           <select
-            className="select select-bordered select-sm bg-base-200/50 min-w-[150px]"
+            className="select select-bordered select-sm bg-base-200/50 min-w-[130px]"
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
           >
@@ -75,6 +87,33 @@ const NoteFilters = ({
             {statuses.map((s) => (
               <option key={s._id} value={s.name}>
                 {s.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="select select-bordered select-sm bg-base-200/50 min-w-[130px]"
+            value={selectedPriority}
+            onChange={(e) => setSelectedPriority(e.target.value)}
+          >
+            <option value="">Todas las prioridades</option>
+            {priorities.map((p) => (
+              <option key={p._id} value={p.name}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="select select-bordered select-sm bg-base-200/50 min-w-[130px]"
+            value={selectedUser}
+            onChange={(e) => setSelectedUser(e.target.value)}
+          >
+            <option value="">Todos los usuarios</option>
+            <option value="Sin asignar">Sin asignar</option>
+            {users.map((u) => (
+              <option key={u._id} value={u.name}>
+                {u.name}
               </option>
             ))}
           </select>
@@ -96,6 +135,8 @@ const NoteFilters = ({
             <option value="createdAt">Fecha de creación</option>
             <option value="title">Título (A-Z)</option>
             <option value="status">Estado</option>
+            <option value="priority">Prioridad</option>
+            <option value="user">Usuario asignado</option>
             <option value="content">Contenido</option>
           </select>
 
@@ -103,7 +144,7 @@ const NoteFilters = ({
             type="button"
             className="btn btn-outline btn-sm gap-1.5 px-3"
             onClick={toggleSortOrder}
-            title={sortOrder === "asc" ? "Ascendente (A→Z, Antiguos primero)" : "Descendiente (Z→A, Recientes primero)"}
+            title={sortOrder === "asc" ? "Ascendente (A→Z, Antiguos primero)" : "Descendente (Z→A, Recientes primero)"}
           >
             <span>{sortOrder === "asc" ? "Ascendente ↑" : "Descendente ↓"}</span>
           </button>

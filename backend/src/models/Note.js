@@ -17,6 +17,14 @@ const noteSchema = new mongoose.Schema(
       type: String,
       default: "Pendiente",
     },
+    priority: {
+      type: String,
+      default: "Media",
+    },
+    user: {
+      type: String,
+      default: "Sin asignar",
+    },
   },
   { timestamps: true } // createdAt, updatedAt
 );

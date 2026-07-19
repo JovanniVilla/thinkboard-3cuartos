@@ -6,6 +6,8 @@ import toast from "react-hot-toast";
 import NoteCard from "../components/NoteCard";
 import NotesNotFound from "../components/NotesNotFound";
 import { useStatuses } from "../lib/useStatuses";
+import { usePriorities } from "../lib/usePriorities";
+import { useUsers } from "../lib/useUsers";
 import NoteListView from "../components/NoteListView";
 import NoteKanbanView from "../components/NoteKanbanView";
 import NoteFilters from "../components/NoteFilters";
@@ -15,7 +17,10 @@ const HomePage = () => {
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const { statuses } = useStatuses();
+  const { priorities } = usePriorities();
+  const { users } = useUsers();
 
   // View Mode: "grid" | "list" | "board"
   const [viewMode, setViewMode] = useState("grid");
@@ -23,6 +28,8 @@ const HomePage = () => {
   // Filtering and Sorting state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedPriority, setSelectedPriority] = useState("");
+  const [selectedUser, setSelectedUser] = useState("");
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
 
@@ -37,7 +44,7 @@ const HomePage = () => {
         if (error.response?.status === 429) {
           setIsRateLimited(true);
         } else {
-          toast.error("Failed to load notes");
+          toast.error("Error al cargar las tareas");
         }
       } finally {
         setLoading(false);
@@ -59,6 +66,12 @@ const HomePage = () => {
       if (selectedStatus && note.status !== selectedStatus) {
         return false;
       }
+      if (selectedPriority && note.priority !== selectedPriority) {
+        return false;
+      }
+      if (selectedUser && note.user !== selectedUser) {
+        return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -75,6 +88,16 @@ const HomePage = () => {
         } else {
           comparison = (a.status || "").localeCompare(b.status || "");
         }
+      } else if (sortBy === "priority") {
+        const orderA = priorities.find((p) => p.name === a.priority)?.order ?? 999;
+        const orderB = priorities.find((p) => p.name === b.priority)?.order ?? 999;
+        if (orderA !== orderB) {
+          comparison = orderA - orderB;
+        } else {
+          comparison = (a.priority || "").localeCompare(b.priority || "");
+        }
+      } else if (sortBy === "user") {
+        comparison = (a.user || "").localeCompare(b.user || "");
       } else if (sortBy === "createdAt") {
         comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       }
@@ -148,17 +171,23 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* Filters panel (Active across views, especially highlighted in list and grid) */}
+            {/* Filters panel */}
             <NoteFilters
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               selectedStatus={selectedStatus}
               setSelectedStatus={setSelectedStatus}
+              selectedPriority={selectedPriority}
+              setSelectedPriority={setSelectedPriority}
+              selectedUser={selectedUser}
+              setSelectedUser={setSelectedUser}
               sortBy={sortBy}
               setSortBy={setSortBy}
               sortOrder={sortOrder}
               setSortOrder={setSortOrder}
               statuses={statuses}
+              priorities={priorities}
+              users={users}
               totalNotes={notes.length}
               filteredCount={filteredNotes.length}
             />
@@ -177,6 +206,8 @@ const HomePage = () => {
                       note={note}
                       setNotes={setNotes}
                       statuses={statuses}
+                      priorities={priorities}
+                      users={users}
                     />
                   ))}
                 </div>
@@ -188,6 +219,8 @@ const HomePage = () => {
                 notes={filteredNotes}
                 setNotes={setNotes}
                 statuses={statuses}
+                priorities={priorities}
+                users={users}
                 sortBy={sortBy}
                 setSortBy={setSortBy}
                 sortOrder={sortOrder}
@@ -200,6 +233,8 @@ const HomePage = () => {
                 notes={filteredNotes}
                 setNotes={setNotes}
                 statuses={statuses}
+                priorities={priorities}
+                users={users}
               />
             )}
           </div>

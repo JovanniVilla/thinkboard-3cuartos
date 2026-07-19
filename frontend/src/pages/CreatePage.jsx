@@ -4,14 +4,23 @@ import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router";
 import api from "../lib/axios";
 import { useStatuses } from "../lib/useStatuses";
+import { usePriorities } from "../lib/usePriorities";
+import { useUsers } from "../lib/useUsers";
 import StatusSelect from "../components/StatusSelect";
+import PrioritySelect from "../components/PrioritySelect";
+import UserSelect from "../components/UserSelect";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("");
+  const [priority, setPriority] = useState("Media");
+  const [user, setUser] = useState("Sin asignar");
   const [loading, setLoading] = useState(false);
+
   const { statuses } = useStatuses();
+  const { priorities } = usePriorities();
+  const { users } = useUsers();
 
   const navigate = useNavigate();
 
@@ -19,7 +28,7 @@ const CreatePage = () => {
     e.preventDefault();
 
     if (!title.trim() || !content.trim()) {
-      toast.error("All fields are required");
+      toast.error("El título y el contenido son obligatorios");
       return;
     }
 
@@ -29,19 +38,21 @@ const CreatePage = () => {
         title,
         content,
         status: status || statuses[0]?.name || "Pendiente",
+        priority: priority || "Media",
+        user: user || "Sin asignar",
       });
 
-      toast.success("Note created successfully!");
+      toast.success("¡Tarea creada exitosamente!");
       navigate("/");
     } catch (error) {
-      console.log("Error creating note", error);
-      if (error.response.status === 429) {
-        toast.error("Slow down! You're creating notes too fast", {
+      console.error("Error creating note", error);
+      if (error.response?.status === 429) {
+        toast.error("¡Demasiadas solicitudes! Espera unos segundos", {
           duration: 4000,
           icon: "💀",
         });
       } else {
-        toast.error("Failed to create note");
+        toast.error("Error al crear la tarea");
       }
     } finally {
       setLoading(false);
@@ -54,53 +65,77 @@ const CreatePage = () => {
         <div className="max-w-2xl mx-auto">
           <Link to={"/"} className="btn btn-ghost mb-6">
             <ArrowLeftIcon className="size-5" />
-            Back to Notes
+            Volver al Tablero
           </Link>
 
-          <div className="card bg-base-100">
+          <div className="card bg-base-100 shadow-sm border border-base-content/10">
             <div className="card-body">
-              <h2 className="card-title text-2xl mb-4">Create New Note</h2>
-              <form onSubmit={handleSubmit}>
-                <div className="form-control mb-4">
+              <h2 className="card-title text-2xl mb-4">Crear Nueva Tarea</h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Title</span>
+                    <span className="label-text font-semibold">Título</span>
                   </label>
                   <input
                     type="text"
-                    placeholder="Note Title"
-                    className="input input-bordered"
+                    placeholder="Título de la tarea"
+                    className="input input-bordered w-full"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                   />
                 </div>
 
-                <div className="form-control mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text font-semibold">Estado</span>
+                    </label>
+                    <StatusSelect
+                      statuses={statuses}
+                      value={status}
+                      onChange={setStatus}
+                      placeholder="— Seleccionar estado —"
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text font-semibold">Prioridad</span>
+                    </label>
+                    <PrioritySelect
+                      priorities={priorities}
+                      value={priority}
+                      onChange={setPriority}
+                    />
+                  </div>
+
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text font-semibold">Asignar a</span>
+                    </label>
+                    <UserSelect
+                      users={users}
+                      value={user}
+                      onChange={setUser}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-control">
                   <label className="label">
-                    <span className="label-text">Content</span>
+                    <span className="label-text font-semibold">Contenido / Descripción</span>
                   </label>
                   <textarea
-                    placeholder="Write your note here..."
-                    className="textarea textarea-bordered h-32"
+                    placeholder="Escribe los detalles de la tarea aquí..."
+                    className="textarea textarea-bordered h-32 w-full"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                   />
                 </div>
 
-                <div className="form-control mb-4">
-                  <label className="label">
-                    <span className="label-text">Estado</span>
-                  </label>
-                  <StatusSelect
-                    statuses={statuses}
-                    value={status}
-                    onChange={setStatus}
-                    placeholder="— Seleccionar estado —"
-                  />
-                </div>
-
-                <div className="card-actions justify-end">
+                <div className="card-actions justify-end pt-2">
                   <button type="submit" className="btn btn-primary" disabled={loading}>
-                    {loading ? "Creating..." : "Create Note"}
+                    {loading ? "Creando..." : "Crear Tarea"}
                   </button>
                 </div>
               </form>
