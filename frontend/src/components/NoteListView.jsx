@@ -150,13 +150,20 @@ const NoteListView = ({
                   className="hover:bg-base-200/50 transition-colors group"
                 >
                   <td className="font-semibold text-base-content max-w-xs">
-                    <Link
-                      to={`/note/${note._id}`}
-                      className="hover:text-primary transition-colors block truncate"
-                      title={note.title}
-                    >
-                      {note.title}
-                    </Link>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {note.keyId && (
+                        <span className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0">
+                          {note.keyId}
+                        </span>
+                      )}
+                      <Link
+                        to={`/note/${note._id}`}
+                        className="hover:text-primary transition-colors block truncate"
+                        title={note.title}
+                      >
+                        {note.title}
+                      </Link>
+                    </div>
                   </td>
                   <td className="text-base-content/70 max-w-xs truncate hidden md:table-cell">
                     <span title={cleanContent}>{cleanContent}</span>

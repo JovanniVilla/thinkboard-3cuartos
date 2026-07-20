@@ -107,9 +107,16 @@ const NoteDetailPage = () => {
           <div className="card bg-base-100 shadow-sm border border-base-content/10">
             <div className="card-body p-6 sm:p-8 space-y-6">
               {/* Header section where Task Title is dominant! */}
-              <div className="space-y-1">
-                <div className="text-xs font-bold uppercase tracking-wider text-base-content/40">
-                  EDITANDO TAREA
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="text-xs font-bold uppercase tracking-wider text-base-content/40">
+                    EDITANDO TAREA
+                  </div>
+                  {note.keyId && (
+                    <span className="badge badge-md font-mono font-extrabold bg-primary text-primary-content px-3 py-3 shadow-sm">
+                      {note.keyId}
+                    </span>
+                  )}
                 </div>
                 <input
                   type="text"

@@ -5,6 +5,11 @@ import mongoose from "mongoose";
 
 const noteSchema = new mongoose.Schema(
   {
+    keyId: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     title: {
       type: String,
       required: true,

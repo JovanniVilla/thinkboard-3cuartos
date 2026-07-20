@@ -10,6 +10,7 @@ import StatusSelect from "../components/StatusSelect";
 import PrioritySelect from "../components/PrioritySelect";
 import UserSelect from "../components/UserSelect";
 import MarkdownEditor from "../components/MarkdownEditor";
+import { useBoardConfig } from "../lib/useBoardConfig";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -22,6 +23,7 @@ const CreatePage = () => {
   const { statuses } = useStatuses();
   const { priorities } = usePriorities();
   const { users } = useUsers();
+  const { boardConfig } = useBoardConfig();
 
   const navigate = useNavigate();
 
@@ -72,9 +74,16 @@ const CreatePage = () => {
           <div className="card bg-base-100 shadow-sm border border-base-content/10">
             <div className="card-body p-6 sm:p-8 space-y-6">
               {/* Header section where Task Title is dominant! */}
-              <div className="space-y-1">
-                <div className="text-xs font-bold uppercase tracking-wider text-base-content/40">
-                  CREAR NUEVA TAREA
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="text-xs font-bold uppercase tracking-wider text-base-content/40">
+                    CREAR NUEVA TAREA
+                  </div>
+                  {boardConfig?.projectKey && (
+                    <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30">
+                      Próximo ID: {boardConfig.projectKey.endsWith("-") ? boardConfig.projectKey : `${boardConfig.projectKey}-`}{boardConfig.taskCounter || 1}
+                    </span>
+                  )}
                 </div>
                 <input
                   type="text"

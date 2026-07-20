@@ -49,7 +49,14 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
       <div className="card-body p-4 space-y-3">
         {/* Title and Status Badge */}
         <div className="flex items-start justify-between gap-2">
-          <h3 className="card-title text-base text-base-content line-clamp-1">{note.title}</h3>
+          <div className="flex items-center gap-2 min-w-0">
+            {note.keyId && (
+              <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0">
+                {note.keyId}
+              </span>
+            )}
+            <h3 className="card-title text-base text-base-content line-clamp-1">{note.title}</h3>
+          </div>
           {note.status && (
             <span
               className="badge badge-sm font-semibold flex-shrink-0"

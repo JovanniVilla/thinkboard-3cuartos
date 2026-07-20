@@ -170,12 +170,19 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                       >
                         <div className="card-body p-3.5 space-y-2">
                           <div className="flex items-start justify-between gap-2">
-                            <Link
-                              to={`/note/${note._id}`}
-                              className="font-semibold text-sm text-base-content hover:text-primary transition-colors line-clamp-2 block"
-                            >
-                              {note.title}
-                            </Link>
+                            <div className="min-w-0 flex-1">
+                              {note.keyId && (
+                                <span className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30 mb-1 inline-block">
+                                  {note.keyId}
+                                </span>
+                              )}
+                              <Link
+                                to={`/note/${note._id}`}
+                                className="font-semibold text-sm text-base-content hover:text-primary transition-colors line-clamp-2 block"
+                              >
+                                {note.title}
+                              </Link>
+                            </div>
                             <div className="flex items-center gap-0.5 opacity-60 hover:opacity-100 transition-opacity flex-shrink-0">
                               <Link
                                 to={`/note/${note._id}`}

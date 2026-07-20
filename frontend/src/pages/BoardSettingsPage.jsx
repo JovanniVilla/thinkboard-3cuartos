@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router";
 import {
   ArrowLeftIcon,
@@ -10,12 +10,15 @@ import {
   ZapIcon,
   UserIcon,
   LayersIcon,
+  FolderKeyIcon,
+  SparklesIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
 import { useUsers } from "../lib/useUsers";
+import { useBoardConfig } from "../lib/useBoardConfig";
 
 const PRESET_COLORS = [
   "#6B7280", "#EF4444", "#F97316", "#EAB308",
@@ -226,12 +229,13 @@ const EditUserRow = ({ user, onSave, onCancel }) => {
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 const BoardSettingsPage = () => {
-  const [activeTab, setActiveTab] = useState("statuses"); // "statuses" | "priorities" | "users"
+  const [activeTab, setActiveTab] = useState("project"); // "project" | "statuses" | "priorities" | "users"
 
   // Data Hooks
   const { statuses, setStatuses, loading: loadingStatuses } = useStatuses();
   const { priorities, setPriorities, loading: loadingPriorities } = usePriorities();
   const { users, setUsers, loading: loadingUsers } = useUsers();
+  const { boardConfig, setBoardConfig, loading: loadingConfig } = useBoardConfig();
 
   // Create state
   const [newName, setNewName] = useState("");
@@ -240,6 +244,19 @@ const BoardSettingsPage = () => {
   const [newEmail, setNewEmail] = useState("");
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState(null);
+
+  // Project Config state
+  const [projectKeyInput, setProjectKeyInput] = useState("");
+  const [taskCounterInput, setTaskCounterInput] = useState("");
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [assigningKeys, setAssigningKeys] = useState(false);
+
+  useEffect(() => {
+    if (boardConfig) {
+      setProjectKeyInput(boardConfig.projectKey || "");
+      setTaskCounterInput(boardConfig.taskCounter || 1);
+    }
+  }, [boardConfig]);
 
   // DnD refs
   const dragIndex = useRef(null);
@@ -254,6 +271,47 @@ const BoardSettingsPage = () => {
     setNewRole("");
     setNewEmail("");
     setEditingId(null);
+  };
+
+  const handleSaveConfig = async () => {
+    setSavingConfig(true);
+    try {
+      const res = await api.put("/board-config", {
+        projectKey: projectKeyInput.trim().toUpperCase(),
+        taskCounter: Number(taskCounterInput) || 1,
+      });
+      setBoardConfig(res.data);
+      setProjectKeyInput(res.data.projectKey || "");
+      setTaskCounterInput(res.data.taskCounter || 1);
+      toast.success("Configuración del proyecto guardada");
+    } catch {
+      toast.error("Error al guardar la configuración del proyecto");
+    } finally {
+      setSavingConfig(false);
+    }
+  };
+
+  const handleAssignExistingKeys = async () => {
+    if (!projectKeyInput.trim()) {
+      toast.error("Primero ingresa y guarda un nombre clave de proyecto");
+      return;
+    }
+    if (!window.confirm(`¿Deseas asignar identificadores secuenciales a todas las tareas existentes que no tienen ID usando el prefijo "${projectKeyInput.trim().toUpperCase()}"?`)) return;
+    setAssigningKeys(true);
+    try {
+      await api.put("/board-config", {
+        projectKey: projectKeyInput.trim().toUpperCase(),
+        taskCounter: Number(taskCounterInput) || 1,
+      });
+      const res = await api.post("/board-config/assign-existing");
+      setBoardConfig(res.data.boardConfig);
+      setTaskCounterInput(res.data.boardConfig.taskCounter || 1);
+      toast.success(res.data.message || "Identificadores asignados a las tareas existentes");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Error al asignar identificadores");
+    } finally {
+      setAssigningKeys(false);
+    }
   };
 
   // ── Create ──────────────────────────────────────────────────────────────
@@ -368,6 +426,17 @@ const BoardSettingsPage = () => {
             <button
               type="button"
               className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+                activeTab === "project" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
+              }`}
+              onClick={() => switchTab("project")}
+            >
+              <FolderKeyIcon className="w-4 h-4" />
+              <span>Proyecto / ID</span>
+            </button>
+
+            <button
+              type="button"
+              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
                 activeTab === "statuses" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
               }`}
               onClick={() => switchTab("statuses")}
@@ -398,6 +467,110 @@ const BoardSettingsPage = () => {
               <span>Usuarios ({users.length})</span>
             </button>
           </div>
+
+          {/* TAB 0: PROYECTO / IDENTIFICADOR */}
+          {activeTab === "project" && (
+            <div className="space-y-6">
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body p-6 sm:p-8 space-y-6">
+                  <div>
+                    <h2 className="text-xl font-extrabold flex items-center gap-2 text-base-content">
+                      <FolderKeyIcon className="size-6 text-primary" />
+                      Identificador Único del Proyecto
+                    </h2>
+                    <p className="text-sm text-base-content/60 mt-1 leading-relaxed">
+                      Define el nombre clave de tu proyecto. Cada vez que se genere una tarea nueva, se le agregará este prefijo junto con un número secuencial para formar su identificador único (ej: <span className="font-mono font-bold text-primary">PROJ-1</span>, <span className="font-mono font-bold text-primary">PROJ-2</span>).
+                    </p>
+                  </div>
+
+                  {loadingConfig ? (
+                    <div className="text-center py-8 text-base-content/50">Cargando configuración…</div>
+                  ) : (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-5 bg-base-200/50 rounded-2xl border border-base-content/10">
+                        <div className="form-control">
+                          <label className="label pt-0 pb-1.5">
+                            <span className="label-text font-bold text-sm">Nombre clave del proyecto (Prefijo)</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Ej: PROJ, TB, DEV..."
+                            className="input input-bordered font-mono font-bold uppercase text-lg"
+                            value={projectKeyInput}
+                            onChange={(e) => setProjectKeyInput(e.target.value.toUpperCase())}
+                          />
+                          <label className="label pb-0 pt-1">
+                            <span className="label-text-alt text-base-content/50">Se convertirá en mayúsculas automáticamente.</span>
+                          </label>
+                        </div>
+
+                        <div className="form-control">
+                          <label className="label pt-0 pb-1.5">
+                            <span className="label-text font-bold text-sm">Siguiente número de tarea</span>
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            className="input input-bordered font-mono text-lg"
+                            value={taskCounterInput}
+                            onChange={(e) => setTaskCounterInput(e.target.value)}
+                          />
+                          <label className="label pb-0 pt-1">
+                            <span className="label-text-alt text-base-content/50">Número consecutivo para la próxima tarea.</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Preview & Save Button */}
+                      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-primary/10 border border-primary/20">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-semibold text-base-content/80">Vista previa de la próxima tarea:</span>
+                          <span className="badge badge-lg font-mono font-extrabold bg-primary text-primary-content px-3 py-3 shadow-sm">
+                            {projectKeyInput.trim() ? `${projectKeyInput.trim().endsWith("-") ? projectKeyInput.trim() : projectKeyInput.trim() + "-"}${taskCounterInput || 1}` : "SIN CLAVE"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-primary gap-2"
+                          onClick={handleSaveConfig}
+                          disabled={savingConfig}
+                        >
+                          <CheckIcon className="size-4" />
+                          {savingConfig ? "Guardando…" : "Guardar configuración"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Retroactive assignment */}
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body p-6 space-y-4">
+                  <div className="flex items-start justify-between flex-wrap gap-4">
+                    <div>
+                      <h3 className="text-lg font-bold flex items-center gap-2 text-base-content">
+                        <SparklesIcon className="size-5 text-amber-500" />
+                        Asignar identificador a tareas existentes
+                      </h3>
+                      <p className="text-sm text-base-content/60 mt-1 max-w-xl leading-relaxed">
+                        Si tienes tareas creadas anteriormente que no tienen un identificador único, puedes generárselo en orden cronológico utilizando la clave actual y continuando la numeración.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-secondary gap-2"
+                      onClick={handleAssignExistingKeys}
+                      disabled={assigningKeys || !projectKeyInput.trim()}
+                    >
+                      <SparklesIcon className="size-4" />
+                      {assigningKeys ? "Asignando…" : "Asignar a tareas sin ID"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* TAB 1: ESTADOS */}
           {activeTab === "statuses" && (
