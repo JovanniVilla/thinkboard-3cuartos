@@ -328,13 +328,23 @@ const NoteDetailPage = () => {
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <CheckCircle2Icon className="size-7 text-gray-400 mt-1 flex-shrink-0" />
-                <input
-                  type="text"
-                  className="w-full bg-transparent text-2xl sm:text-3xl font-extrabold text-white border-0 border-b border-transparent focus:border-primary focus:outline-none transition-colors py-1"
+                <textarea
+                  className="w-full bg-transparent text-2xl sm:text-3xl font-extrabold text-white border-0 border-b border-transparent focus:border-primary focus:outline-none transition-colors py-1 resize-none overflow-hidden leading-tight"
                   value={note.title}
-                  onChange={(e) => setNote({ ...note, title: e.target.value })}
+                  rows={1}
+                  onChange={(e) => {
+                    setNote({ ...note, title: e.target.value });
+                    e.target.style.height = 'auto';
+                    e.target.style.height = e.target.scrollHeight + 'px';
+                  }}
                   onBlur={() => handleSaveNote({ title: note.title })}
                   placeholder="Título de la tarjeta"
+                  ref={(textarea) => {
+                    if (textarea) {
+                      textarea.style.height = 'auto';
+                      textarea.style.height = textarea.scrollHeight + 'px';
+                    }
+                  }}
                 />
               </div>
 
