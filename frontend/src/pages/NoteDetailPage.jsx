@@ -244,9 +244,9 @@ const NoteDetailPage = () => {
   const userColor = users.find((u) => u.name === note.user)?.color || "#3B82F6";
 
   return (
-    <div className="min-h-screen bg-[#141518] text-gray-100 p-2 sm:p-6 flex justify-center items-start">
+    <div className="min-h-screen bg-[#141518] text-gray-100 p-2 sm:p-6 flex justify-center items-start w-full">
       {/* Card Detail Modal Window Container */}
-      <div className="w-full max-w-6xl bg-[#1E1F24] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden my-2 sm:my-6">
+      <div className="w-full bg-[#1E1F24] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden my-2 sm:my-6">
         {/* Header Bar */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/80 bg-[#1E1F24]">
           <div className="flex items-center gap-3">

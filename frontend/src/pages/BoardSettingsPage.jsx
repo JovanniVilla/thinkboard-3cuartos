@@ -405,8 +405,8 @@ const BoardSettingsPage = () => {
 
   return (
     <div className="min-h-screen bg-base-200 pb-12">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-3xl mx-auto">
+      <div className="w-full px-4 sm:px-8 py-8">
+        <div className="w-full">
           {/* Header */}
           <div className="flex items-center gap-4 mb-6">
             <Link to="/" className="btn btn-ghost btn-sm gap-1">

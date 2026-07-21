@@ -3,8 +3,8 @@ import { PlusIcon, Settings2Icon } from "lucide-react";
 
 const Navbar = () => {
   return (
-    <header className="bg-base-300 border-b border-base-content/10">
-      <div className="mx-auto max-w-6xl p-4">
+    <header className="bg-base-300 border-b border-base-content/10 w-full">
+      <div className="w-full px-4 sm:px-8 py-4">
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />

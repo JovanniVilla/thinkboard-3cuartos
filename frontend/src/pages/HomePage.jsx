@@ -110,7 +110,7 @@ const HomePage = () => {
 
       {isRateLimited && <RateLimitedUI />}
 
-      <div className="max-w-7xl mx-auto p-4 mt-6">
+      <div className="w-full px-4 sm:px-8 mt-6">
         {loading && <div className="text-center text-primary py-10">Cargando tareas...</div>}
 
         {notes.length === 0 && !isRateLimited && !loading && <NotesNotFound />}
@@ -199,7 +199,7 @@ const HomePage = () => {
                   <p className="text-base-content/60">No se encontraron tareas que coincidan con los filtros seleccionados.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                   {filteredNotes.map((note) => (
                     <NoteCard
                       key={note._id}
