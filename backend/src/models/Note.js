@@ -30,6 +30,28 @@ const noteSchema = new mongoose.Schema(
       type: String,
       default: "Sin asignar",
     },
+    labels: [
+      {
+        name: { type: String, required: true },
+        color: { type: String, default: "#10B981" },
+      },
+    ],
+    checklist: [
+      {
+        id: { type: String },
+        title: { type: String, required: true },
+        completed: { type: Boolean, default: false },
+      },
+    ],
+    activities: [
+      {
+        id: { type: String },
+        type: { type: String, default: "comment" }, // "comment" | "action"
+        text: { type: String, required: true },
+        user: { type: String, default: "Usuario" },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true } // createdAt, updatedAt
 );

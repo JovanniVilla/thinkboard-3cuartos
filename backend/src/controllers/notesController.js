@@ -24,7 +24,7 @@ export async function getNoteById(req, res) {
 
 export async function createNote(req, res) {
   try {
-    const { title, content, status, priority, user } = req.body;
+    const { title, content, status, priority, user, labels, checklist } = req.body;
 
     let boardConfig = await BoardConfig.findOne();
     let keyId = null;
@@ -38,6 +38,8 @@ export async function createNote(req, res) {
       await boardConfig.save();
     }
 
+    const actor = user && user !== "Sin asignar" ? user : "Sistema";
+
     const note = new Note({
       ...(keyId && { keyId }),
       title,
@@ -45,6 +47,17 @@ export async function createNote(req, res) {
       ...(status && { status }),
       ...(priority && { priority }),
       ...(user && { user }),
+      labels: labels || [],
+      checklist: checklist || [],
+      activities: [
+        {
+          id: Date.now().toString(),
+          type: "action",
+          text: `${actor} agregó esta tarjeta a ${status || "Pendiente"}`,
+          user: actor,
+          createdAt: new Date(),
+        },
+      ],
     });
 
     const savedNote = await note.save();
@@ -57,27 +70,76 @@ export async function createNote(req, res) {
 
 export async function updateNote(req, res) {
   try {
-    const { title, content, status, priority, user, keyId } = req.body;
+    const { title, content, status, priority, user, keyId, labels, checklist, activities } = req.body;
+
+    const currentNote = await Note.findById(req.params.id);
+    if (!currentNote) return res.status(404).json({ message: "Note not found" });
+
+    let updatedActivities = activities !== undefined ? activities : (currentNote.activities || []);
+    
+    // Auto log status changes if status was modified and changed
+    if (status !== undefined && status !== currentNote.status) {
+      const actor = user || currentNote.user || "Usuario";
+      updatedActivities.push({
+        id: Date.now().toString(),
+        type: "action",
+        text: `${actor} movió esta tarjeta a ${status}`,
+        user: actor,
+        createdAt: new Date(),
+      });
+    }
+
     const updatedNote = await Note.findByIdAndUpdate(
       req.params.id,
       {
-        title,
-        content,
+        ...(title !== undefined && { title }),
+        ...(content !== undefined && { content }),
         ...(status !== undefined && { status }),
         ...(priority !== undefined && { priority }),
         ...(user !== undefined && { user }),
         ...(keyId !== undefined && { keyId }),
+        ...(labels !== undefined && { labels }),
+        ...(checklist !== undefined && { checklist }),
+        activities: updatedActivities,
       },
       {
         new: true,
       }
     );
 
-    if (!updatedNote) return res.status(404).json({ message: "Note not found" });
-
     res.status(200).json(updatedNote);
   } catch (error) {
     console.error("Error in updateNote controller", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+export async function addComment(req, res) {
+  try {
+    const { text, user } = req.body;
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: "El texto del comentario es obligatorio" });
+    }
+
+    const note = await Note.findById(req.params.id);
+    if (!note) return res.status(404).json({ message: "Note not found" });
+
+    const actor = user || note.user || "Usuario";
+
+    const newComment = {
+      id: Date.now().toString(),
+      type: "comment",
+      text: text.trim(),
+      user: actor,
+      createdAt: new Date(),
+    };
+
+    note.activities.push(newComment);
+    const updatedNote = await note.save();
+
+    res.status(201).json(updatedNote);
+  } catch (error) {
+    console.error("Error in addComment controller", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }

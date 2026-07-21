@@ -71,8 +71,23 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
           )}
         </div>
 
-        {/* Priority badge */}
-        <div className="flex items-center gap-2">
+        {/* Labels badges */}
+        {note.labels && note.labels.length > 0 && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {note.labels.map((lbl, idx) => (
+              <span
+                key={idx}
+                className="badge badge-xs font-semibold text-white px-2 py-1.5"
+                style={{ backgroundColor: lbl.color || "#10B981" }}
+              >
+                {lbl.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Priority & Indicators badge */}
+        <div className="flex items-center gap-2 flex-wrap text-xs">
           {note.priority && (
             <span
               className="badge badge-xs font-bold gap-1 px-2 py-2"
@@ -85,6 +100,20 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
             >
               <ZapIcon className="size-3" />
               {note.priority}
+            </span>
+          )}
+
+          {/* Checklist progress indicator */}
+          {note.checklist && note.checklist.length > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] text-base-content/70 bg-base-200 px-2 py-0.5 rounded font-mono">
+              ✓ {note.checklist.filter((i) => i.completed).length}/{note.checklist.length}
+            </span>
+          )}
+
+          {/* Comments count indicator */}
+          {note.activities && note.activities.filter((a) => a.type === "comment").length > 0 && (
+            <span className="inline-flex items-center gap-1 text-[11px] text-base-content/70 bg-base-200 px-2 py-0.5 rounded font-mono">
+              💬 {note.activities.filter((a) => a.type === "comment").length}
             </span>
           )}
         </div>
