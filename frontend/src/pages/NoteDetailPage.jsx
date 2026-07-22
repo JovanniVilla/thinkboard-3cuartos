@@ -21,8 +21,9 @@ import {
 } from "lucide-react";
 import { useStatuses } from "../lib/useStatuses";
 import { useUsers } from "../lib/useUsers";
-import MarkdownEditor from "../components/MarkdownEditor";
 import MarkdownRenderer from "../components/MarkdownRenderer";
+import ThemeToggle from "../components/ThemeToggle";
+import MarkdownEditor from "../components/MarkdownEditor";
 
 const DEFAULT_LABEL_COLORS = [
   { name: "Terminado", color: "#10B981" },
@@ -216,7 +217,7 @@ const NoteDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#141518] flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <LoaderIcon className="animate-spin size-10 text-primary" />
       </div>
     );
@@ -224,8 +225,8 @@ const NoteDetailPage = () => {
 
   if (!note) {
     return (
-      <div className="min-h-screen bg-[#141518] flex flex-col items-center justify-center gap-4 text-white">
-        <p className="text-gray-400">Tarea no encontrada</p>
+      <div className="min-h-screen bg-transparent flex flex-col items-center justify-center gap-4 text-base-content">
+        <p className="text-base-content/60">Tarea no encontrada</p>
         <Link to="/" className="btn btn-primary btn-sm">
           Volver al tablero
         </Link>
@@ -244,24 +245,24 @@ const NoteDetailPage = () => {
   const userColor = users.find((u) => u.name === note.user)?.color || "#3B82F6";
 
   return (
-    <div className="min-h-screen bg-[#141518] text-gray-100 p-2 sm:p-6 flex justify-center items-start w-full">
+    <div className="min-h-screen bg-transparent text-base-content p-2 sm:p-6 flex justify-center items-start w-full">
       {/* Card Detail Modal Window Container */}
-      <div className="w-full max-w-5xl mx-auto bg-[#1E1F24] border border-gray-800 rounded-2xl shadow-2xl overflow-hidden my-2 sm:my-6">
+      <div className="w-full max-w-5xl mx-auto bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden my-2 sm:my-6">
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/80 bg-[#1E1F24]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-base-content/10 bg-base-100">
           <div className="flex items-center gap-3">
             {/* Status Dropdown Pill */}
             <div className="dropdown">
               <label
                 tabIndex={0}
-                className="btn btn-sm bg-[#2A2C33] hover:bg-[#32353E] border-0 text-gray-200 font-semibold gap-2 rounded-lg cursor-pointer"
+                className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-semibold gap-2 rounded-lg cursor-pointer"
               >
                 <span>{currentStatus}</span>
-                <ChevronDownIcon className="size-4 text-gray-400" />
+                <ChevronDownIcon className="size-4 text-base-content/60" />
               </label>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu p-2 shadow-xl bg-[#2A2C33] rounded-xl w-48 border border-gray-700 z-50 mt-1"
+                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
               >
                 {statuses.map((st) => (
                   <li key={st._id}>
@@ -272,7 +273,7 @@ const NoteDetailPage = () => {
                         handleSaveNote({ status: st.name });
                       }}
                       className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
-                        currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-gray-300"
+                        currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -295,24 +296,25 @@ const NoteDetailPage = () => {
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-gray-400">
+          <div className="flex items-center gap-2 text-base-content/60">
+            <ThemeToggle />
             <button
               type="button"
-              className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-base-200 rounded-lg transition-colors"
               title="Imagen de portada"
             >
               <ImageIcon className="size-5" />
             </button>
             <button
               type="button"
-              className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-base-200 rounded-lg transition-colors"
               title="Opciones"
             >
               <MoreHorizontalIcon className="size-5" />
             </button>
             <Link
               to="/"
-              className="p-1.5 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+              className="p-1.5 hover:bg-base-200 rounded-lg transition-colors text-base-content/60 hover:text-base-content"
               title="Cerrar vista"
             >
               <XIcon className="size-5" />
@@ -323,13 +325,13 @@ const NoteDetailPage = () => {
         {/* Main Content Layout: 2 Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[600px]">
           {/* Left Column (Main Card Content) */}
-          <div className="lg:col-span-8 p-6 sm:p-8 space-y-7 border-b lg:border-b-0 lg:border-r border-gray-800">
+          <div className="lg:col-span-8 p-6 sm:p-8 space-y-7 border-b lg:border-b-0 lg:border-r border-base-content/10">
             {/* Title Section */}
             <div className="space-y-4">
               <div className="flex items-start gap-3">
-                <CheckCircle2Icon className="size-7 text-gray-400 mt-1 flex-shrink-0" />
+                <CheckCircle2Icon className="size-7 text-base-content/50 mt-1 flex-shrink-0" />
                 <textarea
-                  className="w-full bg-transparent text-2xl sm:text-3xl font-extrabold text-white border-0 border-b border-transparent focus:border-primary focus:outline-none transition-colors py-1 resize-none overflow-hidden leading-tight"
+                  className="w-full bg-transparent text-2xl sm:text-3xl font-extrabold text-base-content border-0 border-b border-transparent focus:border-primary focus:outline-none transition-colors py-1 resize-none overflow-hidden leading-tight"
                   value={note.title}
                   rows={1}
                   onChange={(e) => {
@@ -353,7 +355,7 @@ const NoteDetailPage = () => {
                 <button
                   type="button"
                   onClick={() => setShowLabelMenu(!showLabelMenu)}
-                  className="btn btn-xs sm:btn-sm bg-[#2B2D35] hover:bg-[#353842] border border-gray-700/60 text-gray-300 gap-1.5 rounded-lg"
+                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
                 >
                   <PlusIcon className="size-4" />
                   <span>Add</span>
@@ -361,7 +363,7 @@ const NoteDetailPage = () => {
 
                 <button
                   type="button"
-                  className="btn btn-xs sm:btn-sm bg-[#2B2D35] hover:bg-[#353842] border border-gray-700/60 text-gray-300 gap-1.5 rounded-lg"
+                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
                   onClick={() => toast("Función de fechas próximamente", { icon: "📅" })}
                 >
                   <CalendarIcon className="size-4" />
@@ -370,7 +372,7 @@ const NoteDetailPage = () => {
 
                 <button
                   type="button"
-                  className="btn btn-xs sm:btn-sm bg-[#2B2D35] hover:bg-[#353842] border border-gray-700/60 text-gray-300 gap-1.5 rounded-lg"
+                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
                   onClick={() => {
                     const el = document.getElementById("add-checklist-input");
                     if (el) el.focus();
@@ -384,16 +386,16 @@ const NoteDetailPage = () => {
                 <div className="dropdown dropdown-bottom">
                   <label
                     tabIndex={0}
-                    className="btn btn-xs sm:btn-sm bg-[#2B2D35] hover:bg-[#353842] border border-gray-700/60 text-gray-300 gap-1.5 rounded-lg cursor-pointer"
+                    className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg cursor-pointer"
                   >
                     <UsersIcon className="size-4" />
                     <span>Members</span>
                   </label>
                   <ul
                     tabIndex={0}
-                    className="dropdown-content menu p-2 shadow-xl bg-[#2A2C33] rounded-xl w-52 border border-gray-700 z-50 mt-1"
+                    className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 border border-base-content/10 z-50 mt-1"
                   >
-                    <li className="menu-title text-xs text-gray-400">Asignar Miembro</li>
+                    <li className="menu-title text-xs text-base-content/50">Asignar Miembro</li>
                     {users.map((u) => (
                       <li key={u._id}>
                         <button
@@ -403,7 +405,7 @@ const NoteDetailPage = () => {
                             handleSaveNote({ user: u.name });
                           }}
                           className={`text-sm py-2 rounded-lg flex items-center justify-between ${
-                            note.user === u.name ? "bg-primary/20 text-primary font-bold" : "text-gray-300"
+                            note.user === u.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
                           }`}
                         >
                           <span className="flex items-center gap-2">
@@ -423,7 +425,7 @@ const NoteDetailPage = () => {
 
                 <button
                   type="button"
-                  className="btn btn-xs sm:btn-sm bg-[#2B2D35] hover:bg-[#353842] border border-gray-700/60 text-gray-300 gap-1.5 rounded-lg"
+                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
                   onClick={() => toast("Función de adjuntos próximamente", { icon: "📎" })}
                 >
                   <PaperclipIcon className="size-4" />
@@ -434,7 +436,7 @@ const NoteDetailPage = () => {
 
             {/* Labels (Etiquetas) Section */}
             <div className="space-y-3 pt-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-gray-400">Labels</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-base-content/50">Labels</h4>
               <div className="flex items-center gap-2 flex-wrap">
                 {(note.labels || []).map((lbl, idx) => (
                   <div
@@ -459,20 +461,20 @@ const NoteDetailPage = () => {
                   <button
                     type="button"
                     onClick={() => setShowLabelMenu(!showLabelMenu)}
-                    className="p-2 bg-[#2B2D35] hover:bg-[#353842] border border-gray-700/60 text-gray-300 rounded-lg transition-colors flex items-center justify-center"
+                    className="p-2 bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content rounded-lg transition-colors flex items-center justify-center"
                     title="Agregar etiqueta"
                   >
                     <PlusIcon className="size-4" />
                   </button>
 
                   {showLabelMenu && (
-                    <div className="absolute left-0 mt-2 w-64 bg-[#262830] border border-gray-700 rounded-xl shadow-2xl p-4 z-50 space-y-3 text-sm">
-                      <div className="flex items-center justify-between pb-2 border-b border-gray-700">
-                        <span className="font-bold text-gray-200">Etiquetas</span>
+                    <div className="absolute left-0 mt-2 w-64 bg-base-100 border border-base-content/10 rounded-xl shadow-2xl p-4 z-50 space-y-3 text-sm">
+                      <div className="flex items-center justify-between pb-2 border-b border-base-content/10">
+                        <span className="font-bold text-base-content">Etiquetas</span>
                         <button
                           type="button"
                           onClick={() => setShowLabelMenu(false)}
-                          className="text-gray-400 hover:text-white"
+                          className="text-base-content/60 hover:text-base-content"
                         >
                           <XIcon className="size-4" />
                         </button>
@@ -499,10 +501,10 @@ const NoteDetailPage = () => {
                       </div>
 
                       {/* Add Custom Label */}
-                      <div className="pt-2 border-t border-gray-700 space-y-2">
+                      <div className="pt-2 border-t border-base-content/10 space-y-2">
                         <input
                           type="text"
-                          className="w-full bg-[#1E1F24] border border-gray-700 text-xs text-white rounded-lg px-2.5 py-1.5 focus:border-primary focus:outline-none"
+                          className="w-full bg-base-200 border border-base-content/10 text-xs text-base-content rounded-lg px-2.5 py-1.5 focus:border-primary focus:outline-none"
                           placeholder="Nueva etiqueta personalizada..."
                           value={customLabelInput}
                           onChange={(e) => setCustomLabelInput(e.target.value)}
@@ -531,19 +533,19 @@ const NoteDetailPage = () => {
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Edit3Icon className="size-5 text-gray-400" />
-                  <h3 className="font-bold text-base text-gray-200">Description</h3>
+                  <Edit3Icon className="size-5 text-base-content/60" />
+                  <h3 className="font-bold text-base text-base-content">Description</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsEditingDescription(!isEditingDescription)}
-                  className="btn btn-xs bg-[#2B2D35] hover:bg-[#353842] border border-gray-700/60 text-gray-300 rounded-lg px-3"
+                  className="btn btn-xs bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content rounded-lg px-3"
                 >
                   {isEditingDescription ? "Vista previa" : "Edit"}
                 </button>
               </div>
 
-              <div className="bg-[#18191C] rounded-xl p-4 border border-gray-800/80">
+              <div className="bg-base-200/50 rounded-xl p-4 border border-base-content/10">
                 {isEditingDescription ? (
                   <div className="space-y-3">
                     <MarkdownEditor
@@ -563,7 +565,7 @@ const NoteDetailPage = () => {
                     </button>
                   </div>
                 ) : (
-                  <MarkdownRenderer content={note.content} className="text-gray-300" />
+                  <MarkdownRenderer content={note.content} className="text-base-content/80" />
                 )}
               </div>
             </div>
@@ -572,14 +574,14 @@ const NoteDetailPage = () => {
             <div className="space-y-4 pt-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CheckSquareIcon className="size-5 text-gray-400" />
-                  <h3 className="font-bold text-base text-gray-200">Checklist</h3>
+                  <CheckSquareIcon className="size-5 text-base-content/60" />
+                  <h3 className="font-bold text-base text-base-content">Checklist</h3>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <button
                     type="button"
                     onClick={() => setHideChecked(!hideChecked)}
-                    className="btn btn-xs bg-[#2B2D35] hover:bg-[#353842] border border-gray-700/60 text-gray-300 rounded-lg px-2.5"
+                    className="btn btn-xs bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content rounded-lg px-2.5"
                   >
                     {hideChecked ? "Mostrar completados" : "Hide checked items"}
                   </button>
@@ -597,8 +599,8 @@ const NoteDetailPage = () => {
 
               {/* Progress Bar */}
               <div className="flex items-center gap-3">
-                <span className="text-xs font-mono font-bold text-gray-400 w-8">{progressPercent}%</span>
-                <div className="w-full bg-gray-800 rounded-full h-2.5 overflow-hidden">
+                <span className="text-xs font-mono font-bold text-base-content/60 w-8">{progressPercent}%</span>
+                <div className="w-full bg-base-300 rounded-full h-2.5 overflow-hidden">
                   <div
                     className="bg-primary h-2.5 transition-all duration-300 rounded-full"
                     style={{ width: `${progressPercent}%` }}
@@ -611,18 +613,18 @@ const NoteDetailPage = () => {
                 {displayedChecklist.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-[#18191C] hover:bg-[#212328] border border-gray-800/60 transition-colors group"
+                    className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group"
                   >
                     <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
                       <input
                         type="checkbox"
                         checked={item.completed}
                         onChange={() => handleToggleChecklistItem(item.id)}
-                        className="checkbox checkbox-sm checkbox-primary rounded border-gray-600"
+                        className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
                       />
                       <span
                         className={`text-sm ${
-                          item.completed ? "line-through text-gray-500" : "text-gray-200"
+                          item.completed ? "line-through text-base-content/40" : "text-base-content"
                         }`}
                       >
                         {item.title}
@@ -631,7 +633,7 @@ const NoteDetailPage = () => {
                     <button
                       type="button"
                       onClick={() => handleDeleteChecklistItem(item.id)}
-                      className="opacity-0 group-hover:opacity-100 text-gray-500 hover:text-error transition-opacity p-1"
+                      className="opacity-0 group-hover:opacity-100 text-base-content/40 hover:text-error transition-opacity p-1"
                       title="Eliminar elemento"
                     >
                       <Trash2Icon className="size-4" />
@@ -644,7 +646,7 @@ const NoteDetailPage = () => {
                   <input
                     id="add-checklist-input"
                     type="text"
-                    className="flex-1 bg-[#18191C] border border-gray-700/80 text-sm text-white rounded-lg px-3 py-2 focus:border-primary focus:outline-none placeholder:text-gray-500"
+                    className="flex-1 bg-base-200 border border-base-content/10 text-sm text-base-content rounded-lg px-3 py-2 focus:border-primary focus:outline-none placeholder:text-base-content/40"
                     placeholder="Add an item"
                     value={newChecklistTitle}
                     onChange={(e) => setNewChecklistTitle(e.target.value)}
@@ -662,7 +664,7 @@ const NoteDetailPage = () => {
             </div>
 
             {/* Bottom Actions: Save & Delete */}
-            <div className="flex items-center justify-between pt-6 border-t border-gray-800">
+            <div className="flex items-center justify-between pt-6 border-t border-base-content/10">
               <button
                 type="button"
                 onClick={handleDeleteNote}
@@ -684,16 +686,16 @@ const NoteDetailPage = () => {
           </div>
 
           {/* Right Column: Comments and Activity (Registro de Mensajes y Actividad) */}
-          <div className="lg:col-span-4 p-6 sm:p-8 bg-[#1B1C20] flex flex-col space-y-6">
-            <div className="flex items-center justify-between pb-2 border-b border-gray-800">
+          <div className="lg:col-span-4 p-6 sm:p-8 bg-base-200/50 flex flex-col space-y-6">
+            <div className="flex items-center justify-between pb-2 border-b border-base-content/10">
               <div className="flex items-center gap-2">
-                <MessageSquareIcon className="size-5 text-gray-400" />
-                <h3 className="font-bold text-base text-gray-200">Comments and activity</h3>
+                <MessageSquareIcon className="size-5 text-base-content/60" />
+                <h3 className="font-bold text-base text-base-content">Comments and activity</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setShowDetails(!showDetails)}
-                className="btn btn-xs bg-[#2B2D35] hover:bg-[#353842] border border-gray-700/60 text-gray-300 rounded-lg px-2.5"
+                className="btn btn-xs bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content rounded-lg px-2.5"
               >
                 {showDetails ? "Hide details" : "Show details"}
               </button>
@@ -711,7 +713,7 @@ const NoteDetailPage = () => {
                 <div className="flex-1 space-y-2">
                   <textarea
                     rows={3}
-                    className="w-full bg-[#141518] border border-gray-700 text-sm text-gray-200 rounded-xl p-3 focus:border-primary focus:outline-none placeholder:text-gray-500 resize-none transition-colors"
+                    className="w-full bg-base-100 border border-base-content/10 text-sm text-base-content rounded-xl p-3 focus:border-primary focus:outline-none placeholder:text-base-content/40 resize-none transition-colors"
                     placeholder="Write a comment..."
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
@@ -734,7 +736,7 @@ const NoteDetailPage = () => {
             {showDetails && (
               <div className="space-y-4 pt-2 overflow-y-auto max-h-[500px] pr-1">
                 {(note.activities || []).length === 0 ? (
-                  <p className="text-xs text-gray-500 italic text-center py-6">No hay actividad registrada aún</p>
+                  <p className="text-xs text-base-content/40 italic text-center py-6">No hay actividad registrada aún</p>
                 ) : (
                   [...(note.activities || [])]
                     .reverse()
@@ -746,12 +748,12 @@ const NoteDetailPage = () => {
                         >
                           {getInitials(act.user)}
                         </span>
-                        <div className="space-y-1 flex-1 min-w-0 bg-[#141518]/60 p-2.5 rounded-xl border border-gray-800/80">
+                        <div className="space-y-1 flex-1 min-w-0 bg-base-100/60 p-2.5 rounded-xl border border-base-content/10">
                           <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span className="font-bold text-gray-200">{act.user || "Usuario"}</span>
-                            <span className="text-[10px] text-gray-500">{formatDateActivity(act.createdAt)}</span>
+                            <span className="font-bold text-base-content">{act.user || "Usuario"}</span>
+                            <span className="text-[10px] text-base-content/50">{formatDateActivity(act.createdAt)}</span>
                           </div>
-                          <p className={`text-gray-300 leading-relaxed ${act.type === "action" ? "italic text-gray-400" : ""}`}>
+                          <p className={`text-base-content/80 leading-relaxed ${act.type === "action" ? "italic text-base-content/50" : ""}`}>
                             {act.text}
                           </p>
                         </div>

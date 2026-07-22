@@ -1,5 +1,6 @@
 import { Link } from "react-router";
 import { PlusIcon, Settings2Icon } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 const Navbar = () => {
   return (
@@ -11,6 +12,7 @@ const Navbar = () => {
             <h1 className="text-3xl font-bold text-primary font-mono tracking-tight">ThinkBoard</h1>
           </Link>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Link to={"/board-settings"} className="btn btn-ghost btn-sm" title="Configuración del tablero">
               <Settings2Icon className="size-5" />
             </Link>

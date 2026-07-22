@@ -11,6 +11,7 @@ import PrioritySelect from "../components/PrioritySelect";
 import UserSelect from "../components/UserSelect";
 import MarkdownEditor from "../components/MarkdownEditor";
 import { useBoardConfig } from "../lib/useBoardConfig";
+import ThemeToggle from "../components/ThemeToggle";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -66,10 +67,13 @@ const CreatePage = () => {
     <div className="min-h-screen bg-base-200 pb-12">
       <div className="w-full px-4 sm:px-8 py-8">
         <div className="w-full">
-          <Link to={"/"} className="btn btn-ghost mb-6 gap-1">
-            <ArrowLeftIcon className="size-5" />
-            Volver al Tablero
-          </Link>
+          <div className="flex items-center justify-between mb-6">
+            <Link to={"/"} className="btn btn-ghost gap-1">
+              <ArrowLeftIcon className="size-5" />
+              Volver al Tablero
+            </Link>
+            <ThemeToggle />
+          </div>
 
           <div className="card bg-base-100 shadow-sm border border-base-content/10">
             <div className="card-body p-6 sm:p-8 space-y-6">

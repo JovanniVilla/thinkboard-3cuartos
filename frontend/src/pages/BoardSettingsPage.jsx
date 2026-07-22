@@ -19,6 +19,7 @@ import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
 import { useUsers } from "../lib/useUsers";
 import { useBoardConfig } from "../lib/useBoardConfig";
+import ThemeToggle from "../components/ThemeToggle";
 
 const PRESET_COLORS = [
   "#6B7280", "#EF4444", "#F97316", "#EAB308",
@@ -407,18 +408,20 @@ const BoardSettingsPage = () => {
     <div className="min-h-screen bg-base-200 pb-12">
       <div className="w-full px-4 sm:px-8 py-8">
         <div className="w-full">
-          {/* Header */}
-          <div className="flex items-center gap-4 mb-6">
-            <Link to="/" className="btn btn-ghost btn-sm gap-1">
-              <ArrowLeftIcon className="h-4 w-4" />
-              Volver al Tablero
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">Gestión del Tablero</h1>
-              <p className="text-base-content/60 text-sm">
-                Personaliza estados, prioridades y miembros del equipo
-              </p>
+          <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+            <div className="flex items-center gap-4">
+              <Link to="/" className="btn btn-ghost btn-sm gap-1">
+                <ArrowLeftIcon className="h-4 w-4" />
+                Volver al Tablero
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold">Gestión del Tablero</h1>
+                <p className="text-base-content/60 text-sm">
+                  Personaliza estados, prioridades y miembros del equipo
+                </p>
+              </div>
             </div>
+            <ThemeToggle />
           </div>
 
           {/* Navigation Tabs */}
