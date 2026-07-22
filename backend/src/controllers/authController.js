@@ -153,3 +153,47 @@ export async function getMe(req, res) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
+/**
+ * POST /api/auth/claim-admin
+ * Emergency or setup recovery endpoint to promote a specific account to admin.
+ */
+export async function claimAdmin(req, res) {
+  try {
+    const { email, setupKey } = req.body;
+
+    // Check against secret setup key or fallback default
+    const validKey = process.env.ADMIN_SETUP_KEY || "3cuartos-admin-claim";
+    if (setupKey !== validKey) {
+      return res.status(403).json({ message: "Clave de configuración o rescate inválida" });
+    }
+
+    if (!email) {
+      return res.status(400).json({ message: "El email es requerido" });
+    }
+
+    const user = await User.findOne({ email: new RegExp(`^${email.trim()}$`, "i") });
+    if (!user) {
+      return res.status(404).json({ message: "No se encontró ninguna cuenta con ese email en la base de datos" });
+    }
+
+    user.role = "admin";
+    user.isApproved = true;
+    await user.save();
+
+    res.status(200).json({
+      message: `¡Cuenta ${user.email} promovida a Administrador y Aprobada exitosamente!`,
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isApproved: user.isApproved,
+      },
+    });
+  } catch (error) {
+    console.error("Error in claimAdmin controller", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
