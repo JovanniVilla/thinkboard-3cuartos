@@ -21,7 +21,8 @@ function generateTokenAndSetCookie(userId, role, res) {
 
 /**
  * POST /api/auth/register
- * Register a new user. The first user ever registered becomes admin automatically.
+ * Register a new user. The first user ever registered becomes admin (auto-approved).
+ * Subsequent users are created as pending (isApproved: false).
  */
 export async function register(req, res) {
   try {
@@ -40,26 +41,34 @@ export async function register(req, res) {
       return res.status(400).json({ message: "Ya existe una cuenta con ese email" });
     }
 
-    // First user becomes admin
+    // First user becomes admin and is auto-approved
     const userCount = await User.countDocuments();
-    const role = userCount === 0 ? "admin" : "user";
+    const isFirstUser = userCount === 0;
+    const role = isFirstUser ? "admin" : "user";
+    const isApproved = isFirstUser; // only first user is auto-approved
 
     const user = new User({
       name: name.trim(),
       email: email.trim().toLowerCase(),
       password,
       role,
+      isApproved,
     });
 
     await user.save();
 
-    generateTokenAndSetCookie(user._id, user.role, res);
+    // For first user (admin): log them in immediately
+    // For others: return success but don't issue a token (they need approval)
+    if (isApproved) {
+      generateTokenAndSetCookie(user._id, user.role, res);
+    }
 
     res.status(201).json({
       _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
+      isApproved: user.isApproved,
     });
   } catch (error) {
     console.error("Error in register controller", error);
@@ -70,6 +79,7 @@ export async function register(req, res) {
 /**
  * POST /api/auth/login
  * Authenticate user with email and password.
+ * Blocks login if user is not yet approved by admin.
  */
 export async function login(req, res) {
   try {
@@ -89,6 +99,14 @@ export async function login(req, res) {
       return res.status(401).json({ message: "Credenciales inválidas" });
     }
 
+    // Check if user is approved
+    if (!user.isApproved) {
+      return res.status(403).json({
+        message: "Tu cuenta está pendiente de aprobación por un administrador",
+        pendingApproval: true,
+      });
+    }
+
     generateTokenAndSetCookie(user._id, user.role, res);
 
     res.status(200).json({
@@ -96,6 +114,7 @@ export async function login(req, res) {
       name: user.name,
       email: user.email,
       role: user.role,
+      isApproved: user.isApproved,
     });
   } catch (error) {
     console.error("Error in login controller", error);

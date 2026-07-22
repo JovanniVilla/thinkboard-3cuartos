@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const isAdmin = user?.role === "admin";
+  const isApproved = user?.isApproved === true;
 
   // Check for existing session on mount
   useEffect(() => {
@@ -40,7 +41,10 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     const res = await api.post("/auth/register", { name, email, password });
-    setUser(res.data);
+    // Only set user if approved (first user / admin)
+    if (res.data.isApproved) {
+      setUser(res.data);
+    }
     return res.data;
   };
 
@@ -55,6 +59,7 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         isAdmin,
+        isApproved,
         login,
         register,
         logout,

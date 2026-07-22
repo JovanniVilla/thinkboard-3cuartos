@@ -12,13 +12,21 @@ import {
   LayersIcon,
   FolderKeyIcon,
   SparklesIcon,
+  ShieldIcon,
+  UserCheckIcon,
+  UserXIcon,
+  KeyRoundIcon,
+  ClockIcon,
+  CheckCircle2Icon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
 import { useUsers } from "../lib/useUsers";
+import { useAccounts } from "../lib/useAccounts";
 import { useBoardConfig } from "../lib/useBoardConfig";
+import { useAuth } from "../lib/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
 
 const PRESET_COLORS = [
@@ -230,13 +238,15 @@ const EditUserRow = ({ user, onSave, onCancel }) => {
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 const BoardSettingsPage = () => {
-  const [activeTab, setActiveTab] = useState("project"); // "project" | "statuses" | "priorities" | "users"
+  const [activeTab, setActiveTab] = useState("project"); // "project" | "statuses" | "priorities" | "users" | "accounts"
 
   // Data Hooks
   const { statuses, setStatuses, loading: loadingStatuses } = useStatuses();
   const { priorities, setPriorities, loading: loadingPriorities } = usePriorities();
   const { users, setUsers, loading: loadingUsers } = useUsers();
+  const { accounts, setAccounts, loading: loadingAccounts } = useAccounts();
   const { boardConfig, setBoardConfig, loading: loadingConfig } = useBoardConfig();
+  const { user: currentUser } = useAuth();
 
   // Create state
   const [newName, setNewName] = useState("");
@@ -467,7 +477,23 @@ const BoardSettingsPage = () => {
               onClick={() => switchTab("users")}
             >
               <UserIcon className="w-4 h-4" />
-              <span>Usuarios ({users.length})</span>
+              <span>Miembros ({users.length})</span>
+            </button>
+
+            <button
+              type="button"
+              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all relative ${
+                activeTab === "accounts" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
+              }`}
+              onClick={() => switchTab("accounts")}
+            >
+              <KeyRoundIcon className="w-4 h-4" />
+              <span>Cuentas / Accesos ({accounts.length})</span>
+              {accounts.some((a) => !a.isApproved) && (
+                <span className="badge badge-warning badge-xs absolute -top-1 -right-1 animate-pulse">
+                  {accounts.filter((a) => !a.isApproved).length}
+                </span>
+              )}
             </button>
           </div>
 
@@ -926,6 +952,232 @@ const BoardSettingsPage = () => {
                       </button>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 4: CUENTAS Y AUTORIZACIONES */}
+          {activeTab === "accounts" && (
+            <div className="space-y-6">
+              {/* Summary Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="card bg-base-100 border border-base-content/10 shadow-sm p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-warning/15 border border-warning/30 flex items-center justify-center text-warning">
+                      <ClockIcon className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-base-content/50 uppercase">Pendientes de aprobación</p>
+                      <h3 className="text-2xl font-black text-base-content">
+                        {accounts.filter((a) => !a.isApproved).length}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card bg-base-100 border border-base-content/10 shadow-sm p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-success/15 border border-success/30 flex items-center justify-center text-success">
+                      <CheckCircle2Icon className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-base-content/50 uppercase">Cuentas aprobadas</p>
+                      <h3 className="text-2xl font-black text-base-content">
+                        {accounts.filter((a) => a.isApproved).length}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card bg-base-100 border border-base-content/10 shadow-sm p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary">
+                      <ShieldIcon className="size-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-base-content/50 uppercase">Administradores</p>
+                      <h3 className="text-2xl font-black text-base-content">
+                        {accounts.filter((a) => a.role === "admin").length}
+                      </h3>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Accounts Card */}
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body p-6">
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                    <div>
+                      <h2 className="card-title text-lg flex items-center gap-2">
+                        <KeyRoundIcon className="size-5 text-primary" />
+                        Gestión de Cuentas y Autorizaciones
+                      </h2>
+                      <p className="text-xs text-base-content/60 mt-0.5">
+                        Autoriza, revoca y asigna roles a los usuarios que se han registrado en la plataforma.
+                      </p>
+                    </div>
+                  </div>
+
+                  {loadingAccounts ? (
+                    <div className="text-center py-8 text-base-content/50">Cargando cuentas…</div>
+                  ) : accounts.length === 0 ? (
+                    <div className="text-center py-8 text-base-content/50">No hay cuentas registradas</div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="table w-full">
+                        <thead>
+                          <tr className="border-b border-base-content/10 text-base-content/60">
+                            <th>Usuario</th>
+                            <th>Estado</th>
+                            <th>Rol</th>
+                            <th>Fecha Registro</th>
+                            <th className="text-right">Acciones</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-base-content/10">
+                          {accounts.map((acc) => {
+                            const isSelf = currentUser?._id === acc._id;
+                            return (
+                              <tr key={acc._id} className="hover:bg-base-200/50 transition-colors">
+                                <td>
+                                  <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-primary text-sm shrink-0">
+                                      {acc.name ? acc.name.slice(0, 2).toUpperCase() : "?"}
+                                    </div>
+                                    <div>
+                                      <div className="font-bold flex items-center gap-1.5">
+                                        {acc.name}
+                                        {isSelf && (
+                                          <span className="badge badge-xs badge-neutral">Tú</span>
+                                        )}
+                                      </div>
+                                      <div className="text-xs text-base-content/50 font-mono">{acc.email}</div>
+                                    </div>
+                                  </div>
+                                </td>
+
+                                <td>
+                                  {acc.isApproved ? (
+                                    <span className="badge badge-success badge-sm gap-1 text-xs font-semibold">
+                                      <CheckCircle2Icon className="size-3" />
+                                      Autorizado
+                                    </span>
+                                  ) : (
+                                    <span className="badge badge-warning badge-sm gap-1 text-xs font-semibold">
+                                      <ClockIcon className="size-3" />
+                                      Pendiente
+                                    </span>
+                                  )}
+                                </td>
+
+                                <td>
+                                  <select
+                                    className="select select-bordered select-sm font-semibold max-w-[130px]"
+                                    value={acc.role}
+                                    disabled={isSelf}
+                                    onChange={async (e) => {
+                                      const newRole = e.target.value;
+                                      try {
+                                        const res = await api.put(`/accounts/${acc._id}/role`, { role: newRole });
+                                        setAccounts((prev) =>
+                                          prev.map((a) => (a._id === acc._id ? res.data : a))
+                                        );
+                                        toast.success("Rol actualizado correctamente");
+                                      } catch (error) {
+                                        toast.error(error.response?.data?.message || "Error al cambiar rol");
+                                      }
+                                    }}
+                                  >
+                                    <option value="user">Usuario</option>
+                                    <option value="admin">Administrador</option>
+                                  </select>
+                                </td>
+
+                                <td>
+                                  <span className="text-xs text-base-content/60">
+                                    {acc.createdAt ? new Date(acc.createdAt).toLocaleDateString("es-ES", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    }) : "—"}
+                                  </span>
+                                </td>
+
+                                <td className="text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    {!acc.isApproved ? (
+                                      <button
+                                        type="button"
+                                        className="btn btn-success btn-sm gap-1 text-white shadow-sm"
+                                        onClick={async () => {
+                                          try {
+                                            const res = await api.put(`/accounts/${acc._id}/approve`);
+                                            setAccounts((prev) =>
+                                              prev.map((a) => (a._id === acc._id ? res.data : a))
+                                            );
+                                            toast.success("Usuario autorizado correctamente");
+                                          } catch (error) {
+                                            toast.error(error.response?.data?.message || "Error al autorizar");
+                                          }
+                                        }}
+                                        title="Autorizar acceso"
+                                      >
+                                        <UserCheckIcon className="size-4" />
+                                        Autorizar
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        className="btn btn-outline btn-warning btn-sm gap-1"
+                                        disabled={isSelf}
+                                        onClick={async () => {
+                                          if (!window.confirm(`¿Revocar el acceso a ${acc.name}? No podrá iniciar sesión hasta ser autorizado nuevamente.`)) return;
+                                          try {
+                                            const res = await api.put(`/accounts/${acc._id}/reject`);
+                                            setAccounts((prev) =>
+                                              prev.map((a) => (a._id === acc._id ? res.data : a))
+                                            );
+                                            toast.success("Acceso revocado");
+                                          } catch (error) {
+                                            toast.error(error.response?.data?.message || "Error al revocar");
+                                          }
+                                        }}
+                                        title="Revocar acceso"
+                                      >
+                                        <UserXIcon className="size-4" />
+                                        Revocar
+                                      </button>
+                                    )}
+
+                                    <button
+                                      type="button"
+                                      className="btn btn-ghost btn-sm text-error hover:bg-error/10"
+                                      disabled={isSelf}
+                                      onClick={async () => {
+                                        if (!window.confirm(`¿Estás seguro de eliminar permanentemente la cuenta de ${acc.name}?`)) return;
+                                        try {
+                                          await api.delete(`/accounts/${acc._id}`);
+                                          setAccounts((prev) => prev.filter((a) => a._id !== acc._id));
+                                          toast.success("Cuenta eliminada");
+                                        } catch (error) {
+                                          toast.error(error.response?.data?.message || "Error al eliminar");
+                                        }
+                                      }}
+                                      title="Eliminar cuenta"
+                                    >
+                                      <Trash2Icon className="size-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

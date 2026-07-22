@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate } from "react-router";
 import { useAuth } from "../lib/AuthContext";
-import { LogInIcon, EyeIcon, EyeOffIcon, LoaderIcon } from "lucide-react";
+import { LogInIcon, EyeIcon, EyeOffIcon, LoaderIcon, ClockIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../lib/ThemeContext";
 
@@ -12,6 +12,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
 
   // Redirect if already logged in
   if (!authLoading && user) {
@@ -25,11 +26,16 @@ const LoginPage = () => {
       return;
     }
     setLoading(true);
+    setPendingApproval(false);
     try {
       await login(email, password);
       toast.success("¡Bienvenido de vuelta!");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Error al iniciar sesión");
+      if (error.response?.data?.pendingApproval) {
+        setPendingApproval(true);
+      } else {
+        toast.error(error.response?.data?.message || "Error al iniciar sesión");
+      }
     } finally {
       setLoading(false);
     }
@@ -55,6 +61,20 @@ const LoginPage = () => {
           </Link>
           <p className="text-base-content/60 text-sm">Inicia sesión para acceder a tu tablero</p>
         </div>
+
+        {/* Pending Approval Banner */}
+        {pendingApproval && (
+          <div className="mb-6 bg-warning/10 border border-warning/30 rounded-2xl p-5 text-center">
+            <div className="w-12 h-12 rounded-full bg-warning/20 flex items-center justify-center mx-auto mb-3">
+              <ClockIcon className="size-6 text-warning" />
+            </div>
+            <h3 className="font-bold text-base-content mb-1">Cuenta pendiente de aprobación</h3>
+            <p className="text-sm text-base-content/60 leading-relaxed">
+              Tu cuenta ha sido registrada correctamente pero aún no ha sido aprobada por un administrador.
+              Por favor, espera a que un administrador autorice tu acceso.
+            </p>
+          </div>
+        )}
 
         {/* Card */}
         <div className="bg-base-100/80 backdrop-blur-xl border border-base-content/10 rounded-2xl shadow-2xl p-8">

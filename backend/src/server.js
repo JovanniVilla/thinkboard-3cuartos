@@ -5,6 +5,7 @@ import path from "path";
 import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/authRoutes.js";
+import accountRoutes from "./routes/accountRoutes.js";
 import notesRoutes from "./routes/notesRoutes.js";
 import statusRoutes from "./routes/statusRoutes.js";
 import priorityRoutes from "./routes/priorityRoutes.js";
@@ -39,6 +40,7 @@ app.use(rateLimiter);
 // });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/accounts", accountRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/status", statusRoutes);
 app.use("/api/priorities", priorityRoutes);

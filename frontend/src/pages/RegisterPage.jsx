@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, Navigate } from "react-router";
 import { useAuth } from "../lib/AuthContext";
-import { UserPlusIcon, EyeIcon, EyeOffIcon, LoaderIcon } from "lucide-react";
+import { UserPlusIcon, EyeIcon, EyeOffIcon, LoaderIcon, CheckCircleIcon, ClockIcon } from "lucide-react";
 import toast from "react-hot-toast";
 import { useTheme } from "../lib/ThemeContext";
 
@@ -14,6 +14,7 @@ const RegisterPage = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
 
   // Redirect if already logged in
   if (!authLoading && user) {
@@ -40,14 +41,54 @@ const RegisterPage = () => {
 
     setLoading(true);
     try {
-      await register(name, email, password);
-      toast.success("¡Cuenta creada exitosamente!");
+      const data = await register(name, email, password);
+      if (data.isApproved) {
+        // First user (admin) - auto-approved, will redirect via context
+        toast.success("¡Cuenta de administrador creada!");
+      } else {
+        // Regular user - needs approval
+        setRegistrationComplete(true);
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || "Error al crear la cuenta");
     } finally {
       setLoading(false);
     }
   };
+
+  // Show success screen after registration
+  if (registrationComplete) {
+    return (
+      <div className="relative min-h-screen flex items-center justify-center p-4">
+        <div
+          className={`absolute inset-0 -z-10 transition-all duration-500 ${
+            theme === "light"
+              ? "[background:radial-gradient(125%_125%_at_50%_10%,#ffffff_60%,#00FF9D15_100%)]"
+              : "[background:radial-gradient(125%_125%_at_50%_10%,#000000_60%,#00FF9D40_100%)]"
+          }`}
+        />
+        <div className="w-full max-w-md">
+          <div className="bg-base-100/80 backdrop-blur-xl border border-base-content/10 rounded-2xl shadow-2xl p-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto mb-4">
+              <CheckCircleIcon className="size-8 text-success" />
+            </div>
+            <h2 className="text-2xl font-bold text-base-content mb-2">¡Registro exitoso!</h2>
+            <div className="flex items-center gap-2 justify-center mb-4">
+              <ClockIcon className="size-4 text-warning" />
+              <span className="text-sm font-medium text-warning">Pendiente de aprobación</span>
+            </div>
+            <p className="text-base-content/60 text-sm leading-relaxed mb-6">
+              Tu cuenta ha sido creada correctamente. Un administrador debe aprobar tu acceso antes
+              de que puedas iniciar sesión. Te notificaremos cuando tu cuenta sea activada.
+            </p>
+            <Link to="/login" className="btn btn-primary w-full gap-2">
+              Ir a Iniciar Sesión
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen flex items-center justify-center p-4">
@@ -155,6 +196,12 @@ const RegisterPage = () => {
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 autoComplete="new-password"
               />
+            </div>
+
+            {/* Info note */}
+            <div className="text-xs text-base-content/40 flex items-start gap-1.5 px-1">
+              <ClockIcon className="size-3.5 mt-0.5 shrink-0" />
+              <span>Las cuentas nuevas requieren aprobación de un administrador antes de poder acceder.</span>
             </div>
 
             {/* Submit */}
