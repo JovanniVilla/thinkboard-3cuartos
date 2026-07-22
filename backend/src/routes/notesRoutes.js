@@ -7,8 +7,12 @@ import {
   updateNote,
   addComment,
 } from "../controllers/notesController.js";
+import { protectRoute } from "../middleware/auth.js";
 
 const router = express.Router();
+
+// All note routes require authentication
+router.use(protectRoute);
 
 router.get("/", getAllNotes);
 router.get("/:id", getNoteById);

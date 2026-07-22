@@ -6,13 +6,16 @@ import { BrowserRouter } from "react-router";
 import { Toaster } from "react-hot-toast";
 
 import { ThemeProvider } from "./lib/ThemeContext";
+import { AuthProvider } from "./lib/AuthContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <ThemeProvider>
-        <App />
-        <Toaster />
+        <AuthProvider>
+          <App />
+          <Toaster />
+        </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   </StrictMode>
