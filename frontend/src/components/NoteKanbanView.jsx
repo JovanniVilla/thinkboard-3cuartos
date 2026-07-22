@@ -178,7 +178,7 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                               )}
                               <Link
                                 to={`/note/${note._id}`}
-                                className="font-semibold text-sm text-base-content hover:text-primary transition-colors line-clamp-2 block"
+                                className="font-semibold text-sm text-base-content hover:text-primary transition-colors break-words whitespace-normal block"
                               >
                                 {note.title}
                               </Link>

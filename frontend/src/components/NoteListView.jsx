@@ -150,7 +150,7 @@ const NoteListView = ({
                   className="hover:bg-base-200/50 transition-colors group"
                 >
                   <td className="font-semibold text-base-content max-w-xs">
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-start gap-2 min-w-0 pt-0.5">
                       {note.keyId && (
                         <span className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0">
                           {note.keyId}
@@ -158,7 +158,7 @@ const NoteListView = ({
                       )}
                       <Link
                         to={`/note/${note._id}`}
-                        className="hover:text-primary transition-colors block truncate"
+                        className="hover:text-primary transition-colors block break-words whitespace-normal"
                         title={note.title}
                       >
                         {note.title}
