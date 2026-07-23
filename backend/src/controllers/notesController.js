@@ -47,6 +47,7 @@ export async function createNote(req, res) {
       ...(status && { status }),
       ...(priority && { priority }),
       ...(user && { user }),
+      createdBy: req.user?._id || null,
       labels: labels || [],
       checklist: checklist || [],
       activities: [
@@ -74,6 +75,13 @@ export async function updateNote(req, res) {
 
     const currentNote = await Note.findById(req.params.id);
     if (!currentNote) return res.status(404).json({ message: "Note not found" });
+
+    // Authorization: only the creator or admin can update
+    const isOwner = currentNote.createdBy && req.user && currentNote.createdBy.toString() === req.user._id.toString();
+    const isAdmin = req.user?.role === "admin";
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: "No tienes permiso para editar esta nota" });
+    }
 
     let updatedActivities = activities !== undefined ? activities : (currentNote.activities || []);
     
@@ -146,8 +154,17 @@ export async function addComment(req, res) {
 
 export async function deleteNote(req, res) {
   try {
-    const deletedNote = await Note.findByIdAndDelete(req.params.id);
-    if (!deletedNote) return res.status(404).json({ message: "Note not found" });
+    const currentNote = await Note.findById(req.params.id);
+    if (!currentNote) return res.status(404).json({ message: "Note not found" });
+
+    // Authorization: only the creator or admin can delete
+    const isOwner = currentNote.createdBy && req.user && currentNote.createdBy.toString() === req.user._id.toString();
+    const isAdmin = req.user?.role === "admin";
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({ message: "No tienes permiso para eliminar esta nota" });
+    }
+
+    await Note.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Note deleted successfully!" });
   } catch (error) {
     console.error("Error in deleteNote controller", error);

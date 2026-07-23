@@ -2,7 +2,10 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
+import cookieParser from "cookie-parser";
 
+import authRoutes from "./routes/authRoutes.js";
+import accountRoutes from "./routes/accountRoutes.js";
 import notesRoutes from "./routes/notesRoutes.js";
 import statusRoutes from "./routes/statusRoutes.js";
 import priorityRoutes from "./routes/priorityRoutes.js";
@@ -22,10 +25,12 @@ if (process.env.NODE_ENV !== "production") {
   app.use(
     cors({
       origin: "http://localhost:5173",
+      credentials: true,
     })
   );
 }
 app.use(express.json()); // this middleware will parse JSON bodies: req.body
+app.use(cookieParser());
 app.use(rateLimiter);
 
 // our simple custom middleware
@@ -34,6 +39,8 @@ app.use(rateLimiter);
 //   next();
 // });
 
+app.use("/api/auth", authRoutes);
+app.use("/api/accounts", accountRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/status", statusRoutes);
 app.use("/api/priorities", priorityRoutes);

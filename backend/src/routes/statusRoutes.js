@@ -5,12 +5,13 @@ import {
   updateStatus,
   deleteStatus,
 } from "../controllers/statusController.js";
+import { protectRoute, requireAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.get("/", getAllStatuses);
-router.post("/", createStatus);
-router.put("/:id", updateStatus);
-router.delete("/:id", deleteStatus);
+router.get("/", protectRoute, getAllStatuses);
+router.post("/", protectRoute, requireAdmin, createStatus);
+router.put("/:id", protectRoute, requireAdmin, updateStatus);
+router.delete("/:id", protectRoute, requireAdmin, deleteStatus);
 
 export default router;

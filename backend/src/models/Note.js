@@ -10,6 +10,11 @@ const noteSchema = new mongoose.Schema(
       trim: true,
       default: null,
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
     title: {
       type: String,
       required: true,

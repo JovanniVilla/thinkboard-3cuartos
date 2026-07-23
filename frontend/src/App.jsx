@@ -4,7 +4,10 @@ import HomePage from "./pages/HomePage";
 import CreatePage from "./pages/CreatePage";
 import NoteDetailPage from "./pages/NoteDetailPage";
 import BoardSettingsPage from "./pages/BoardSettingsPage";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
+import ProtectedRoute from "./components/ProtectedRoute";
 import { useTheme } from "./lib/ThemeContext";
 
 const App = () => {
@@ -20,10 +23,15 @@ const App = () => {
         }`}
       />
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/create" element={<CreatePage />} />
-        <Route path="/note/:id" element={<NoteDetailPage />} />
-        <Route path="/board-settings" element={<BoardSettingsPage />} />
+        {/* Public auth routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+
+        {/* Protected routes */}
+        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/create" element={<ProtectedRoute><CreatePage /></ProtectedRoute>} />
+        <Route path="/note/:id" element={<ProtectedRoute><NoteDetailPage /></ProtectedRoute>} />
+        <Route path="/board-settings" element={<ProtectedRoute adminOnly><BoardSettingsPage /></ProtectedRoute>} />
       </Routes>
     </div>
   );
