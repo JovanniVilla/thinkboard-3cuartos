@@ -22,11 +22,33 @@ export async function updateBoardConfig(req, res) {
       boardConfig = new BoardConfig();
     }
 
+    const oldProjectKey = (boardConfig.projectKey || "").trim().toUpperCase();
+    let oldPrefix = "";
+    if (oldProjectKey) {
+      oldPrefix = oldProjectKey.endsWith("-") ? oldProjectKey : `${oldProjectKey}-`;
+    }
+
     if (projectKey !== undefined) {
       boardConfig.projectKey = projectKey.trim().toUpperCase();
     }
     if (taskCounter !== undefined && !isNaN(taskCounter)) {
       boardConfig.taskCounter = Math.max(1, Number(taskCounter));
+    }
+
+    const newProjectKey = (boardConfig.projectKey || "").trim().toUpperCase();
+    let newPrefix = "";
+    if (newProjectKey) {
+      newPrefix = newProjectKey.endsWith("-") ? newProjectKey : `${newProjectKey}-`;
+    }
+
+    // Si el prefijo cambió y ya existía uno, actualizamos las notas existentes
+    if (oldProjectKey && newProjectKey && oldProjectKey !== newProjectKey) {
+      // Usamos expresión regular para buscar notas que empiecen con el prefijo antiguo
+      const notesToUpdate = await Note.find({ keyId: { $regex: `^${oldPrefix}` } });
+      for (const note of notesToUpdate) {
+        note.keyId = note.keyId.replace(oldPrefix, newPrefix);
+        await note.save();
+      }
     }
 
     const savedConfig = await boardConfig.save();
