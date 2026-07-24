@@ -3,7 +3,6 @@ import Navbar from "../components/Navbar";
 import RateLimitedUI from "../components/RateLimitedUI";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
-import NoteCard from "../components/NoteCard";
 import NotesNotFound from "../components/NotesNotFound";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
@@ -11,7 +10,7 @@ import { useUsers } from "../lib/useUsers";
 import NoteListView from "../components/NoteListView";
 import NoteKanbanView from "../components/NoteKanbanView";
 import NoteFilters from "../components/NoteFilters";
-import { LayoutGridIcon, ListIcon, Columns3Icon } from "lucide-react";
+import { ListIcon, Columns3Icon } from "lucide-react";
 
 const HomePage = () => {
   const [isRateLimited, setIsRateLimited] = useState(false);
@@ -22,8 +21,8 @@ const HomePage = () => {
   const { priorities } = usePriorities();
   const { users } = useUsers();
 
-  // View Mode: "grid" | "list" | "board"
-  const [viewMode, setViewMode] = useState("grid");
+  // View Mode: "list" | "board"
+  const [viewMode, setViewMode] = useState("list");
 
   // Filtering and Sorting state
   const [searchQuery, setSearchQuery] = useState("");
@@ -129,20 +128,6 @@ const HomePage = () => {
               <div className="flex items-center gap-1.5 bg-base-200/80 p-1 rounded-lg border border-base-content/10 self-end sm:self-auto">
                 <button
                   type="button"
-                  onClick={() => setViewMode("grid")}
-                  className={`btn btn-sm gap-1.5 transition-all ${
-                    viewMode === "grid"
-                      ? "btn-primary shadow-sm"
-                      : "btn-ghost text-base-content/70 hover:text-base-content"
-                  }`}
-                  title="Vista en Cuadrícula"
-                >
-                  <LayoutGridIcon className="size-4" />
-                  <span className="hidden md:inline">Cuadrícula</span>
-                </button>
-
-                <button
-                  type="button"
                   onClick={() => setViewMode("list")}
                   className={`btn btn-sm gap-1.5 transition-all ${
                     viewMode === "list"
@@ -193,27 +178,6 @@ const HomePage = () => {
             />
 
             {/* Render selected view */}
-            {viewMode === "grid" && (
-              filteredNotes.length === 0 ? (
-                <div className="bg-base-100 rounded-xl p-12 text-center border border-base-content/10">
-                  <p className="text-base-content/60">No se encontraron tareas que coincidan con los filtros seleccionados.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
-                  {filteredNotes.map((note) => (
-                    <NoteCard
-                      key={note._id}
-                      note={note}
-                      setNotes={setNotes}
-                      statuses={statuses}
-                      priorities={priorities}
-                      users={users}
-                    />
-                  ))}
-                </div>
-              )
-            )}
-
             {viewMode === "list" && (
               <NoteListView
                 notes={filteredNotes}
