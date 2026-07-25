@@ -82,6 +82,7 @@ const NoteDetailPage = () => {
   const [hideChecked, setHideChecked] = useState(false);
   const [editingChecklistId, setEditingChecklistId] = useState(null);
   const [editingChecklistTitle, setEditingChecklistTitle] = useState("");
+  const [expandChecklist, setExpandChecklist] = useState(false);
 
   // Labels popover state
   const [showLabelMenu, setShowLabelMenu] = useState(false);
@@ -700,13 +701,22 @@ const NoteDetailPage = () => {
                   <CheckSquareIcon className="size-5 text-base-content/60" />
                   <h3 className="font-bold text-base text-base-content">Checklist</h3>
                 </div>
-                <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-2 text-xs flex-wrap justify-end">
+                  {displayedChecklist.length > 4 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandChecklist(!expandChecklist)}
+                      className="btn btn-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg px-2.5 font-medium"
+                    >
+                      {expandChecklist ? "Contraer lista" : `Ver todas (${displayedChecklist.length})`}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setHideChecked(!hideChecked)}
                     className="btn btn-xs bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content rounded-lg px-2.5"
                   >
-                    {hideChecked ? "Mostrar completados" : "Hide checked items"}
+                    {hideChecked ? "Mostrar completados" : "Ocultar completados"}
                   </button>
                   {totalCount > 0 && (
                     <button
@@ -714,7 +724,7 @@ const NoteDetailPage = () => {
                       onClick={handleDeleteAllChecklist}
                       className="btn btn-xs bg-error/20 hover:bg-error/30 text-error border border-error/30 rounded-lg px-2.5"
                     >
-                      Delete
+                      Eliminar
                     </button>
                   )}
                 </div>
@@ -731,9 +741,10 @@ const NoteDetailPage = () => {
                 </div>
               </div>
 
-              {/* Checklist Items List */}
-              <div className="space-y-2">
-                {displayedChecklist.map((item) => (
+              {/* Checklist Items List Container */}
+              <div className="space-y-3">
+                <div className={`space-y-2 ${expandChecklist ? "" : "max-h-[240px] overflow-y-auto pr-1"}`}>
+                  {displayedChecklist.map((item) => (
                   <div
                     key={item.id}
                     className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group"
@@ -814,14 +825,27 @@ const NoteDetailPage = () => {
                     )}
                   </div>
                 ))}
+                </div>
+
+                {displayedChecklist.length > 4 && (
+                  <div className="flex justify-center pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setExpandChecklist(!expandChecklist)}
+                      className="text-xs text-primary hover:underline font-semibold flex items-center gap-1 py-1 px-3 rounded-lg hover:bg-base-200 transition-colors"
+                    >
+                      {expandChecklist ? "▲ Contraer lista de tareas" : `▼ Ver las ${displayedChecklist.length} tareas en lista completa`}
+                    </button>
+                  </div>
+                )}
 
                 {/* Add Item Form */}
-                <form onSubmit={handleAddChecklistItem} className="pt-2 flex items-center gap-2">
+                <form onSubmit={handleAddChecklistItem} className="pt-1 flex items-center gap-2">
                   <input
                     id="add-checklist-input"
                     type="text"
                     className="flex-1 bg-base-200 border border-base-content/10 text-sm text-base-content rounded-lg px-3 py-2 focus:border-primary focus:outline-none placeholder:text-base-content/40"
-                    placeholder="Add an item"
+                    placeholder="Escribe un nuevo elemento..."
                     value={newChecklistTitle}
                     onChange={(e) => setNewChecklistTitle(e.target.value)}
                   />
