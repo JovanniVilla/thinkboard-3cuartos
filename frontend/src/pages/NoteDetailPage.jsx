@@ -326,11 +326,11 @@ const NoteDetailPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-transparent text-base-content p-2 sm:p-6 flex justify-center items-start w-full">
+    <div className="min-h-screen bg-transparent text-base-content p-1 sm:p-2 flex justify-center items-start w-full">
       {/* Card Detail Modal Window Container */}
-      <div className="w-full max-w-5xl mx-auto bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden my-2 sm:my-6">
+      <div className="w-full max-w-5xl mx-auto bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-0 mb-4 sm:mt-1 sm:mb-6">
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-base-content/10 bg-base-100">
+        <div className="flex items-center justify-between px-5 py-2.5 border-b border-base-content/10 bg-base-100">
           <div className="flex items-center gap-3">
             {/* Status Dropdown Pill */}
             <div className="dropdown">
@@ -449,13 +449,13 @@ const NoteDetailPage = () => {
         {/* Main Content Layout: 2 Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[600px]">
           {/* Left Column (Main Card Content) */}
-          <div className="lg:col-span-8 p-6 sm:p-8 space-y-7 border-b lg:border-b-0 lg:border-r border-base-content/10">
+          <div className="lg:col-span-8 p-5 sm:p-6 space-y-4 border-b lg:border-b-0 lg:border-r border-base-content/10">
             {/* Title Section */}
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <CheckCircle2Icon className="size-7 text-base-content/50 mt-1 flex-shrink-0" />
+            <div className="space-y-2.5">
+              <div className="flex items-start gap-2.5">
+                <CheckCircle2Icon className="size-6 text-base-content/50 mt-1 flex-shrink-0" />
                 <textarea
-                  className="w-full bg-transparent text-2xl sm:text-3xl font-extrabold text-base-content border-0 border-b border-transparent focus:border-primary focus:outline-none transition-colors py-1 resize-none overflow-hidden leading-tight"
+                  className="w-full bg-transparent text-xl sm:text-2xl font-semibold tracking-normal text-base-content/95 font-sans border-0 border-b border-transparent focus:border-primary focus:outline-none transition-colors py-0.5 resize-none overflow-hidden leading-snug"
                   value={note.title}
                   rows={1}
                   onChange={(e) => {
@@ -475,14 +475,14 @@ const NoteDetailPage = () => {
               </div>
 
               {/* Quick Action Buttons Row */}
-              <div className="flex items-center gap-2 flex-wrap text-sm pt-1">
+              <div className="flex items-center gap-1.5 flex-wrap text-sm pt-0">
                 <button
                   type="button"
                   onClick={() => setShowLabelMenu(!showLabelMenu)}
                   className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
                 >
                   <PlusIcon className="size-4" />
-                  <span>Add</span>
+                  <span>Etiqueta</span>
                 </button>
 
                 <button
@@ -559,9 +559,9 @@ const NoteDetailPage = () => {
             </div>
 
             {/* Labels (Etiquetas) Section */}
-            <div className="space-y-3 pt-2">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-base-content/50">Labels</h4>
-              <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2.5 flex-wrap py-0">
+              <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 flex-shrink-0">Etiquetas:</span>
+              <div className="flex items-center gap-1.5 flex-wrap">
                 {(note.labels || []).map((lbl, idx) => (
                   <div
                     key={idx}
@@ -654,18 +654,18 @@ const NoteDetailPage = () => {
             </div>
 
             {/* Description Section */}
-            <div className="space-y-3 pt-2">
+            <div className="space-y-2 pt-0.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Edit3Icon className="size-5 text-base-content/60" />
-                  <h3 className="font-bold text-base text-base-content">Description</h3>
+                  <h3 className="font-bold text-base text-base-content">Descripción</h3>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsEditingDescription(!isEditingDescription)}
                   className="btn btn-xs bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content rounded-lg px-3"
                 >
-                  {isEditingDescription ? "Vista previa" : "Edit"}
+                  {isEditingDescription ? "Vista previa" : "Editar"}
                 </button>
               </div>
 
@@ -695,7 +695,7 @@ const NoteDetailPage = () => {
             </div>
 
             {/* Checklist Section */}
-            <div className="space-y-4 pt-2">
+            <div className="space-y-2.5 pt-0.5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <CheckSquareIcon className="size-5 text-base-content/60" />
