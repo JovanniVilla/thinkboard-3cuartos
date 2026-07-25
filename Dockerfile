@@ -9,8 +9,8 @@ COPY backend/package*.json ./backend/
 COPY frontend/package*.json ./frontend/
 
 # Install dependencies separately to leverage Docker cache
-RUN npm install --prefix backend
-RUN npm install --prefix frontend
+RUN npm install --prefix backend --legacy-peer-deps
+RUN npm install --prefix frontend --legacy-peer-deps
 
 # Copy all source code
 COPY . .
