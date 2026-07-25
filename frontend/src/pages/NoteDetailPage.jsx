@@ -19,6 +19,8 @@ import {
   MoreHorizontalIcon,
   SendIcon,
   ZapIcon,
+  PencilIcon,
+  CheckIcon,
 } from "lucide-react";
 import { useStatuses } from "../lib/useStatuses";
 import { useUsers } from "../lib/useUsers";
@@ -78,6 +80,8 @@ const NoteDetailPage = () => {
   // Checklist state
   const [newChecklistTitle, setNewChecklistTitle] = useState("");
   const [hideChecked, setHideChecked] = useState(false);
+  const [editingChecklistId, setEditingChecklistId] = useState(null);
+  const [editingChecklistTitle, setEditingChecklistTitle] = useState("");
 
   // Labels popover state
   const [showLabelMenu, setShowLabelMenu] = useState(false);
@@ -237,6 +241,20 @@ const NoteDetailPage = () => {
     const nextChecklist = (note.checklist || []).filter((item) => item.id !== itemId);
     setNote({ ...note, checklist: nextChecklist });
     handleSaveNote({ checklist: nextChecklist });
+  };
+
+  const handleUpdateChecklistItem = (itemId) => {
+    if (!editingChecklistTitle.trim()) {
+      setEditingChecklistId(null);
+      return;
+    }
+    const nextChecklist = (note.checklist || []).map((item) =>
+      item.id === itemId ? { ...item, title: editingChecklistTitle.trim() } : item
+    );
+    setNote({ ...note, checklist: nextChecklist });
+    handleSaveNote({ checklist: nextChecklist });
+    setEditingChecklistId(null);
+    setEditingChecklistTitle("");
   };
 
   const handleDeleteAllChecklist = () => {
@@ -720,29 +738,80 @@ const NoteDetailPage = () => {
                     key={item.id}
                     className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group"
                   >
-                    <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
-                      <input
-                        type="checkbox"
-                        checked={item.completed}
-                        onChange={() => handleToggleChecklistItem(item.id)}
-                        className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
-                      />
-                      <span
-                        className={`text-sm ${
-                          item.completed ? "line-through text-base-content/40" : "text-base-content"
-                        }`}
-                      >
-                        {item.title}
-                      </span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteChecklistItem(item.id)}
-                      className="opacity-0 group-hover:opacity-100 text-base-content/40 hover:text-error transition-opacity p-1"
-                      title="Eliminar elemento"
-                    >
-                      <Trash2Icon className="size-4" />
-                    </button>
+                    {editingChecklistId === item.id ? (
+                      <div className="flex items-center gap-2 flex-1 w-full">
+                        <input
+                          type="text"
+                          className="flex-1 bg-base-100 border border-base-content/20 text-sm text-base-content rounded px-2.5 py-1 focus:border-primary focus:outline-none"
+                          value={editingChecklistTitle}
+                          onChange={(e) => setEditingChecklistTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleUpdateChecklistItem(item.id);
+                            } else if (e.key === "Escape") {
+                              setEditingChecklistId(null);
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleUpdateChecklistItem(item.id)}
+                          className="text-success hover:text-success/80 transition-colors p-1"
+                          title="Guardar cambios"
+                        >
+                          <CheckIcon className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingChecklistId(null)}
+                          className="text-base-content/40 hover:text-base-content transition-colors p-1"
+                          title="Cancelar"
+                        >
+                          <XIcon className="size-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={item.completed}
+                            onChange={() => handleToggleChecklistItem(item.id)}
+                            className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
+                          />
+                          <span
+                            className={`text-sm ${
+                              item.completed ? "line-through text-base-content/40" : "text-base-content"
+                            }`}
+                          >
+                            {item.title}
+                          </span>
+                        </label>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingChecklistId(item.id);
+                              setEditingChecklistTitle(item.title);
+                            }}
+                            className="text-base-content/40 hover:text-primary transition-colors p-1"
+                            title="Editar elemento"
+                          >
+                            <PencilIcon className="size-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteChecklistItem(item.id)}
+                            className="text-base-content/40 hover:text-error transition-colors p-1"
+                            title="Eliminar elemento"
+                          >
+                            <Trash2Icon className="size-4" />
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
 
