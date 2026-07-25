@@ -18,9 +18,11 @@ import {
   ImageIcon,
   MoreHorizontalIcon,
   SendIcon,
+  ZapIcon,
 } from "lucide-react";
 import { useStatuses } from "../lib/useStatuses";
 import { useUsers } from "../lib/useUsers";
+import { usePriorities } from "../lib/usePriorities";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import ThemeToggle from "../components/ThemeToggle";
 import MarkdownEditor from "../components/MarkdownEditor";
@@ -83,6 +85,7 @@ const NoteDetailPage = () => {
 
   const { statuses } = useStatuses();
   const { users } = useUsers();
+  const { priorities } = usePriorities();
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -341,6 +344,49 @@ const NoteDetailPage = () => {
                           style={{ backgroundColor: st.color || "#6B7280" }}
                         />
                         {st.name}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Priority Dropdown Pill */}
+            <div className="dropdown">
+              <label
+                tabIndex={0}
+                className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-semibold gap-2 rounded-lg cursor-pointer"
+              >
+                {(() => {
+                  const currentPriority = (priorities || []).find(p => p.name === note.priority);
+                  return (
+                    <>
+                      <ZapIcon className="size-4" style={{ color: currentPriority?.color || "#6B7280" }} />
+                      <span>{note.priority || "Media"}</span>
+                    </>
+                  );
+                })()}
+                <ChevronDownIcon className="size-4 text-base-content/60" />
+              </label>
+              <ul
+                tabIndex={0}
+                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
+              >
+                {(priorities || []).map((p) => (
+                  <li key={p._id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNote({ ...note, priority: p.name });
+                        handleSaveNote({ priority: p.name });
+                      }}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
+                        note.priority === p.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <ZapIcon className="size-4" style={{ color: p.color }} />
+                        {p.name}
                       </span>
                     </button>
                   </li>
