@@ -124,13 +124,27 @@ export async function updateNote(req, res) {
 
 export async function addComment(req, res) {
   try {
-    const { text, user } = req.body;
+    const { text, user, parentId } = req.body;
     if (!text || !text.trim()) {
       return res.status(400).json({ message: "El texto del comentario es obligatorio" });
     }
 
     const note = await Note.findById(req.params.id);
     if (!note) return res.status(404).json({ message: "Note not found" });
+
+    // Validate parentId if provided
+    if (parentId) {
+      const parentComment = note.activities.find(
+        (act) => act.id === parentId && act.type === "comment"
+      );
+      if (!parentComment) {
+        return res.status(404).json({ message: "El comentario original no existe" });
+      }
+      // If the parent comment already has a parentId, it is a reply. Cannot reply to replies.
+      if (parentComment.parentId) {
+        return res.status(400).json({ message: "No se puede responder a una respuesta (hilo de nivel 2 no permitido)" });
+      }
+    }
 
     const actor = user || note.user || "Usuario";
 
@@ -140,6 +154,7 @@ export async function addComment(req, res) {
       text: text.trim(),
       user: actor,
       createdAt: new Date(),
+      parentId: parentId || null,
     };
 
     note.activities.push(newComment);

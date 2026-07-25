@@ -68,6 +68,10 @@ const NoteDetailPage = () => {
   const [commentText, setCommentText] = useState("");
   const [postingComment, setPostingComment] = useState(false);
   const [showDetails, setShowDetails] = useState(true);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [replyingToId, setReplyingToId] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [postingReply, setPostingReply] = useState(false);
 
   // Checklist state
   const [newChecklistTitle, setNewChecklistTitle] = useState("");
@@ -151,6 +155,30 @@ const NoteDetailPage = () => {
       toast.error("Error al publicar el comentario");
     } finally {
       setPostingComment(false);
+    }
+  };
+
+  // Add Reply handler
+  const handleAddReply = async (e, parentId) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
+
+    setPostingReply(true);
+    try {
+      const res = await api.post(`/notes/${id}/comments`, {
+        text: replyText.trim(),
+        user: note.user || "Usuario",
+        parentId: parentId,
+      });
+      setNote(res.data);
+      setReplyText("");
+      setReplyingToId(null);
+      toast.success("Respuesta publicada");
+    } catch (error) {
+      console.error("Error posting reply:", error);
+      toast.error("Error al publicar la respuesta");
+    } finally {
+      setPostingReply(false);
     }
   };
 
@@ -243,6 +271,37 @@ const NoteDetailPage = () => {
 
   const currentStatus = note.status || "Pendiente";
   const userColor = users.find((u) => u.name === note.user)?.color || "#3B82F6";
+
+  // Comments & activity calculations
+  const activities = note.activities || [];
+  const allComments = activities.filter((act) => act.type === "comment");
+  const mainComments = allComments.filter((act) => !act.parentId);
+  const replies = allComments.filter((act) => act.parentId);
+
+  // Sort main comments chronologically to correctly extract the last 3 comments
+  const sortedMainComments = [...mainComments].sort(
+    (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+  );
+
+  const displayedMainComments = showAllComments
+    ? sortedMainComments
+    : sortedMainComments.length > 3
+    ? sortedMainComments.slice(-3)
+    : sortedMainComments;
+
+  // Filter actions and allowed main comments
+  const displayedMainItems = activities.filter((act) => {
+    if (act.type === "action") return true;
+    if (act.type === "comment" && !act.parentId) {
+      return displayedMainComments.some((c) => c.id === act.id);
+    }
+    return false;
+  });
+
+  // Sort main items descending by date for displaying newest first
+  const sortedMainItems = [...displayedMainItems].sort(
+    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  );
 
   return (
     <div className="min-h-screen bg-transparent text-base-content p-2 sm:p-6 flex justify-center items-start w-full">
@@ -735,30 +794,148 @@ const NoteDetailPage = () => {
             {/* Activity Feed */}
             {showDetails && (
               <div className="space-y-4 pt-2 overflow-y-auto max-h-[500px] pr-1">
-                {(note.activities || []).length === 0 ? (
+                {mainComments.length > 3 && (
+                  <div className="flex justify-center pb-2 border-b border-base-content/5">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllComments(!showAllComments)}
+                      className="btn btn-xs btn-outline btn-secondary rounded-lg px-3 gap-1"
+                    >
+                      {showAllComments ? "Mostrar solo últimos 3 comentarios" : `Ver todos los comentarios (${mainComments.length})`}
+                    </button>
+                  </div>
+                )}
+                {sortedMainItems.length === 0 ? (
                   <p className="text-xs text-base-content/40 italic text-center py-6">No hay actividad registrada aún</p>
                 ) : (
-                  [...(note.activities || [])]
-                    .reverse()
-                    .map((act, idx) => (
-                      <div key={act.id || idx} className="flex items-start gap-3 text-xs">
-                        <span
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5 shadow-sm"
-                          style={{ backgroundColor: act.type === "comment" ? "#3B82F6" : "#6B7280" }}
-                        >
-                          {getInitials(act.user)}
-                        </span>
-                        <div className="space-y-1 flex-1 min-w-0 bg-base-100/60 p-2.5 rounded-xl border border-base-content/10">
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span className="font-bold text-base-content">{act.user || "Usuario"}</span>
-                            <span className="text-[10px] text-base-content/50">{formatDateActivity(act.createdAt)}</span>
+                  sortedMainItems.map((act, idx) => {
+                    if (act.type === "action") {
+                      return (
+                        <div key={act.id || idx} className="flex items-start gap-3 text-xs">
+                          <span
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5 shadow-sm"
+                            style={{ backgroundColor: "#6B7280" }}
+                          >
+                            {getInitials(act.user)}
+                          </span>
+                          <div className="space-y-1 flex-1 min-w-0 bg-base-100/60 p-2.5 rounded-xl border border-base-content/10">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className="font-bold text-base-content">{act.user || "Usuario"}</span>
+                              <span className="text-[10px] text-base-content/50">{formatDateActivity(act.createdAt)}</span>
+                            </div>
+                            <p className="text-base-content/50 leading-relaxed italic">
+                              {act.text}
+                            </p>
                           </div>
-                          <p className={`text-base-content/80 leading-relaxed ${act.type === "action" ? "italic text-base-content/50" : ""}`}>
-                            {act.text}
-                          </p>
                         </div>
+                      );
+                    }
+
+                    // For comments
+                    const commentReplies = replies
+                      .filter((r) => r.parentId === act.id)
+                      .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+                    return (
+                      <div key={act.id || idx} className="space-y-2">
+                        {/* Main Comment Row */}
+                        <div className="flex items-start gap-3 text-xs">
+                          <span
+                            className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5 shadow-sm"
+                            style={{ backgroundColor: "#3B82F6" }}
+                          >
+                            {getInitials(act.user)}
+                          </span>
+                          <div className="space-y-1 flex-1 min-w-0 bg-base-100/60 p-2.5 rounded-xl border border-base-content/10">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className="font-bold text-base-content">{act.user || "Usuario"}</span>
+                              <span className="text-[10px] text-base-content/50">{formatDateActivity(act.createdAt)}</span>
+                            </div>
+                            <p className="text-base-content/80 leading-relaxed">
+                              {act.text}
+                            </p>
+                            {/* Reply Action button */}
+                            <div className="flex justify-end pt-1">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (replyingToId === act.id) {
+                                    setReplyingToId(null);
+                                    setReplyText("");
+                                  } else {
+                                    setReplyingToId(act.id);
+                                    setReplyText("");
+                                  }
+                                }}
+                                className="text-[10px] text-primary hover:underline font-semibold"
+                              >
+                                Responder
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Reply Form */}
+                        {replyingToId === act.id && (
+                          <form onSubmit={(e) => handleAddReply(e, act.id)} className="ml-10 flex gap-2 items-start mt-1">
+                            <div className="flex-1">
+                              <textarea
+                                rows={2}
+                                className="w-full bg-base-100 border border-base-content/10 text-xs text-base-content rounded-lg p-2 focus:border-primary focus:outline-none placeholder:text-base-content/40 resize-none transition-colors"
+                                placeholder="Escribe una respuesta..."
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                              />
+                              <div className="flex justify-end gap-1.5 mt-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setReplyingToId(null);
+                                    setReplyText("");
+                                  }}
+                                  className="btn btn-ghost btn-xs rounded text-[10px] h-6 min-h-0"
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  type="submit"
+                                  disabled={postingReply || !replyText.trim()}
+                                  className="btn btn-primary btn-xs rounded text-[10px] h-6 min-h-0 px-2"
+                                >
+                                  {postingReply ? "Enviando..." : "Responder"}
+                                </button>
+                              </div>
+                            </div>
+                          </form>
+                        )}
+
+                        {/* Replies List */}
+                        {commentReplies.length > 0 && (
+                          <div className="ml-10 space-y-2 border-l-2 border-base-content/10 pl-3 mt-1">
+                            {commentReplies.map((rep, rIdx) => (
+                              <div key={rep.id || rIdx} className="flex items-start gap-2 text-[11px]">
+                                <span
+                                  className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0 mt-0.5 shadow-sm"
+                                  style={{ backgroundColor: "#10B981" }}
+                                >
+                                  {getInitials(rep.user)}
+                                </span>
+                                <div className="space-y-1 flex-1 min-w-0 bg-base-100/30 p-2 rounded-lg border border-base-content/5">
+                                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                                    <span className="font-semibold text-base-content">{rep.user || "Usuario"}</span>
+                                    <span className="text-[9px] text-base-content/45">{formatDateActivity(rep.createdAt)}</span>
+                                  </div>
+                                  <p className="text-base-content/75 leading-relaxed">
+                                    {rep.text}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    ))
+                    );
+                  })
                 )}
               </div>
             )}

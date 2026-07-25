@@ -55,6 +55,7 @@ const noteSchema = new mongoose.Schema(
         text: { type: String, required: true },
         user: { type: String, default: "Usuario" },
         createdAt: { type: Date, default: Date.now },
+        parentId: { type: String, default: null },
       },
     ],
   },
