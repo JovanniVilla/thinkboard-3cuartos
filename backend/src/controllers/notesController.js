@@ -135,7 +135,7 @@ export async function addComment(req, res) {
     // Validate parentId if provided
     if (parentId) {
       const parentComment = note.activities.find(
-        (act) => act.id === parentId && act.type === "comment"
+        (act) => (act.id === parentId || act._id.toString() === parentId) && act.type === "comment"
       );
       if (!parentComment) {
         return res.status(404).json({ message: "El comentario original no existe" });

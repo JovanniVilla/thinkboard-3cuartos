@@ -293,7 +293,7 @@ const NoteDetailPage = () => {
   const displayedMainItems = activities.filter((act) => {
     if (act.type === "action") return true;
     if (act.type === "comment" && !act.parentId) {
-      return displayedMainComments.some((c) => c.id === act.id);
+      return displayedMainComments.some((c) => c._id === act._id || c.id === act.id);
     }
     return false;
   });
@@ -833,7 +833,7 @@ const NoteDetailPage = () => {
 
                     // For comments
                     const commentReplies = replies
-                      .filter((r) => r.parentId === act.id)
+                      .filter((r) => r.parentId === act.id || r.parentId === act._id)
                       .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 
                     return (
