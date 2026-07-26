@@ -117,47 +117,10 @@ const HomePage = () => {
         {notes.length > 0 && !isRateLimited && !loading && (
           <div>
             {/* View Switcher Bar */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 bg-base-100 p-3 rounded-xl border border-base-content/10 shadow-sm">
-              <div className="flex items-center gap-2">
-                <h2 className="font-bold text-lg text-base-content px-2">Mis Tareas</h2>
-                <span className="badge badge-primary badge-sm font-semibold">
-                  {notes.length} total
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1.5 bg-base-200/80 p-1 rounded-lg border border-base-content/10 self-end sm:self-auto">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("list")}
-                  className={`btn btn-sm gap-1.5 transition-all ${
-                    viewMode === "list"
-                      ? "btn-primary shadow-sm"
-                      : "btn-ghost text-base-content/70 hover:text-base-content"
-                  }`}
-                  title="Vista en Lista con Filtros y Ordenamiento"
-                >
-                  <ListIcon className="size-4" />
-                  <span className="hidden md:inline">Lista</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setViewMode("board")}
-                  className={`btn btn-sm gap-1.5 transition-all ${
-                    viewMode === "board"
-                      ? "btn-primary shadow-sm"
-                      : "btn-ghost text-base-content/70 hover:text-base-content"
-                  }`}
-                  title="Vista en Tablero Kanban por Estado"
-                >
-                  <Columns3Icon className="size-4" />
-                  <span className="hidden md:inline">Tablero</span>
-                </button>
-              </div>
-            </div>
-
             {/* Filters panel */}
             <NoteFilters
+              viewMode={viewMode}
+              setViewMode={setViewMode}
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
               selectedStatus={selectedStatus}
