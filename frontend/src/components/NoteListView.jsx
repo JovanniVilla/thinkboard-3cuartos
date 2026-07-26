@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon, CheckCircle2Icon, PlusIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
+import { useLabels } from "../lib/useLabels";
 import { Link, useNavigate } from "react-router";
 import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
@@ -29,8 +30,21 @@ const NoteListView = ({
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { labels: boardLabels } = useLabels();
   const [editingTitleId, setEditingTitleId] = useState(null);
   const [editingTitleValue, setEditingTitleValue] = useState("");
+
+  const handleLabelToggle = (note, labelObj) => {
+    const currentLabels = note.labels || [];
+    const exists = currentLabels.some((l) => l.name.toLowerCase() === labelObj.name.toLowerCase());
+    let nextLabels;
+    if (exists) {
+      nextLabels = currentLabels.filter((l) => l.name.toLowerCase() !== labelObj.name.toLowerCase());
+    } else {
+      nextLabels = [...currentLabels, { name: labelObj.name, color: labelObj.color }];
+    }
+    handleInlineEdit(note._id, "labels", nextLabels);
+  };
 
   const handleInlineEdit = async (noteId, field, value) => {
     const note = notes.find(n => n._id === noteId);
@@ -272,26 +286,56 @@ const NoteListView = ({
                     )}
                   </td>
                   <td className="hidden lg:table-cell max-w-[150px]">
-                    {note.labels?.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {note.labels.map((label, idx) => (
-                          <span
-                            key={idx}
-                            className="badge badge-xs font-semibold px-1.5 py-1.5 truncate max-w-[120px]"
-                            style={{
-                              backgroundColor: label.color + "20",
-                              color: label.color,
-                              borderColor: label.color + "40",
-                            }}
-                            title={label.name}
-                          >
-                            {label.name}
-                          </span>
-                        ))}
+                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+                      <div tabIndex={0} role="button" className="flex flex-wrap gap-1 min-h-[24px] items-center hover:bg-base-200 p-1 rounded transition-colors" title="Editar etiquetas">
+                        {note.labels?.length > 0 ? (
+                          note.labels.map((label, idx) => (
+                            <span
+                              key={idx}
+                              className="badge badge-xs font-semibold px-1.5 py-1.5 truncate max-w-[120px]"
+                              style={{
+                                backgroundColor: label.color + "20",
+                                color: label.color,
+                                borderColor: label.color + "40",
+                              }}
+                            >
+                              {label.name}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-xs text-base-content/40 hover:text-base-content/80 flex items-center gap-1 w-full"><PlusIcon className="size-3" /> Añadir</span>
+                        )}
                       </div>
-                    ) : (
-                      <span className="text-xs text-base-content/40">-</span>
-                    )}
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-52 border border-base-content/10">
+                        {boardLabels.length === 0 && (
+                          <li className="text-xs text-base-content/50 p-2 text-center">No hay etiquetas creadas</li>
+                        )}
+                        {boardLabels.map((defLabel) => {
+                          const isSelected = (note.labels || []).some(
+                            (l) => l.name.toLowerCase() === defLabel.name.toLowerCase()
+                          );
+                          return (
+                            <li key={defLabel._id || defLabel.name}>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleLabelToggle(note, defLabel);
+                                }}
+                                className="text-xs py-2 px-2 flex items-center justify-between w-full hover:bg-base-200 rounded-lg text-left"
+                              >
+                                <span className="flex items-center gap-2 truncate">
+                                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: defLabel.color }} />
+                                  <span className="truncate font-medium text-base-content">{defLabel.name}</span>
+                                </span>
+                                {isSelected && <CheckCircle2Icon className="size-4 text-primary" />}
+                              </button>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
                   </td>
 
                   <td>
