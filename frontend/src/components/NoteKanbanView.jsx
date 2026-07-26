@@ -24,7 +24,7 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
   const getMentionCount = (note) => {
     if (!user?.name || !note.activities) return 0;
     return note.activities.reduce((acc, act) => {
-      if (act.mentions?.includes(user.name)) {
+      if (act.mentions?.includes(user.name) && !act.resolvedMentions?.includes(user.name)) {
         return acc + 1;
       }
       return acc;

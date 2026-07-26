@@ -22,6 +22,7 @@ import {
   PencilIcon,
   CheckIcon,
 } from "lucide-react";
+import { useAuth } from "../lib/AuthContext";
 import { useStatuses } from "../lib/useStatuses";
 import { useAccounts } from "../lib/useAccounts";
 import { usePriorities } from "../lib/usePriorities";
@@ -92,6 +93,7 @@ const NoteDetailPage = () => {
   const { priorities } = usePriorities();
   const { accounts } = useAccounts();
   const accountsList = accounts.map((acc) => acc.name);
+  const { user: currentUser } = useAuth();
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -148,6 +150,21 @@ const NoteDetailPage = () => {
   const extractMentions = (text) => {
     const matches = [...text.matchAll(/data-id="([^"]+)"/g)];
     return [...new Set(matches.map(m => m[1]))];
+  };
+
+  const handleResolveMention = (activityId) => {
+    if (!currentUser?.name || !note.activities) return;
+    const nextActivities = note.activities.map(act => {
+      if (act.id === activityId || act._id === activityId) {
+        return {
+          ...act,
+          resolvedMentions: [...(act.resolvedMentions || []), currentUser.name]
+        };
+      }
+      return act;
+    });
+    setNote({ ...note, activities: nextActivities });
+    handleSaveNote({ activities: nextActivities });
   };
 
   // Add Comment handler
@@ -1004,8 +1021,18 @@ const NoteDetailPage = () => {
                             <div className="prose prose-sm prose-base break-words max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
                               <MarkdownRenderer content={act.text} />
                             </div>
-                            {/* Reply Action button */}
-                            <div className="flex justify-end pt-1">
+                            <div className="flex justify-end gap-3 pt-1 items-center">
+                              {act.mentions?.includes(currentUser?.name) && !act.resolvedMentions?.includes(currentUser?.name) && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleResolveMention(act.id || act._id)}
+                                  className="text-[10px] flex items-center gap-1 text-primary hover:text-primary-focus font-semibold bg-primary/10 px-1.5 py-0.5 rounded"
+                                  title="Marcar mención como atendida"
+                                >
+                                  <CheckIcon className="size-3" />
+                                  Atendido
+                                </button>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1080,6 +1107,19 @@ const NoteDetailPage = () => {
                                   <div className="prose prose-sm prose-base break-words max-w-none text-[11px] prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
                                     <MarkdownRenderer content={rep.text} />
                                   </div>
+                                  {rep.mentions?.includes(currentUser?.name) && !rep.resolvedMentions?.includes(currentUser?.name) && (
+                                    <div className="flex justify-end mt-1">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleResolveMention(rep.id || rep._id)}
+                                        className="text-[9px] flex items-center gap-1 text-primary hover:text-primary-focus font-semibold bg-primary/10 px-1.5 py-0.5 rounded"
+                                        title="Marcar mención como atendida"
+                                      >
+                                        <CheckIcon className="size-3" />
+                                        Atendido
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             ))}
