@@ -31,3 +31,12 @@ ul[data-type="taskList"] input[type="checkbox"] {
   height: 0;
   pointer-events: none;
 }
+
+/* Force text wrapping for long continuous strings (like URLs) */
+.prose {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.prose a {
+  word-break: break-all;
+}
