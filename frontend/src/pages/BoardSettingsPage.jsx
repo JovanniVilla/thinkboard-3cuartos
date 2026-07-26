@@ -426,13 +426,13 @@ const BoardSettingsPage = () => {
                           </label>
                           <input
                             type="number"
-                            min="1"
-                            className="input input-bordered font-mono text-lg"
+                            className="input input-bordered font-mono text-lg bg-base-200/50 cursor-not-allowed opacity-70"
                             value={taskCounterInput}
-                            onChange={(e) => setTaskCounterInput(e.target.value)}
+                            readOnly
+                            disabled
                           />
                           <label className="label pb-0 pt-1">
-                            <span className="label-text-alt text-base-content/50">Número consecutivo para la próxima tarea.</span>
+                            <span className="label-text-alt text-base-content/50">Generado automáticamente.</span>
                           </label>
                         </div>
                       </div>
