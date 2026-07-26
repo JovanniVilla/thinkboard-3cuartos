@@ -21,6 +21,7 @@ import {
   ZapIcon,
   PencilIcon,
   CheckIcon,
+  FolderIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useStatuses } from "../lib/useStatuses";
@@ -31,6 +32,7 @@ import ThemeToggle from "../components/ThemeToggle";
 import MarkdownEditor from "../components/MarkdownEditor";
 
 import { useLabels } from "../lib/useLabels";
+import { useBoardConfig } from "../lib/useBoardConfig";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -60,6 +62,8 @@ const NoteDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  
+  const { boardConfig } = useBoardConfig();
 
   // Comments and Activity state
   const [commentText, setCommentText] = useState("");
@@ -454,6 +458,18 @@ const NoteDetailPage = () => {
           </div>
 
           <div className="flex items-center gap-2 text-base-content/60">
+            {boardConfig?.driveFolderLink && (
+              <a 
+                href={boardConfig.driveFolderLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-sm btn-outline btn-primary gap-2 mr-2"
+                title="Carpeta del proyecto en Drive"
+              >
+                <FolderIcon className="size-4" />
+                <span className="hidden sm:inline">Carpeta del Proyecto</span>
+              </a>
+            )}
             <ThemeToggle />
             <button
               type="button"

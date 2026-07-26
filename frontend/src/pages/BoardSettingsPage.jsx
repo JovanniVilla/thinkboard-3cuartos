@@ -156,6 +156,7 @@ const BoardSettingsPage = () => {
   // Project Config state
   const [projectKeyInput, setProjectKeyInput] = useState("");
   const [taskCounterInput, setTaskCounterInput] = useState("");
+  const [driveFolderLinkInput, setDriveFolderLinkInput] = useState("");
   const [savingConfig, setSavingConfig] = useState(false);
   const [assigningKeys, setAssigningKeys] = useState(false);
 
@@ -163,6 +164,7 @@ const BoardSettingsPage = () => {
     if (boardConfig) {
       setProjectKeyInput(boardConfig.projectKey || "");
       setTaskCounterInput(boardConfig.taskCounter || 1);
+      setDriveFolderLinkInput(boardConfig.driveFolderLink || "");
     }
   }, [boardConfig]);
 
@@ -185,10 +187,12 @@ const BoardSettingsPage = () => {
       const res = await api.put("/board-config", {
         projectKey: projectKeyInput.trim().toUpperCase(),
         taskCounter: Number(taskCounterInput) || 1,
+        driveFolderLink: driveFolderLinkInput.trim(),
       });
       setBoardConfig(res.data);
       setProjectKeyInput(res.data.projectKey || "");
       setTaskCounterInput(res.data.taskCounter || 1);
+      setDriveFolderLinkInput(res.data.driveFolderLink || "");
       toast.success("Configuración del proyecto guardada");
     } catch {
       toast.error("Error al guardar la configuración del proyecto");
@@ -436,6 +440,22 @@ const BoardSettingsPage = () => {
                           />
                           <label className="label pb-0 pt-1">
                             <span className="label-text-alt text-base-content/50">Generado automáticamente.</span>
+                          </label>
+                        </div>
+                        
+                        <div className="form-control sm:col-span-2">
+                          <label className="label pt-0 pb-1.5">
+                            <span className="label-text font-bold text-sm">Enlace a la carpeta de Google Drive del proyecto</span>
+                          </label>
+                          <input
+                            type="url"
+                            placeholder="Ej: https://drive.google.com/drive/folders/..."
+                            className="input input-bordered"
+                            value={driveFolderLinkInput}
+                            onChange={(e) => setDriveFolderLinkInput(e.target.value)}
+                          />
+                          <label className="label pb-0 pt-1">
+                            <span className="label-text-alt text-base-content/50">Este enlace será accesible desde todas las tareas.</span>
                           </label>
                         </div>
                       </div>

@@ -11,6 +11,11 @@ const boardConfigSchema = new mongoose.Schema(
       type: Number,
       default: 1,
     },
+    driveFolderLink: {
+      type: String,
+      trim: true,
+      default: "",
+    },
   },
   { timestamps: true }
 );
