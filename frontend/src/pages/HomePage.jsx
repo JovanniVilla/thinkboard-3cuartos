@@ -29,6 +29,7 @@ const HomePage = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedPriority, setSelectedPriority] = useState("");
   const [selectedUser, setSelectedUser] = useState("");
+  const [showCompleted, setShowCompleted] = useState(false);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
 
@@ -69,6 +70,9 @@ const HomePage = () => {
         return false;
       }
       if (selectedUser && note.user !== selectedUser) {
+        return false;
+      }
+      if (!showCompleted && selectedStatus !== "Completado" && note.status?.toLowerCase() === "completado") {
         return false;
       }
       return true;
@@ -129,6 +133,8 @@ const HomePage = () => {
               setSelectedPriority={setSelectedPriority}
               selectedUser={selectedUser}
               setSelectedUser={setSelectedUser}
+              showCompleted={showCompleted}
+              setShowCompleted={setShowCompleted}
               sortBy={sortBy}
               setSortBy={setSortBy}
               sortOrder={sortOrder}

@@ -16,6 +16,8 @@ const NoteFilters = ({
   setSelectedPriority,
   selectedUser,
   setSelectedUser,
+  showCompleted,
+  setShowCompleted,
   sortBy,
   setSortBy,
   sortOrder,
@@ -142,6 +144,17 @@ const NoteFilters = ({
         >
           Ordenar: Fecha {sortOrder === "asc" ? "↑" : "↓"}
         </button>
+
+        {/* Show Completed Toggle */}
+        <label className="label cursor-pointer gap-2 bg-base-200/50 border border-base-content/20 px-3 py-1 rounded-lg">
+          <span className="label-text text-sm whitespace-nowrap text-base-content/70">Mostrar completados</span>
+          <input
+            type="checkbox"
+            className="checkbox checkbox-sm checkbox-primary"
+            checked={showCompleted}
+            onChange={(e) => setShowCompleted(e.target.checked)}
+          />
+        </label>
 
       </div>
     </div>
