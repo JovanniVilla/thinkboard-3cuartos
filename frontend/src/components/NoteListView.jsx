@@ -1,6 +1,6 @@
 import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -27,6 +27,7 @@ const NoteListView = ({
   setSortOrder,
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   const getMentionCount = (note) => {
     if (!user?.name || !note.activities) return 0;
@@ -39,6 +40,7 @@ const NoteListView = ({
   };
   const handleDelete = async (e, id) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
 
     try {
@@ -85,17 +87,31 @@ const NoteListView = ({
           <thead className="bg-base-200/60 text-base-content/70 text-xs uppercase tracking-wider">
             <tr>
               <th
+                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5 w-24"
+                onClick={() => handleHeaderClick("keyId")}
+              >
+                <div className="flex items-center gap-1">
+                  <span>Id de la tarea</span>
+                  {renderSortIndicator("keyId")}
+                </div>
+              </th>
+              <th
                 className="cursor-pointer hover:bg-base-200 transition-colors py-3.5"
                 onClick={() => handleHeaderClick("title")}
               >
                 <div className="flex items-center gap-1">
-                  <span>Título</span>
+                  <span>Nombre de la tarea</span>
                   {renderSortIndicator("title")}
                 </div>
               </th>
               <th className="py-3.5 hidden md:table-cell">
                 <div className="flex items-center gap-1 text-base-content/70">
                   <span>Checklist</span>
+                </div>
+              </th>
+              <th className="py-3.5 hidden lg:table-cell">
+                <div className="flex items-center gap-1 text-base-content/70">
+                  <span>Etiquetas</span>
                 </div>
               </th>
 
@@ -154,19 +170,25 @@ const NoteListView = ({
               return (
                 <tr
                   key={note._id}
-                  className="hover:bg-base-200/50 transition-colors group"
+                  className="hover:bg-base-200/50 transition-colors group cursor-pointer"
+                  onClick={() => navigate(`/note/${note._id}`)}
                 >
+                  <td className="font-medium text-base-content/70">
+                    {note.keyId ? (
+                      <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30">
+                        {note.keyId}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-base-content/40">-</span>
+                    )}
+                  </td>
                   <td className="font-semibold text-base-content max-w-xs">
                     <div className="flex items-start gap-2 min-w-0 pt-0.5">
-                      {note.keyId && (
-                        <span className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0">
-                          {note.keyId}
-                        </span>
-                      )}
                       <Link
                         to={`/note/${note._id}`}
                         className="hover:text-primary transition-colors block break-words whitespace-normal"
                         title={note.title}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         {note.title}
                       </Link>
@@ -183,6 +205,28 @@ const NoteListView = ({
                       <div className="flex items-center gap-1.5 text-xs font-medium text-base-content/70" title={`${note.checklist.filter(i => i.completed).length} de ${note.checklist.length} completados`}>
                         <ListChecksIcon className="size-4 opacity-70" />
                         <span>{note.checklist.filter(i => i.completed).length}/{note.checklist.length}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-base-content/40">-</span>
+                    )}
+                  </td>
+                  <td className="hidden lg:table-cell max-w-[150px]">
+                    {note.labels?.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {note.labels.map((label, idx) => (
+                          <span
+                            key={idx}
+                            className="badge badge-xs font-semibold px-1.5 py-1.5 truncate max-w-[120px]"
+                            style={{
+                              backgroundColor: label.color + "20",
+                              color: label.color,
+                              borderColor: label.color + "40",
+                            }}
+                            title={label.name}
+                          >
+                            {label.name}
+                          </span>
+                        ))}
                       </div>
                     ) : (
                       <span className="text-xs text-base-content/40">-</span>
@@ -242,6 +286,7 @@ const NoteListView = ({
                         to={`/note/${note._id}`}
                         className="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-primary"
                         title="Editar tarea"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <PenSquareIcon className="size-4" />
                       </Link>
