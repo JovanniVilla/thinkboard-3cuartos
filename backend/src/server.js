@@ -9,7 +9,6 @@ import accountRoutes from "./routes/accountRoutes.js";
 import notesRoutes from "./routes/notesRoutes.js";
 import statusRoutes from "./routes/statusRoutes.js";
 import priorityRoutes from "./routes/priorityRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
 import boardConfigRoutes from "./routes/boardConfigRoutes.js";
 import { connectDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
@@ -45,7 +44,6 @@ app.use("/api/accounts", accountRoutes);
 app.use("/api/notes", notesRoutes);
 app.use("/api/status", statusRoutes);
 app.use("/api/priorities", priorityRoutes);
-app.use("/api/users", userRoutes);
 app.use("/api/board-config", boardConfigRoutes);
 
 if (process.env.NODE_ENV === "production") {

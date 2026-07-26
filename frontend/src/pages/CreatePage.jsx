@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router";
 import api from "../lib/axios";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
-import { useUsers } from "../lib/useUsers";
+import { useAccounts } from "../lib/useAccounts";
 import StatusSelect from "../components/StatusSelect";
 import PrioritySelect from "../components/PrioritySelect";
 import UserSelect from "../components/UserSelect";
@@ -23,7 +23,7 @@ const CreatePage = () => {
 
   const { statuses } = useStatuses();
   const { priorities } = usePriorities();
-  const { users } = useUsers();
+  const { accounts } = useAccounts();
   const { boardConfig } = useBoardConfig();
 
   const navigate = useNavigate();
@@ -129,7 +129,7 @@ const CreatePage = () => {
                     <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/60">Asignado a</span>
                   </label>
                   <UserSelect
-                    users={users}
+                    users={accounts}
                     value={user}
                     onChange={setUser}
                   />

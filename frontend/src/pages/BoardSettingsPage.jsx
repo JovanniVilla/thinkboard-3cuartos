@@ -23,7 +23,6 @@ import toast from "react-hot-toast";
 import api from "../lib/axios";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
-import { useUsers } from "../lib/useUsers";
 import { useAccounts } from "../lib/useAccounts";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import { useAuth } from "../lib/AuthContext";
@@ -132,109 +131,7 @@ const EditRow = ({ item, onSave, onCancel, endpoint, typeName }) => {
   );
 };
 
-// ─── Inline-edit row for User ───────────────────────────────────────────────
-const EditUserRow = ({ user, onSave, onCancel }) => {
-  const [name, setName] = useState(user.name);
-  const [role, setRole] = useState(user.role || "");
-  const [email, setEmail] = useState(user.email || "");
-  const [color, setColor] = useState(user.color);
-  const [saving, setSaving] = useState(false);
 
-  const handleSave = async () => {
-    if (!name.trim()) {
-      toast.error("El nombre del usuario es requerido");
-      return;
-    }
-    setSaving(true);
-    try {
-      const res = await api.put(`/users/${user._id}`, {
-        name: name.trim(),
-        role: role.trim(),
-        email: email.trim(),
-        color,
-      });
-      onSave(res.data);
-      toast.success("Usuario actualizado");
-    } catch {
-      toast.error("Error al actualizar el usuario");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="rounded-xl border-2 border-primary/40 bg-base-200 p-3 space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="flex items-center gap-3">
-          <label
-            className="relative w-9 h-9 rounded-full cursor-pointer flex-shrink-0 border-2 border-white/20 shadow-md overflow-hidden flex items-center justify-center text-white font-bold text-xs"
-            style={{ backgroundColor: color }}
-            title="Cambiar color de avatar"
-          >
-            {name ? name.slice(0, 2).toUpperCase() : "?"}
-            <input
-              type="color"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-            />
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="input input-bordered input-sm flex-1"
-            placeholder="Nombre completo"
-            autoFocus
-          />
-        </div>
-
-        <input
-          type="text"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="input input-bordered input-sm w-full"
-          placeholder="Rol (ej: Diseñador, PM)"
-        />
-      </div>
-
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="input input-bordered input-sm w-full"
-        placeholder="Correo electrónico (opcional)"
-      />
-
-      <div className="flex items-center gap-2 flex-wrap">
-        {PRESET_COLORS.map((c) => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setColor(c)}
-            className="w-6 h-6 rounded-full transition-transform hover:scale-125"
-            style={{
-              backgroundColor: c,
-              outline: color === c ? `3px solid ${c}` : "none",
-              outlineOffset: "2px",
-            }}
-          />
-        ))}
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <button type="button" className="btn btn-ghost btn-sm gap-1" onClick={onCancel} disabled={saving}>
-          <XIcon className="h-4 w-4" />
-          Cancelar
-        </button>
-        <button type="button" className="btn btn-primary btn-sm gap-1" onClick={handleSave} disabled={saving || !name.trim()}>
-          <CheckIcon className="h-4 w-4" />
-          {saving ? "Guardando…" : "Guardar cambios"}
-        </button>
-      </div>
-    </div>
-  );
-};
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 const BoardSettingsPage = () => {
@@ -243,7 +140,6 @@ const BoardSettingsPage = () => {
   // Data Hooks
   const { statuses, setStatuses, loading: loadingStatuses } = useStatuses();
   const { priorities, setPriorities, loading: loadingPriorities } = usePriorities();
-  const { users, setUsers, loading: loadingUsers } = useUsers();
   const { accounts, setAccounts, loading: loadingAccounts } = useAccounts();
   const { boardConfig, setBoardConfig, loading: loadingConfig } = useBoardConfig();
   const { user: currentUser } = useAuth();
@@ -469,16 +365,7 @@ const BoardSettingsPage = () => {
               <span>Prioridades ({priorities.length})</span>
             </button>
 
-            <button
-              type="button"
-              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
-                activeTab === "users" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
-              }`}
-              onClick={() => switchTab("users")}
-            >
-              <UserIcon className="w-4 h-4" />
-              <span>Miembros ({users.length})</span>
-            </button>
+
 
             <button
               type="button"
@@ -833,129 +720,6 @@ const BoardSettingsPage = () => {
             </div>
           )}
 
-          {/* TAB 3: USUARIOS */}
-          {activeTab === "users" && (
-            <div className="space-y-6">
-              <div className="card bg-base-100 shadow-sm border border-base-content/10">
-                <div className="card-body">
-                  <h2 className="card-title text-lg mb-4">Miembros del Equipo</h2>
-
-                  {loadingUsers ? (
-                    <div className="text-center py-6 text-base-content/50">Cargando usuarios…</div>
-                  ) : users.length === 0 ? (
-                    <div className="text-center py-6 text-base-content/50">No hay usuarios configurados</div>
-                  ) : (
-                    <ul className="space-y-3">
-                      {users.map((user) => (
-                        <li key={user._id}>
-                          {editingId === user._id ? (
-                            <EditUserRow
-                              user={user}
-                              onSave={(updated) => {
-                                setUsers((prev) => prev.map((u) => (u._id === updated._id ? updated : u)));
-                                setEditingId(null);
-                              }}
-                              onCancel={() => setEditingId(null)}
-                            />
-                          ) : (
-                            <div className="flex items-center justify-between px-3 py-3 rounded-xl hover:bg-base-200 transition-colors group border border-base-content/10">
-                              <div className="flex items-center gap-3 min-w-0">
-                                <span
-                                  className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm flex-shrink-0 shadow-sm"
-                                  style={{ backgroundColor: user.color }}
-                                >
-                                  {user.name.slice(0, 2).toUpperCase()}
-                                </span>
-                                <div className="min-w-0">
-                                  <h3 className="font-bold text-base-content truncate">{user.name}</h3>
-                                  <p className="text-xs text-base-content/60 truncate">
-                                    {user.role || "Miembro del equipo"} {user.email ? `• ${user.email}` : ""}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <div className="flex gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                                <button className="btn btn-ghost btn-xs gap-1" onClick={() => setEditingId(user._id)}>
-                                  Editar
-                                </button>
-                                <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete(user._id, "/users", "usuario", setUsers)}>
-                                  <Trash2Icon className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </div>
-
-              {/* Create user */}
-              <div className="card bg-base-100 shadow-sm border border-base-content/10">
-                <div className="card-body">
-                  <h2 className="card-title text-lg mb-4">Agregar nuevo miembro</h2>
-                  <div className="flex flex-col gap-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="form-control">
-                        <label className="label"><span className="label-text">Nombre completo *</span></label>
-                        <input
-                          type="text"
-                          placeholder="Ej: Ana García"
-                          className="input input-bordered"
-                          value={newName}
-                          onChange={(e) => setNewName(e.target.value)}
-                        />
-                      </div>
-                      <div className="form-control">
-                        <label className="label"><span className="label-text">Rol en el equipo</span></label>
-                        <input
-                          type="text"
-                          placeholder="Ej: Diseñadora UX/UI, Tech Lead..."
-                          className="input input-bordered"
-                          value={newRole}
-                          onChange={(e) => setNewRole(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Correo electrónico (opcional)</span></label>
-                      <input
-                        type="email"
-                        placeholder="ejemplo@agencia.dev"
-                        className="input input-bordered"
-                        value={newEmail}
-                        onChange={(e) => setNewEmail(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label"><span className="label-text">Color de avatar</span></label>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {PRESET_COLORS.map((color) => (
-                          <button
-                            key={color}
-                            type="button"
-                            onClick={() => setNewColor(color)}
-                            className="w-8 h-8 rounded-full transition-transform hover:scale-110"
-                            style={{ backgroundColor: color, outline: newColor === color ? `3px solid ${color}` : "none", outlineOffset: "2px" }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="card-actions justify-end mt-2">
-                      <button className="btn btn-primary gap-2" onClick={handleCreate} disabled={creating || !newName.trim()}>
-                        <PlusIcon className="h-4 w-4" />
-                        {creating ? "Creando…" : "Agregar Miembro"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* TAB 4: CUENTAS Y AUTORIZACIONES */}
           {activeTab === "accounts" && (

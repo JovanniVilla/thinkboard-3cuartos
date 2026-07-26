@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import NotesNotFound from "../components/NotesNotFound";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
-import { useUsers } from "../lib/useUsers";
+import { useAccounts } from "../lib/useAccounts";
 import NoteListView from "../components/NoteListView";
 import NoteKanbanView from "../components/NoteKanbanView";
 import NoteFilters from "../components/NoteFilters";
@@ -19,7 +19,7 @@ const HomePage = () => {
 
   const { statuses } = useStatuses();
   const { priorities } = usePriorities();
-  const { users } = useUsers();
+  const { accounts } = useAccounts();
 
   // View Mode: "list" | "board"
   const [viewMode, setViewMode] = useState("list");
@@ -172,7 +172,7 @@ const HomePage = () => {
               setSortOrder={setSortOrder}
               statuses={statuses}
               priorities={priorities}
-              users={users}
+              users={accounts}
               totalNotes={notes.length}
               filteredCount={filteredNotes.length}
             />
@@ -184,7 +184,7 @@ const HomePage = () => {
                 setNotes={setNotes}
                 statuses={statuses}
                 priorities={priorities}
-                users={users}
+                users={accounts}
                 sortBy={sortBy}
                 setSortBy={setSortBy}
                 sortOrder={sortOrder}
@@ -198,7 +198,7 @@ const HomePage = () => {
                 setNotes={setNotes}
                 statuses={statuses}
                 priorities={priorities}
-                users={users}
+                users={accounts}
               />
             )}
           </div>

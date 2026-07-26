@@ -21,8 +21,7 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
   const priorityConfig = priorities.find((p) => p.name === note.priority);
   const priorityColor = priorityConfig?.color || "#3B82F6";
 
-  const userConfig = users.find((u) => u.name === note.user);
-  const userColor = userConfig?.color || "#6B7280";
+  const userColor = "#3B82F6";
 
   const handleDelete = async (e, id) => {
     e.preventDefault();

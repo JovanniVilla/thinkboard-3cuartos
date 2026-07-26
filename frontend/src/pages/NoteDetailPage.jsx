@@ -23,7 +23,7 @@ import {
   CheckIcon,
 } from "lucide-react";
 import { useStatuses } from "../lib/useStatuses";
-import { useUsers } from "../lib/useUsers";
+import { useAccounts } from "../lib/useAccounts";
 import { usePriorities } from "../lib/usePriorities";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import ThemeToggle from "../components/ThemeToggle";
@@ -89,7 +89,7 @@ const NoteDetailPage = () => {
   const [customLabelInput, setCustomLabelInput] = useState("");
 
   const { statuses } = useStatuses();
-  const { users } = useUsers();
+  const { accounts } = useAccounts();
   const { priorities } = usePriorities();
 
   const navigate = useNavigate();
@@ -292,7 +292,7 @@ const NoteDetailPage = () => {
   const displayedChecklist = hideChecked ? checklistItems.filter((i) => !i.completed) : checklistItems;
 
   const currentStatus = note.status || "Pendiente";
-  const userColor = users.find((u) => u.name === note.user)?.color || "#3B82F6";
+  const userColor = "#3B82F6"; // Default color as accounts lack a color field
 
   // Comments & activity calculations
   const activities = note.activities || [];
@@ -520,7 +520,7 @@ const NoteDetailPage = () => {
                     className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 border border-base-content/10 z-50 mt-1"
                   >
                     <li className="menu-title text-xs text-base-content/50">Asignar Miembro</li>
-                    {users.map((u) => (
+                    {accounts.map((u) => (
                       <li key={u._id}>
                         <button
                           type="button"
@@ -535,7 +535,7 @@ const NoteDetailPage = () => {
                           <span className="flex items-center gap-2">
                             <span
                               className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                              style={{ backgroundColor: u.color }}
+                              style={{ backgroundColor: "#3B82F6" }}
                             >
                               {getInitials(u.name)}
                             </span>

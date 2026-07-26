@@ -41,7 +41,7 @@ const UserSelect = ({ users = [], value, onChange, placeholder = "— Selecciona
           <div className="flex items-center gap-2 truncate">
             <span
               className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-              style={{ backgroundColor: selected.color }}
+              style={{ backgroundColor: "#3B82F6" }}
             >
               {getInitials(selected.name)}
             </span>
@@ -96,7 +96,7 @@ const UserSelect = ({ users = [], value, onChange, placeholder = "— Selecciona
               >
                 <span
                   className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                  style={{ backgroundColor: u.color }}
+                  style={{ backgroundColor: "#3B82F6" }}
                 >
                   {getInitials(u.name)}
                 </span>
