@@ -14,7 +14,7 @@ const getInitials = (name = "") => {
     .toUpperCase();
 };
 
-const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }) => {
+const NoteCard = ({ note, setNotes, statuses = [], priorities = [] }) => {
   const statusConfig = statuses.find((s) => s.name === note.status);
   const statusColor = statusConfig?.color || "#6B7280";
 

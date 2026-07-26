@@ -147,8 +147,6 @@ const BoardSettingsPage = () => {
   // Create state
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState("#3B82F6");
-  const [newRole, setNewRole] = useState("");
-  const [newEmail, setNewEmail] = useState("");
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
@@ -237,19 +235,8 @@ const BoardSettingsPage = () => {
         const res = await api.post("/priorities", { name: newName.trim(), color: newColor });
         setPriorities((prev) => [...prev, res.data]);
         toast.success("Prioridad creada");
-      } else if (activeTab === "users") {
-        const res = await api.post("/users", {
-          name: newName.trim(),
-          color: newColor,
-          role: newRole.trim() || "Miembro del equipo",
-          email: newEmail.trim(),
-        });
-        setUsers((prev) => [...prev, res.data]);
-        toast.success("Usuario creado");
       }
       setNewName("");
-      setNewRole("");
-      setNewEmail("");
       setNewColor("#3B82F6");
     } catch {
       toast.error("Error al crear el elemento");
