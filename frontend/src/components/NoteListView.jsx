@@ -1,7 +1,7 @@
-import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { Link } from "react-router";
-import { formatDate, stripMarkdown } from "../lib/utils";
+import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 
@@ -93,15 +93,12 @@ const NoteListView = ({
                   {renderSortIndicator("title")}
                 </div>
               </th>
-              <th
-                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5 max-w-xs hidden md:table-cell"
-                onClick={() => handleHeaderClick("content")}
-              >
-                <div className="flex items-center gap-1">
-                  <span>Contenido</span>
-                  {renderSortIndicator("content")}
+              <th className="py-3.5 hidden md:table-cell">
+                <div className="flex items-center gap-1 text-base-content/70">
+                  <span>Checklist</span>
                 </div>
               </th>
+
               <th
                 className="cursor-pointer hover:bg-base-200 transition-colors py-3.5"
                 onClick={() => handleHeaderClick("status")}
@@ -154,8 +151,6 @@ const NoteListView = ({
               const userConfig = users.find((u) => u.name === note.user);
               const userColor = userConfig?.color || "#6B7280";
 
-              const cleanContent = stripMarkdown(note.content);
-
               return (
                 <tr
                   key={note._id}
@@ -183,9 +178,17 @@ const NoteListView = ({
                       )}
                     </div>
                   </td>
-                  <td className="text-base-content/70 max-w-xs truncate hidden md:table-cell">
-                    <span title={cleanContent}>{cleanContent}</span>
+                  <td className="hidden md:table-cell">
+                    {note.checklist?.length > 0 ? (
+                      <div className="flex items-center gap-1.5 text-xs font-medium text-base-content/70" title={`${note.checklist.filter(i => i.completed).length} de ${note.checklist.length} completados`}>
+                        <ListChecksIcon className="size-4 opacity-70" />
+                        <span>{note.checklist.filter(i => i.completed).length}/{note.checklist.length}</span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-base-content/40">-</span>
+                    )}
                   </td>
+
                   <td>
                     <span
                       className="badge badge-sm font-medium whitespace-nowrap"
