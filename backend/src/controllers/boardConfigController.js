@@ -41,13 +41,29 @@ export async function updateBoardConfig(req, res) {
       newPrefix = newProjectKey.endsWith("-") ? newProjectKey : `${newProjectKey}-`;
     }
 
-    // Si el prefijo cambió y ya existía uno, actualizamos las notas existentes
-    if (oldProjectKey && newProjectKey && oldProjectKey !== newProjectKey) {
-      // Usamos expresión regular para buscar notas que empiecen con el prefijo antiguo
-      const notesToUpdate = await Note.find({ keyId: { $regex: `^${oldPrefix}` } });
-      for (const note of notesToUpdate) {
-        note.keyId = note.keyId.replace(oldPrefix, newPrefix);
+    // Si hay una nueva clave, procesamos todas las tareas
+    if (newProjectKey) {
+      const allNotes = await Note.find().sort({ createdAt: 1 });
+      let currentCounter = boardConfig.taskCounter || 1;
+      let isModifiedCounter = false;
+
+      for (const note of allNotes) {
+        if (note.keyId && note.keyId.includes("-")) {
+          // Ya tiene un ID, reemplazamos el prefijo manteniendo el número
+          const parts = note.keyId.split("-");
+          const num = parts[parts.length - 1];
+          note.keyId = `${newPrefix}${num}`;
+        } else {
+          // No tiene ID, le asignamos uno nuevo consecutivo
+          note.keyId = `${newPrefix}${currentCounter}`;
+          currentCounter++;
+          isModifiedCounter = true;
+        }
         await note.save();
+      }
+
+      if (isModifiedCounter) {
+        boardConfig.taskCounter = currentCounter;
       }
     }
 
