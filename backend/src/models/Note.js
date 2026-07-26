@@ -58,6 +58,7 @@ const noteSchema = new mongoose.Schema(
         parentId: { type: String, default: null },
         mentions: [{ type: String }],
         resolvedMentions: [{ type: String }],
+        updatedAt: { type: Date },
       },
     ],
   },

@@ -78,6 +78,10 @@ const NoteDetailPage = () => {
   const [replyText, setReplyText] = useState("");
   const [postingReply, setPostingReply] = useState(false);
 
+  // Edit Comment state
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editedCommentText, setEditedCommentText] = useState("");
+
   // Checklist state
   const [newChecklistTitle, setNewChecklistTitle] = useState("");
   const [hideChecked, setHideChecked] = useState(false);
@@ -165,6 +169,25 @@ const NoteDetailPage = () => {
     });
     setNote({ ...note, activities: nextActivities });
     handleSaveNote({ activities: nextActivities });
+  };
+
+  const handleSaveEditedComment = (activityId) => {
+    if (!editedCommentText.trim() || !note.activities) return;
+    const nextActivities = note.activities.map(act => {
+      if (act.id === activityId || act._id === activityId) {
+        return {
+          ...act,
+          text: editedCommentText.trim(),
+          mentions: extractMentions(editedCommentText),
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return act;
+    });
+    setNote({ ...note, activities: nextActivities });
+    handleSaveNote({ activities: nextActivities });
+    setEditingCommentId(null);
+    setEditedCommentText("");
   };
 
   // Add Comment handler
@@ -1016,11 +1039,48 @@ const NoteDetailPage = () => {
                           <div className="space-y-1 flex-1 min-w-0 bg-base-100/60 p-2.5 rounded-xl border border-base-content/10">
                             <div className="flex items-center justify-between gap-2 flex-wrap">
                               <span className="font-bold text-base-content">{act.user || "Usuario"}</span>
-                              <span className="text-[10px] text-base-content/50">{formatDateActivity(act.createdAt)}</span>
+                              <span className="text-[10px] text-base-content/50">
+                                {formatDateActivity(act.createdAt)}
+                                {act.createdAt !== act.updatedAt && act.updatedAt && " (editado)"}
+                              </span>
                             </div>
-                            <div className="prose prose-sm prose-base break-words max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
-                              <MarkdownRenderer content={act.text} />
-                            </div>
+                            {editingCommentId === (act.id || act._id) ? (
+                              <div className="mt-2">
+                                <MarkdownEditor
+                                  value={editedCommentText}
+                                  onChange={setEditedCommentText}
+                                  placeholder="Edita tu comentario..."
+                                  minHeight="min-h-[60px]"
+                                  hideFooter
+                                  compactToolbar
+                                  users={accountsList}
+                                />
+                                <div className="flex justify-end gap-1.5 mt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingCommentId(null);
+                                      setEditedCommentText("");
+                                    }}
+                                    className="btn btn-ghost btn-xs rounded text-[10px] h-6 min-h-0"
+                                  >
+                                    Cancelar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveEditedComment(act.id || act._id)}
+                                    disabled={!editedCommentText.trim()}
+                                    className="btn btn-primary btn-xs rounded text-[10px] h-6 min-h-0 px-2"
+                                  >
+                                    Guardar
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="prose prose-sm prose-base break-words max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
+                                <MarkdownRenderer content={act.text} />
+                              </div>
+                            )}
                             <div className="flex justify-end gap-3 pt-1 items-center">
                               {act.mentions?.includes(currentUser?.name) && !act.resolvedMentions?.includes(currentUser?.name) && (
                                 <button
@@ -1031,6 +1091,18 @@ const NoteDetailPage = () => {
                                 >
                                   <CheckIcon className="size-3" />
                                   Atendido
+                                </button>
+                              )}
+                              {act.user === currentUser?.name && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingCommentId(act.id || act._id);
+                                    setEditedCommentText(act.text);
+                                  }}
+                                  className="text-[10px] text-base-content/50 hover:text-primary hover:underline font-semibold"
+                                >
+                                  Editar
                                 </button>
                               )}
                               <button
@@ -1102,13 +1174,50 @@ const NoteDetailPage = () => {
                                 <div className="space-y-1 flex-1 min-w-0 bg-base-100/30 p-2 rounded-lg border border-base-content/5">
                                   <div className="flex items-center justify-between gap-2 flex-wrap">
                                     <span className="font-semibold text-base-content">{rep.user || "Usuario"}</span>
-                                    <span className="text-[9px] text-base-content/45">{formatDateActivity(rep.createdAt)}</span>
+                                    <span className="text-[9px] text-base-content/45">
+                                      {formatDateActivity(rep.createdAt)}
+                                      {rep.createdAt !== rep.updatedAt && rep.updatedAt && " (editado)"}
+                                    </span>
                                   </div>
-                                  <div className="prose prose-sm prose-base break-words max-w-none text-[11px] prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
-                                    <MarkdownRenderer content={rep.text} />
-                                  </div>
-                                  {rep.mentions?.includes(currentUser?.name) && !rep.resolvedMentions?.includes(currentUser?.name) && (
-                                    <div className="flex justify-end mt-1">
+                                  {editingCommentId === (rep.id || rep._id) ? (
+                                    <div className="mt-2">
+                                      <MarkdownEditor
+                                        value={editedCommentText}
+                                        onChange={setEditedCommentText}
+                                        placeholder="Edita tu respuesta..."
+                                        minHeight="min-h-[50px]"
+                                        hideFooter
+                                        compactToolbar
+                                        users={accountsList}
+                                      />
+                                      <div className="flex justify-end gap-1.5 mt-1">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setEditingCommentId(null);
+                                            setEditedCommentText("");
+                                          }}
+                                          className="btn btn-ghost btn-xs rounded text-[9px] h-5 min-h-0 px-1.5"
+                                        >
+                                          Cancelar
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSaveEditedComment(rep.id || rep._id)}
+                                          disabled={!editedCommentText.trim()}
+                                          className="btn btn-primary btn-xs rounded text-[9px] h-5 min-h-0 px-2"
+                                        >
+                                          Guardar
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="prose prose-sm prose-base break-words max-w-none text-[11px] prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
+                                      <MarkdownRenderer content={rep.text} />
+                                    </div>
+                                  )}
+                                  <div className="flex justify-end gap-3 items-center mt-1">
+                                    {rep.mentions?.includes(currentUser?.name) && !rep.resolvedMentions?.includes(currentUser?.name) && (
                                       <button
                                         type="button"
                                         onClick={() => handleResolveMention(rep.id || rep._id)}
@@ -1118,8 +1227,20 @@ const NoteDetailPage = () => {
                                         <CheckIcon className="size-3" />
                                         Atendido
                                       </button>
-                                    </div>
-                                  )}
+                                    )}
+                                    {rep.user === currentUser?.name && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setEditingCommentId(rep.id || rep._id);
+                                          setEditedCommentText(rep.text);
+                                        }}
+                                        className="text-[9px] text-base-content/50 hover:text-primary hover:underline font-semibold"
+                                      >
+                                        Editar
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             ))}
