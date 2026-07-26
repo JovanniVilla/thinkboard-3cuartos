@@ -5,7 +5,9 @@ import Link from "@tiptap/extension-link";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Placeholder from "@tiptap/extension-placeholder";
+import Mention from "@tiptap/extension-mention";
 import { Markdown } from "tiptap-markdown";
+import createMentionSuggestion from "../lib/mentionSuggestion";
 
 import {
   BoldIcon,
@@ -138,11 +140,18 @@ const MarkdownEditor = ({
   placeholder = "Escribe aquí...", 
   minHeight = "min-h-[200px]", 
   hideFooter = false, 
-  compactToolbar = false 
+  compactToolbar = false,
+  users = []
 }) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
+      Mention.configure({
+        HTMLAttributes: {
+          class: 'mention bg-primary/10 text-primary font-bold px-1 py-0.5 rounded-md cursor-pointer hover:bg-primary/20',
+        },
+        suggestion: createMentionSuggestion(users),
+      }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {

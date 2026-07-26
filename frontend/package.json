@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tippyjs/react": "^4.2.6",
     "@tiptap/extension-link": "^3.29.0",
+    "@tiptap/extension-mention": "^3.29.0",
     "@tiptap/extension-placeholder": "^3.29.0",
     "@tiptap/extension-task-item": "^3.29.0",
     "@tiptap/extension-task-list": "^3.29.0",
@@ -23,7 +25,9 @@
     "react-hot-toast": "^2.5.2",
     "react-markdown": "^10.1.0",
     "react-router": "^7.6.0",
+    "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
+    "tippy.js": "^6.3.7",
     "tiptap-markdown": "^0.9.0"
   },
   "devDependencies": {

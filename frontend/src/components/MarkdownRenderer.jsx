@@ -1,5 +1,6 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 
 const MarkdownRenderer = ({ content = "", className = "" }) => {
   return (
@@ -17,6 +18,7 @@ const MarkdownRenderer = ({ content = "", className = "" }) => {
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
         components={{
           input: ({ type, checked, ...props }) => {
             if (type === "checkbox") {

@@ -124,7 +124,7 @@ export async function updateNote(req, res) {
 
 export async function addComment(req, res) {
   try {
-    const { text, user, parentId } = req.body;
+    const { text, user, parentId, mentions = [] } = req.body;
     if (!text || !text.trim()) {
       return res.status(400).json({ message: "El texto del comentario es obligatorio" });
     }
@@ -155,6 +155,7 @@ export async function addComment(req, res) {
       user: actor,
       createdAt: new Date(),
       parentId: parentId || null,
+      mentions,
     };
 
     note.activities.push(newComment);

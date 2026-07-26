@@ -89,8 +89,9 @@ const NoteDetailPage = () => {
   const [customLabelInput, setCustomLabelInput] = useState("");
 
   const { statuses } = useStatuses();
-  const { accounts } = useAccounts();
   const { priorities } = usePriorities();
+  const { accounts } = useAccounts();
+  const accountsList = accounts.map((acc) => acc.name);
 
   const navigate = useNavigate();
   const { id } = useParams();
@@ -126,7 +127,7 @@ const NoteDetailPage = () => {
 
   const handleSaveNote = async (updatedFields = {}) => {
     const mergedNote = { ...note, ...updatedFields };
-    if (!mergedNote.title.trim()) {
+    if (!mergedNote.title?.trim()) {
       toast.error("El título es obligatorio");
       return;
     }
@@ -144,6 +145,11 @@ const NoteDetailPage = () => {
     }
   };
 
+  const extractMentions = (text) => {
+    const matches = [...text.matchAll(/data-id="([^"]+)"/g)];
+    return [...new Set(matches.map(m => m[1]))];
+  };
+
   // Add Comment handler
   const handleAddComment = async (e) => {
     e.preventDefault();
@@ -154,6 +160,7 @@ const NoteDetailPage = () => {
       const res = await api.post(`/notes/${id}/comments`, {
         text: commentText.trim(),
         user: note.user || "Usuario",
+        mentions: extractMentions(commentText),
       });
       setNote(res.data);
       setCommentText("");
@@ -177,6 +184,7 @@ const NoteDetailPage = () => {
         text: replyText.trim(),
         user: note.user || "Usuario",
         parentId: parentId,
+        mentions: extractMentions(replyText),
       });
       setNote(res.data);
       setReplyText("");
@@ -675,7 +683,8 @@ const NoteDetailPage = () => {
                     <MarkdownEditor
                       value={note.content}
                       onChange={(val) => setNote({ ...note, content: val })}
-                      placeholder="Escribe los detalles de la tarea en Markdown..."
+                      placeholder="Añade una descripción más detallada..."
+                      users={accountsList}
                     />
                     <button
                       type="button"
@@ -916,6 +925,7 @@ const NoteDetailPage = () => {
                     minHeight="min-h-[80px]"
                     hideFooter
                     compactToolbar
+                    users={accountsList}
                   />
                   <div className="flex justify-end">
                     <button
@@ -1026,6 +1036,7 @@ const NoteDetailPage = () => {
                                 minHeight="min-h-[60px]"
                                 hideFooter
                                 compactToolbar
+                                users={accountsList}
                               />
                               <div className="flex justify-end gap-1.5 mt-1">
                                 <button

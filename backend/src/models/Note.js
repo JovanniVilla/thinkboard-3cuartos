@@ -56,6 +56,7 @@ const noteSchema = new mongoose.Schema(
         user: { type: String, default: "Usuario" },
         createdAt: { type: Date, default: Date.now },
         parentId: { type: String, default: null },
+        mentions: [{ type: String }],
       },
     ],
   },

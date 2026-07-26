@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, AtSignIcon } from "lucide-react";
+import { useAuth } from "../lib/AuthContext";
 import { Link } from "react-router";
 import { formatDate, stripMarkdown } from "../lib/utils";
 import api from "../lib/axios";
@@ -18,6 +19,17 @@ const getInitials = (name = "") => {
 const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], users = [] }) => {
   const [draggingNoteId, setDraggingNoteId] = useState(null);
   const [dragOverStatus, setDragOverStatus] = useState(null);
+  const { user } = useAuth();
+
+  const getMentionCount = (note) => {
+    if (!user?.name || !note.activities) return 0;
+    return note.activities.reduce((acc, act) => {
+      if (act.mentions?.includes(user.name)) {
+        return acc + 1;
+      }
+      return acc;
+    }, 0);
+  };
 
   const handleDelete = async (e, id) => {
     e.preventDefault();
@@ -202,22 +214,33 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                             </div>
                           </div>
 
-                          {/* Priority badge */}
-                          {note.priority && (
-                            <div className="flex items-center">
-                              <span
-                                className="badge badge-xs font-bold gap-1 px-2 py-2"
-                                style={{
-                                  backgroundColor: priorityColor + "15",
-                                  color: priorityColor,
-                                  borderColor: priorityColor + "40",
-                                }}
-                              >
-                                <ZapIcon className="size-3" />
-                                {note.priority}
-                              </span>
-                            </div>
-                          )}
+                          {/* Badges Row */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Priority badge */}
+                            {note.priority && (
+                              <div className="flex items-center">
+                                <span
+                                  className="badge badge-xs font-bold gap-1 px-2 py-2"
+                                  style={{
+                                    backgroundColor: priorityColor + "15",
+                                    color: priorityColor,
+                                    borderColor: priorityColor + "40",
+                                  }}
+                                >
+                                  <ZapIcon className="size-3" />
+                                  {note.priority}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Mentions badge */}
+                            {getMentionCount(note) > 0 && (
+                              <div className="flex items-center gap-1 bg-primary text-primary-content text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm" title={`Tienes ${getMentionCount(note)} mención(es)`}>
+                                <AtSignIcon className="size-3" />
+                                {getMentionCount(note)}
+                              </div>
+                            )}
+                          </div>
 
                           <p className="text-xs text-base-content/70 line-clamp-3 leading-relaxed">
                             {cleanContent}

@@ -1,4 +1,5 @@
-import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon } from "lucide-react";
+import { useAuth } from "../lib/AuthContext";
 import { Link } from "react-router";
 import { formatDate, stripMarkdown } from "../lib/utils";
 import api from "../lib/axios";
@@ -25,6 +26,17 @@ const NoteListView = ({
   sortOrder,
   setSortOrder,
 }) => {
+  const { user } = useAuth();
+  
+  const getMentionCount = (note) => {
+    if (!user?.name || !note.activities) return 0;
+    return note.activities.reduce((acc, act) => {
+      if (act.mentions?.includes(user.name)) {
+        return acc + 1;
+      }
+      return acc;
+    }, 0);
+  };
   const handleDelete = async (e, id) => {
     e.preventDefault();
     if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
@@ -163,6 +175,12 @@ const NoteListView = ({
                       >
                         {note.title}
                       </Link>
+                      {getMentionCount(note) > 0 && (
+                        <div className="flex items-center gap-1 bg-primary text-primary-content text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm flex-shrink-0" title={`Tienes ${getMentionCount(note)} mención(es)`}>
+                          <AtSignIcon className="size-3" />
+                          {getMentionCount(note)}
+                        </div>
+                      )}
                     </div>
                   </td>
                   <td className="text-base-content/70 max-w-xs truncate hidden md:table-cell">
