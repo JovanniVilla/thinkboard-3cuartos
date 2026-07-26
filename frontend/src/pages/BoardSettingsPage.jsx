@@ -18,11 +18,13 @@ import {
   KeyRoundIcon,
   ClockIcon,
   CheckCircle2Icon,
+  TagIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
+import { useLabels } from "../lib/useLabels";
 import { useAccounts } from "../lib/useAccounts";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import { useAuth } from "../lib/AuthContext";
@@ -140,6 +142,7 @@ const BoardSettingsPage = () => {
   // Data Hooks
   const { statuses, setStatuses, loading: loadingStatuses } = useStatuses();
   const { priorities, setPriorities, loading: loadingPriorities } = usePriorities();
+  const { labels, setLabels, loading: loadingLabels } = useLabels();
   const { accounts, setAccounts, loading: loadingAccounts } = useAccounts();
   const { boardConfig, setBoardConfig, loading: loadingConfig } = useBoardConfig();
   const { user: currentUser } = useAuth();
@@ -233,6 +236,10 @@ const BoardSettingsPage = () => {
         const res = await api.post("/priorities", { name: newName.trim(), color: newColor });
         setPriorities((prev) => [...prev, res.data]);
         toast.success("Prioridad creada");
+      } else if (activeTab === "labels") {
+        const res = await api.post("/labels", { name: newName.trim(), color: newColor });
+        setLabels((prev) => [...prev, res.data]);
+        toast.success("Etiqueta creada");
       }
       setNewName("");
       setNewColor("#3B82F6");
@@ -348,6 +355,17 @@ const BoardSettingsPage = () => {
             >
               <ZapIcon className="w-4 h-4" />
               <span>Prioridades ({priorities.length})</span>
+            </button>
+
+            <button
+              type="button"
+              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+                activeTab === "labels" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
+              }`}
+              onClick={() => switchTab("labels")}
+            >
+              <TagIcon className="w-4 h-4" />
+              <span>Etiquetas ({labels.length})</span>
             </button>
 
 
@@ -697,6 +715,122 @@ const BoardSettingsPage = () => {
                       <button className="btn btn-primary gap-2" onClick={handleCreate} disabled={creating || !newName.trim()}>
                         <PlusIcon className="h-4 w-4" />
                         {creating ? "Creando…" : "Crear Prioridad"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: ETIQUETAS */}
+          {activeTab === "labels" && (
+            <div className="space-y-6">
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="card-title text-lg">Etiquetas actuales</h2>
+                    <span className="text-xs text-base-content/40 flex items-center gap-1">
+                      <GripVerticalIcon className="h-3 w-3" />
+                      Arrastra para reordenar
+                    </span>
+                  </div>
+
+                  {loadingLabels ? (
+                    <div className="text-center py-6 text-base-content/50">Cargando etiquetas…</div>
+                  ) : labels.length === 0 ? (
+                    <div className="text-center py-6 text-base-content/50">No hay etiquetas configuradas</div>
+                  ) : (
+                    <ul className="space-y-2 mt-2">
+                      {labels.map((label, index) => (
+                        <li
+                          key={label._id}
+                          draggable={editingId !== label._id}
+                          onDragStart={(e) => handleDragStart(e, index, label._id)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={() => handleDrop(labels, setLabels, "/labels")}
+                          onDragEnd={handleDragEnd}
+                          className={`transition-all duration-150 ${
+                            draggingId === label._id ? "opacity-40 scale-95" : ""
+                          }`}
+                        >
+                          {editingId === label._id ? (
+                            <EditRow
+                              item={label}
+                              onSave={(updated) => {
+                                setLabels((prev) => prev.map((l) => (l._id === updated._id ? updated : l)));
+                                setEditingId(null);
+                              }}
+                              onCancel={() => setEditingId(null)}
+                              endpoint="/labels"
+                              typeName="Etiqueta"
+                            />
+                          ) : (
+                            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-base-200 transition-colors group border border-transparent hover:border-base-content/10">
+                              <GripVerticalIcon className="h-4 w-4 text-base-content/25 cursor-grab active:cursor-grabbing flex-shrink-0" />
+                              <TagIcon className="w-4 h-4 flex-shrink-0" style={{ color: label.color }} />
+                              <span
+                                className="px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-shrink-0"
+                                style={{
+                                  backgroundColor: label.color + "20",
+                                  color: label.color,
+                                  borderColor: label.color + "50",
+                                }}
+                              >
+                                {label.name}
+                              </span>
+                              <span className="flex-1" />
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button className="btn btn-ghost btn-xs gap-1" onClick={() => setEditingId(label._id)}>
+                                  Editar
+                                </button>
+                                <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete(label._id, "/labels", "etiqueta", setLabels)}>
+                                  <Trash2Icon className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              {/* Create label */}
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body">
+                  <h2 className="card-title text-lg mb-4">Agregar nueva etiqueta</h2>
+                  <div className="flex flex-col gap-4">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Nombre de la etiqueta</span></label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Frontend, Backend, Diseño…"
+                        className="input input-bordered"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Color</span></label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {PRESET_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setNewColor(color)}
+                            className="w-8 h-8 rounded-full transition-transform hover:scale-110"
+                            style={{ backgroundColor: color, outline: newColor === color ? `3px solid ${color}` : "none", outlineOffset: "2px" }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="card-actions justify-end">
+                      <button className="btn btn-primary gap-2" onClick={handleCreate} disabled={creating || !newName.trim()}>
+                        <PlusIcon className="h-4 w-4" />
+                        {creating ? "Creando…" : "Crear Etiqueta"}
                       </button>
                     </div>
                   </div>

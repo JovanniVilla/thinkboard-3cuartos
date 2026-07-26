@@ -30,15 +30,7 @@ import MarkdownRenderer from "../components/MarkdownRenderer";
 import ThemeToggle from "../components/ThemeToggle";
 import MarkdownEditor from "../components/MarkdownEditor";
 
-const DEFAULT_LABEL_COLORS = [
-  { name: "Terminado", color: "#10B981" },
-  { name: "En Progreso", color: "#3B82F6" },
-  { name: "Pendiente", color: "#F59E0B" },
-  { name: "Bloqueado", color: "#EF4444" },
-  { name: "Urgente", color: "#EC4899" },
-  { name: "Diseño", color: "#8B5CF6" },
-  { name: "Backend", color: "#06B6D4" },
-];
+import { useLabels } from "../lib/useLabels";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -91,9 +83,9 @@ const NoteDetailPage = () => {
 
   // Labels popover state
   const [showLabelMenu, setShowLabelMenu] = useState(false);
-  const [customLabelInput, setCustomLabelInput] = useState("");
 
   const { statuses } = useStatuses();
+  const { labels: boardLabels } = useLabels();
   const { priorities } = usePriorities();
   const { accounts } = useAccounts();
   const accountsList = accounts.map((acc) => acc.name);
@@ -253,13 +245,6 @@ const NoteDetailPage = () => {
     handleSaveNote({ labels: nextLabels });
   };
 
-  const handleAddCustomLabel = () => {
-    if (!customLabelInput.trim()) return;
-    const name = customLabelInput.trim();
-    const color = DEFAULT_LABEL_COLORS[Math.floor(Math.random() * DEFAULT_LABEL_COLORS.length)].color;
-    toggleLabel({ name, color });
-    setCustomLabelInput("");
-  };
 
   // Checklist handlers
   const handleAddChecklistItem = (e) => {
@@ -652,14 +637,14 @@ const NoteDetailPage = () => {
                         </button>
                       </div>
 
-                      <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                        {DEFAULT_LABEL_COLORS.map((defLabel) => {
+                      <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1 pb-2">
+                        {boardLabels.map((defLabel) => {
                           const isSelected = (note.labels || []).some(
                             (l) => l.name.toLowerCase() === defLabel.name.toLowerCase()
                           );
                           return (
                             <button
-                              key={defLabel.name}
+                              key={defLabel._id || defLabel.name}
                               type="button"
                               onClick={() => toggleLabel(defLabel)}
                               className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-bold text-white transition-opacity hover:opacity-90"
@@ -670,30 +655,11 @@ const NoteDetailPage = () => {
                             </button>
                           );
                         })}
-                      </div>
-
-                      {/* Add Custom Label */}
-                      <div className="pt-2 border-t border-base-content/10 space-y-2">
-                        <input
-                          type="text"
-                          className="w-full bg-base-200 border border-base-content/10 text-xs text-base-content rounded-lg px-2.5 py-1.5 focus:border-primary focus:outline-none"
-                          placeholder="Nueva etiqueta personalizada..."
-                          value={customLabelInput}
-                          onChange={(e) => setCustomLabelInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleAddCustomLabel();
-                            }
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={handleAddCustomLabel}
-                          className="w-full btn btn-xs btn-primary rounded-lg text-xs"
-                        >
-                          Crear Etiqueta
-                        </button>
+                        {boardLabels.length === 0 && (
+                          <div className="text-center text-xs text-base-content/50 py-2">
+                            No hay etiquetas. Configúralas en los ajustes del tablero.
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
