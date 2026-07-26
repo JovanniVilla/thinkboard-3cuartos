@@ -4,6 +4,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
+import Placeholder from "@tiptap/extension-placeholder";
 import { Markdown } from "tiptap-markdown";
 
 import {
@@ -20,11 +21,11 @@ import {
 } from "lucide-react";
 
 // Toolbar component
-const Toolbar = ({ editor }) => {
+const Toolbar = ({ editor, compact }) => {
   if (!editor) return null;
 
   return (
-    <div className="bg-base-200/80 px-3 py-2 border-b border-base-content/15 flex flex-wrap items-center gap-1">
+    <div className={`bg-base-200/80 px-3 py-1.5 border-b border-base-content/15 flex flex-wrap items-center gap-1 ${compact ? 'hidden' : ''}`}>
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
@@ -131,7 +132,14 @@ const Toolbar = ({ editor }) => {
   );
 };
 
-const MarkdownEditor = ({ value = "", onChange }) => {
+const MarkdownEditor = ({ 
+  value = "", 
+  onChange, 
+  placeholder = "Escribe aquí...", 
+  minHeight = "min-h-[200px]", 
+  hideFooter = false, 
+  compactToolbar = false 
+}) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -145,12 +153,15 @@ const MarkdownEditor = ({ value = "", onChange }) => {
       TaskItem.configure({
         nested: true,
       }),
+      Placeholder.configure({
+        placeholder,
+      }),
       Markdown,
     ],
     content: value,
     editorProps: {
       attributes: {
-        class: 'prose prose-sm prose-base max-w-none focus:outline-none min-h-[200px] p-4 bg-base-100',
+        class: `prose prose-sm prose-base max-w-none focus:outline-none ${minHeight} p-3 bg-base-100`,
       },
     },
     onUpdate: ({ editor }) => {
@@ -173,14 +184,16 @@ const MarkdownEditor = ({ value = "", onChange }) => {
 
   return (
     <div className="border border-base-content/20 rounded-xl overflow-hidden bg-base-100 shadow-sm transition-all focus-within:border-primary/60">
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} compact={compactToolbar} />
       <EditorContent editor={editor} />
       
       {/* Footer hint */}
-      <div className="bg-base-200/40 px-3 py-1.5 border-t border-base-content/10 flex items-center justify-between text-[11px] text-base-content/50">
-        <span>Editor visual avanzado (Markdown automático)</span>
-        <span>{value.length} caracteres</span>
-      </div>
+      {!hideFooter && (
+        <div className="bg-base-200/40 px-3 py-1.5 border-t border-base-content/10 flex items-center justify-between text-[11px] text-base-content/50">
+          <span>Editor visual avanzado (Markdown automático)</span>
+          <span>{value.length} caracteres</span>
+        </div>
+      )}
     </div>
   );
 };

@@ -909,12 +909,13 @@ const NoteDetailPage = () => {
                   {getInitials(note.user)}
                 </span>
                 <div className="flex-1 space-y-2">
-                  <textarea
-                    rows={3}
-                    className="w-full bg-base-100 border border-base-content/10 text-sm text-base-content rounded-xl p-3 focus:border-primary focus:outline-none placeholder:text-base-content/40 resize-none transition-colors"
-                    placeholder="Write a comment..."
+                  <MarkdownEditor
                     value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
+                    onChange={setCommentText}
+                    placeholder="Escribe un comentario..."
+                    minHeight="min-h-[80px]"
+                    hideFooter
+                    compactToolbar
                   />
                   <div className="flex justify-end">
                     <button
@@ -990,9 +991,9 @@ const NoteDetailPage = () => {
                               <span className="font-bold text-base-content">{act.user || "Usuario"}</span>
                               <span className="text-[10px] text-base-content/50">{formatDateActivity(act.createdAt)}</span>
                             </div>
-                            <p className="text-base-content/80 leading-relaxed">
-                              {act.text}
-                            </p>
+                            <div className="prose prose-sm prose-base max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
+                              <MarkdownRenderer content={act.text} />
+                            </div>
                             {/* Reply Action button */}
                             <div className="flex justify-end pt-1">
                               <button
@@ -1018,12 +1019,13 @@ const NoteDetailPage = () => {
                         {replyingToId === act.id && (
                           <form onSubmit={(e) => handleAddReply(e, act.id)} className="ml-10 flex gap-2 items-start mt-1">
                             <div className="flex-1">
-                              <textarea
-                                rows={2}
-                                className="w-full bg-base-100 border border-base-content/10 text-xs text-base-content rounded-lg p-2 focus:border-primary focus:outline-none placeholder:text-base-content/40 resize-none transition-colors"
-                                placeholder="Escribe una respuesta..."
+                              <MarkdownEditor
                                 value={replyText}
-                                onChange={(e) => setReplyText(e.target.value)}
+                                onChange={setReplyText}
+                                placeholder="Escribe una respuesta..."
+                                minHeight="min-h-[60px]"
+                                hideFooter
+                                compactToolbar
                               />
                               <div className="flex justify-end gap-1.5 mt-1">
                                 <button
@@ -1064,9 +1066,9 @@ const NoteDetailPage = () => {
                                     <span className="font-semibold text-base-content">{rep.user || "Usuario"}</span>
                                     <span className="text-[9px] text-base-content/45">{formatDateActivity(rep.createdAt)}</span>
                                   </div>
-                                  <p className="text-base-content/75 leading-relaxed">
-                                    {rep.text}
-                                  </p>
+                                  <div className="prose prose-sm prose-base max-w-none text-[11px] prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
+                                    <MarkdownRenderer content={rep.text} />
+                                  </div>
                                 </div>
                               </div>
                             ))}

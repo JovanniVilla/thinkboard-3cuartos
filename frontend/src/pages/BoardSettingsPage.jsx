@@ -173,8 +173,6 @@ const BoardSettingsPage = () => {
     setActiveTab(tab);
     setNewName("");
     setNewColor("#3B82F6");
-    setNewRole("");
-    setNewEmail("");
     setEditingId(null);
   };
 
