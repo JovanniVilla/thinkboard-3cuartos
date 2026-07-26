@@ -34,6 +34,8 @@ const NoteListView = ({
   const [editingTitleId, setEditingTitleId] = useState(null);
   const [editingTitleValue, setEditingTitleValue] = useState("");
 
+  const activeNotes = notes.filter(note => note.status?.toLowerCase() !== "completado");
+
   const handleLabelToggle = (note, labelObj) => {
     const currentLabels = note.labels || [];
     const exists = currentLabels.some((l) => l.name.toLowerCase() === labelObj.name.toLowerCase());
@@ -107,7 +109,7 @@ const NoteListView = ({
     );
   };
 
-  if (notes.length === 0) {
+  if (activeNotes.length === 0) {
     return (
       <div className="bg-base-100 rounded-xl p-12 text-center border border-base-content/10">
         <p className="text-base-content/60">No se encontraron tareas que coincidan con los filtros seleccionados.</p>
@@ -193,7 +195,7 @@ const NoteListView = ({
 
           {/* Table Body */}
           <tbody className="divide-y divide-base-content/10">
-            {notes.map((note) => {
+            {activeNotes.map((note) => {
               const statusConfig = statuses.find((s) => s.name === note.status);
               const statusColor = statusConfig?.color || "#6B7280";
 
