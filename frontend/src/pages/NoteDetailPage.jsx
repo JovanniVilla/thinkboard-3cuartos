@@ -884,7 +884,7 @@ const NoteDetailPage = () => {
           </div>
 
           {/* Right Column: Comments and Activity (Registro de Mensajes y Actividad) */}
-          <div className="lg:col-span-4 p-6 sm:p-8 bg-base-200/50 flex flex-col space-y-6">
+          <div className="lg:col-span-4 p-4 sm:p-5 bg-base-200/50 flex flex-col space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-base-content/10">
               <div className="flex items-center gap-2">
                 <MessageSquareIcon className="size-5 text-base-content/60" />
@@ -899,9 +899,40 @@ const NoteDetailPage = () => {
               </button>
             </div>
 
+            {/* Comment Form */}
+            <form onSubmit={handleAddComment} className="space-y-2">
+              <div className="flex items-start gap-2">
+                <span
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0 mt-1"
+                  style={{ backgroundColor: userColor }}
+                >
+                  {getInitials(note.user)}
+                </span>
+                <div className="flex-1 space-y-2">
+                  <textarea
+                    rows={3}
+                    className="w-full bg-base-100 border border-base-content/10 text-sm text-base-content rounded-xl p-3 focus:border-primary focus:outline-none placeholder:text-base-content/40 resize-none transition-colors"
+                    placeholder="Write a comment..."
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={postingComment || !commentText.trim()}
+                      className="btn btn-xs sm:btn-sm btn-primary rounded-lg gap-1.5"
+                    >
+                      <SendIcon className="size-3.5" />
+                      <span>{postingComment ? "Enviando..." : "Comentar"}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+
             {/* Activity Feed */}
             {showDetails && (
-              <div className="space-y-4 pt-2 overflow-y-auto max-h-[450px] pr-1 flex-1">
+              <div className="space-y-3 pt-2 overflow-y-auto max-h-[500px]">
                 {mainComments.length > 3 && (
                   <div className="flex justify-center pb-2 border-b border-base-content/5">
                     <button
@@ -919,7 +950,7 @@ const NoteDetailPage = () => {
                   sortedMainItems.map((act, idx) => {
                     if (act.type === "action") {
                       return (
-                        <div key={act.id || idx} className="flex items-start gap-3 text-xs">
+                        <div key={act.id || idx} className="flex items-start gap-2 text-xs">
                           <span
                             className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5 shadow-sm"
                             style={{ backgroundColor: "#6B7280" }}
@@ -947,7 +978,7 @@ const NoteDetailPage = () => {
                     return (
                       <div key={act.id || idx} className="space-y-2">
                         {/* Main Comment Row */}
-                        <div className="flex items-start gap-3 text-xs">
+                        <div className="flex items-start gap-2 text-xs">
                           <span
                             className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5 shadow-sm"
                             style={{ backgroundColor: "#3B82F6" }}
@@ -1047,37 +1078,6 @@ const NoteDetailPage = () => {
                 )}
               </div>
             )}
-            
-            {/* Comment Form */}
-            <form onSubmit={handleAddComment} className="space-y-3 pt-4 border-t border-base-content/10 mt-auto">
-              <div className="flex items-start gap-3">
-                <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0 mt-1"
-                  style={{ backgroundColor: userColor }}
-                >
-                  {getInitials(note.user)}
-                </span>
-                <div className="flex-1 space-y-2">
-                  <textarea
-                    rows={3}
-                    className="w-full bg-base-100 border border-base-content/10 text-sm text-base-content rounded-xl p-3 focus:border-primary focus:outline-none placeholder:text-base-content/40 resize-none transition-colors"
-                    placeholder="Write a comment..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                  />
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={postingComment || !commentText.trim()}
-                      className="btn btn-xs sm:btn-sm btn-primary rounded-lg gap-1.5"
-                    >
-                      <SendIcon className="size-3.5" />
-                      <span>{postingComment ? "Enviando..." : "Comentar"}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </form>
           </div>
         </div>
       </div>
