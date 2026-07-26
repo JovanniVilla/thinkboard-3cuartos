@@ -181,10 +181,27 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                         <div className="card-body p-3.5 space-y-2">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">
-                              {note.keyId && (
-                                <span className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30 mb-1 inline-block">
-                                  {note.keyId}
-                                </span>
+                              {(note.keyId || note.priority) && (
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  {note.keyId && (
+                                    <span className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30">
+                                      {note.keyId}
+                                    </span>
+                                  )}
+                                  {note.priority && (
+                                    <span
+                                      className="badge badge-xs font-bold gap-1 px-2 py-2"
+                                      style={{
+                                        backgroundColor: priorityColor + "15",
+                                        color: priorityColor,
+                                        borderColor: priorityColor + "40",
+                                      }}
+                                    >
+                                      <ZapIcon className="size-3" />
+                                      {note.priority}
+                                    </span>
+                                  )}
+                                </div>
                               )}
                               <Link
                                 to={`/note/${note._id}`}
@@ -230,22 +247,6 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                               </span>
                             ))}
 
-                            {/* Priority badge */}
-                            {note.priority && (
-                              <div className="flex items-center">
-                                <span
-                                  className="badge badge-xs font-bold gap-1 px-2 py-2"
-                                  style={{
-                                    backgroundColor: priorityColor + "15",
-                                    color: priorityColor,
-                                    borderColor: priorityColor + "40",
-                                  }}
-                                >
-                                  <ZapIcon className="size-3" />
-                                  {note.priority}
-                                </span>
-                              </div>
-                            )}
 
                             {/* Mentions badge */}
                             {getMentionCount(note) > 0 && (
