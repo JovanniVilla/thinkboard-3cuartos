@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { Link, useNavigate } from "react-router";
@@ -28,6 +29,27 @@ const NoteListView = ({
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [editingTitleId, setEditingTitleId] = useState(null);
+  const [editingTitleValue, setEditingTitleValue] = useState("");
+
+  const handleInlineEdit = async (noteId, field, value) => {
+    const note = notes.find(n => n._id === noteId);
+    if (!note || note[field] === value) return;
+
+    const previousValue = note[field];
+    // Optimistic update
+    setNotes(prev => prev.map(n => n._id === noteId ? { ...n, [field]: value } : n));
+
+    try {
+      await api.put(`/notes/${noteId}`, { ...note, [field]: value });
+      toast.success("Tarea actualizada");
+    } catch (error) {
+      console.error("Error updating note", error);
+      toast.error("Error al actualizar la tarea");
+      // Revert on error
+      setNotes(prev => prev.map(n => n._id === noteId ? { ...n, [field]: previousValue } : n));
+    }
+  };
   
   const getMentionCount = (note) => {
     if (!user?.name || !note.activities) return 0;
@@ -183,16 +205,55 @@ const NoteListView = ({
                     )}
                   </td>
                   <td className="font-semibold text-base-content max-w-xs">
-                    <div className="flex items-start gap-2 min-w-0 pt-0.5">
-                      <Link
-                        to={`/note/${note._id}`}
-                        className="hover:text-primary transition-colors block break-words whitespace-normal"
-                        title={note.title}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {note.title}
-                      </Link>
-                      {getMentionCount(note) > 0 && (
+                    <div className="flex items-start gap-2 min-w-0 pt-0.5 group/title">
+                      {editingTitleId === note._id ? (
+                        <div className="flex items-center gap-1 w-full" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="text"
+                            className="input input-xs input-bordered w-full font-semibold"
+                            value={editingTitleValue}
+                            onChange={(e) => setEditingTitleValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                handleInlineEdit(note._id, "title", editingTitleValue);
+                                setEditingTitleId(null);
+                              } else if (e.key === "Escape") {
+                                setEditingTitleId(null);
+                              }
+                            }}
+                            autoFocus
+                            onBlur={() => {
+                              handleInlineEdit(note._id, "title", editingTitleValue);
+                              setEditingTitleId(null);
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <Link
+                            to={`/note/${note._id}`}
+                            className="hover:text-primary transition-colors block break-words whitespace-normal"
+                            title={note.title}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {note.title}
+                          </Link>
+                          <button
+                            type="button"
+                            className="opacity-0 group-hover/title:opacity-100 transition-opacity p-0.5 text-base-content/50 hover:text-primary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingTitleId(note._id);
+                              setEditingTitleValue(note.title);
+                            }}
+                            title="Editar título"
+                          >
+                            <PenSquareIcon className="size-3.5" />
+                          </button>
+                        </>
+                      )}
+                      
+                      {getMentionCount(note) > 0 && editingTitleId !== note._id && (
                         <div className="flex items-center gap-1 bg-primary text-primary-content text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm flex-shrink-0" title={`Tienes ${getMentionCount(note)} mención(es)`}>
                           <AtSignIcon className="size-3" />
                           {getMentionCount(note)}
@@ -234,47 +295,110 @@ const NoteListView = ({
                   </td>
 
                   <td>
-                    <span
-                      className="badge badge-sm font-medium whitespace-nowrap"
-                      style={{
-                        backgroundColor: statusColor + "20",
-                        color: statusColor,
-                        borderColor: statusColor + "50",
-                      }}
-                    >
-                      {note.status || "Pendiente"}
-                    </span>
+                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        tabIndex={0}
+                        role="button"
+                        className="badge badge-sm font-medium whitespace-nowrap border"
+                        style={{
+                          backgroundColor: statusColor + "20",
+                          color: statusColor,
+                          borderColor: statusColor + "50",
+                        }}
+                      >
+                        {note.status || "Pendiente"}
+                      </div>
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 border border-base-content/10">
+                        {statuses.map((st) => (
+                          <li key={st._id}>
+                            <a
+                              onClick={() => {
+                                handleInlineEdit(note._id, "status", st.name);
+                                document.activeElement.blur();
+                              }}
+                              className={`text-xs py-1.5 px-2 ${note.status === st.name ? "bg-primary/10 text-primary font-bold" : ""}`}
+                            >
+                              <span className="w-2.5 h-2.5 rounded-full mr-1 flex-shrink-0" style={{ backgroundColor: st.color || "#6B7280" }} />
+                              <span className="truncate">{st.name}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </td>
                   <td>
-                    <span
-                      className="badge badge-xs font-bold gap-1 px-2 py-2 whitespace-nowrap"
-                      style={{
-                        backgroundColor: priorityColor + "15",
-                        color: priorityColor,
-                        borderColor: priorityColor + "40",
-                      }}
-                    >
-                      <ZapIcon className="size-3" />
-                      {note.priority || "Media"}
-                    </span>
+                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        tabIndex={0}
+                        role="button"
+                        className="badge badge-xs font-bold gap-1 px-2 py-2 whitespace-nowrap border"
+                        style={{
+                          backgroundColor: priorityColor + "15",
+                          color: priorityColor,
+                          borderColor: priorityColor + "40",
+                        }}
+                      >
+                        <ZapIcon className="size-3" />
+                        {note.priority || "Media"}
+                      </div>
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-36 border border-base-content/10">
+                        {priorities.map((p) => (
+                          <li key={p._id}>
+                            <a
+                              onClick={() => {
+                                handleInlineEdit(note._id, "priority", p.name);
+                                document.activeElement.blur();
+                              }}
+                              className={`text-xs py-1.5 px-2 ${note.priority === p.name ? "bg-primary/10 text-primary font-bold" : ""}`}
+                            >
+                              <ZapIcon className="size-3 flex-shrink-0" style={{ color: p.color }} />
+                              <span className="truncate">{p.name}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </td>
                   <td>
-                    <div className="flex items-center gap-2 max-w-[140px]" title={note.user || "Sin asignar"}>
-                      {note.user && note.user !== "Sin asignar" ? (
-                        <span
-                          className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] shadow-sm flex-shrink-0"
-                          style={{ backgroundColor: userColor }}
-                        >
-                          {getInitials(note.user)}
+                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+                      <div tabIndex={0} role="button" className="flex items-center gap-2 max-w-[140px] hover:bg-base-200 p-1 rounded transition-colors" title={note.user || "Sin asignar"}>
+                        {note.user && note.user !== "Sin asignar" ? (
+                          <span
+                            className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] shadow-sm flex-shrink-0"
+                            style={{ backgroundColor: userColor }}
+                          >
+                            {getInitials(note.user)}
+                          </span>
+                        ) : (
+                          <span className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 flex-shrink-0">
+                            <UserIcon className="size-3.5" />
+                          </span>
+                        )}
+                        <span className="truncate text-xs font-medium text-base-content/80">
+                          {note.user || "Sin asignar"}
                         </span>
-                      ) : (
-                        <span className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 flex-shrink-0">
-                          <UserIcon className="size-3.5" />
-                        </span>
-                      )}
-                      <span className="truncate text-xs font-medium text-base-content/80">
-                        {note.user || "Sin asignar"}
-                      </span>
+                      </div>
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-48 border border-base-content/10">
+                        {users.map((u) => (
+                          <li key={u._id}>
+                            <a
+                              onClick={() => {
+                                handleInlineEdit(note._id, "user", u.name);
+                                document.activeElement.blur();
+                              }}
+                              className={`text-xs py-1.5 px-2 ${note.user === u.name ? "bg-primary/10 text-primary font-bold" : ""}`}
+                            >
+                              <span
+                                className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0"
+                                style={{ backgroundColor: u.color || "#3B82F6" }}
+                              >
+                                {getInitials(u.name)}
+                              </span>
+                              <span className="truncate">{u.name}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   </td>
                   <td className="text-xs text-base-content/60 whitespace-nowrap hidden sm:table-cell">
