@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, AtSignIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { Link } from "react-router";
-import { formatDate, stripMarkdown } from "../lib/utils";
+import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 
@@ -168,8 +168,6 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                     const userConfig = users.find((u) => u.name === note.user);
                     const userColor = userConfig?.color || "#6B7280";
 
-                    const cleanContent = stripMarkdown(note.content);
-
                     return (
                       <div
                         key={note._id}
@@ -216,6 +214,22 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
 
                           {/* Badges Row */}
                           <div className="flex flex-wrap items-center gap-2">
+                            {/* Labels */}
+                            {note.labels?.map((label, idx) => (
+                              <span
+                                key={idx}
+                                className="badge badge-xs font-semibold px-2 py-2"
+                                style={{
+                                  backgroundColor: label.color + "20",
+                                  color: label.color,
+                                  borderColor: label.color + "40",
+                                }}
+                                title={label.name}
+                              >
+                                {label.name}
+                              </span>
+                            ))}
+
                             {/* Priority badge */}
                             {note.priority && (
                               <div className="flex items-center">
@@ -241,10 +255,6 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                               </div>
                             )}
                           </div>
-
-                          <p className="text-xs text-base-content/70 line-clamp-3 leading-relaxed">
-                            {cleanContent}
-                          </p>
 
                           {/* Footer: Assignee & Date */}
                           <div className="pt-2 border-t border-base-content/10 flex items-center justify-between text-[11px] text-base-content/60">
