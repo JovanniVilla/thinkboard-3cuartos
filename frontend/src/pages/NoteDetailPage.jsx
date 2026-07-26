@@ -991,7 +991,7 @@ const NoteDetailPage = () => {
                               <span className="font-bold text-base-content">{act.user || "Usuario"}</span>
                               <span className="text-[10px] text-base-content/50">{formatDateActivity(act.createdAt)}</span>
                             </div>
-                            <div className="prose prose-sm prose-base max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
+                            <div className="prose prose-sm prose-base break-words max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
                               <MarkdownRenderer content={act.text} />
                             </div>
                             {/* Reply Action button */}
@@ -1066,7 +1066,7 @@ const NoteDetailPage = () => {
                                     <span className="font-semibold text-base-content">{rep.user || "Usuario"}</span>
                                     <span className="text-[9px] text-base-content/45">{formatDateActivity(rep.createdAt)}</span>
                                   </div>
-                                  <div className="prose prose-sm prose-base max-w-none text-[11px] prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
+                                  <div className="prose prose-sm prose-base break-words max-w-none text-[11px] prose-p:my-1 prose-ul:my-1 prose-ol:my-1">
                                     <MarkdownRenderer content={rep.text} />
                                   </div>
                                 </div>

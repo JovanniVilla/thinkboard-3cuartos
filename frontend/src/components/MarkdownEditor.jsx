@@ -161,7 +161,7 @@ const MarkdownEditor = ({
     content: value,
     editorProps: {
       attributes: {
-        class: `prose prose-sm prose-base max-w-none focus:outline-none ${minHeight} p-3 bg-base-100`,
+        class: `prose prose-sm prose-base break-words max-w-none focus:outline-none ${minHeight} p-3 bg-base-100`,
       },
     },
     onUpdate: ({ editor }) => {

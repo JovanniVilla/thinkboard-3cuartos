@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 const MarkdownRenderer = ({ content = "", className = "" }) => {
   return (
     <div
-      className={`prose prose-sm sm:prose-base max-w-none text-base-content/90 
+      className={`prose prose-sm sm:prose-base break-words max-w-none text-base-content/90 
       prose-headings:text-base-content prose-headings:font-bold prose-headings:mb-2 prose-headings:mt-4 first:prose-headings:mt-0
       prose-a:text-primary prose-a:font-medium prose-a:no-underline hover:prose-a:underline
       prose-strong:text-base-content prose-strong:font-semibold
