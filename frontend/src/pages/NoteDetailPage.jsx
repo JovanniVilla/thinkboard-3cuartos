@@ -899,40 +899,9 @@ const NoteDetailPage = () => {
               </button>
             </div>
 
-            {/* Comment Form */}
-            <form onSubmit={handleAddComment} className="space-y-3">
-              <div className="flex items-start gap-3">
-                <span
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0 mt-1"
-                  style={{ backgroundColor: userColor }}
-                >
-                  {getInitials(note.user)}
-                </span>
-                <div className="flex-1 space-y-2">
-                  <textarea
-                    rows={3}
-                    className="w-full bg-base-100 border border-base-content/10 text-sm text-base-content rounded-xl p-3 focus:border-primary focus:outline-none placeholder:text-base-content/40 resize-none transition-colors"
-                    placeholder="Write a comment..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                  />
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={postingComment || !commentText.trim()}
-                      className="btn btn-xs sm:btn-sm btn-primary rounded-lg gap-1.5"
-                    >
-                      <SendIcon className="size-3.5" />
-                      <span>{postingComment ? "Enviando..." : "Comentar"}</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </form>
-
             {/* Activity Feed */}
             {showDetails && (
-              <div className="space-y-4 pt-2 overflow-y-auto max-h-[500px] pr-1">
+              <div className="space-y-4 pt-2 overflow-y-auto max-h-[450px] pr-1 flex-1">
                 {mainComments.length > 3 && (
                   <div className="flex justify-center pb-2 border-b border-base-content/5">
                     <button
@@ -1078,6 +1047,37 @@ const NoteDetailPage = () => {
                 )}
               </div>
             )}
+            
+            {/* Comment Form */}
+            <form onSubmit={handleAddComment} className="space-y-3 pt-4 border-t border-base-content/10 mt-auto">
+              <div className="flex items-start gap-3">
+                <span
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0 mt-1"
+                  style={{ backgroundColor: userColor }}
+                >
+                  {getInitials(note.user)}
+                </span>
+                <div className="flex-1 space-y-2">
+                  <textarea
+                    rows={3}
+                    className="w-full bg-base-100 border border-base-content/10 text-sm text-base-content rounded-xl p-3 focus:border-primary focus:outline-none placeholder:text-base-content/40 resize-none transition-colors"
+                    placeholder="Write a comment..."
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={postingComment || !commentText.trim()}
+                      className="btn btn-xs sm:btn-sm btn-primary rounded-lg gap-1.5"
+                    >
+                      <SendIcon className="size-3.5" />
+                      <span>{postingComment ? "Enviando..." : "Comentar"}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       </div>
