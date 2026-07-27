@@ -280,9 +280,9 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                           </div>
 
                           {/* Footer: Assignee & Date */}
-                          <div className="pt-2 border-t border-base-content/10 flex items-center justify-between text-[11px] text-base-content/60">
-                            <div className="flex items-center gap-1.5 truncate" title={`Asignado a: ${note.user || "Sin asignar"}`}>
-                              {note.user && note.user !== "Sin asignar" ? (
+                            <div className="pt-2 border-t border-base-content/10 flex items-center justify-between text-[11px] text-base-content/60">
+                              <div className="flex items-center gap-1.5 truncate" title={`Asignado a: ${note.user || "Sin asignar"}${userConfig?.jobTitle ? ` - ${userConfig.jobTitle}` : ""}`}>
+                                {note.user && note.user !== "Sin asignar" ? (
                                 <span
                                   className="w-5 h-5 rounded-full flex items-center justify-center font-bold text-white text-[9px] shadow-sm flex-shrink-0"
                                   style={{ backgroundColor: userColor }}

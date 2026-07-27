@@ -434,7 +434,7 @@ const NoteListView = ({
                   </td>
                   <td>
                     <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
-                      <div tabIndex={0} role="button" className="flex items-center gap-2 max-w-[140px] hover:bg-base-200 p-1 rounded transition-colors" title={note.user || "Sin asignar"}>
+                      <div tabIndex={0} role="button" className="flex items-center gap-2 max-w-[140px] hover:bg-base-200 p-1 rounded transition-colors" title={`${note.user || "Sin asignar"}${userConfig?.jobTitle ? ` - ${userConfig.jobTitle}` : ""}`}>
                         {note.user && note.user !== "Sin asignar" ? (
                           <span
                             className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] shadow-sm flex-shrink-0"

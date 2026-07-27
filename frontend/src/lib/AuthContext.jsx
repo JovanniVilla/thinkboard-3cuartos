@@ -53,6 +53,12 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateProfile = async (name, color, jobTitle) => {
+    const res = await api.put("/auth/profile", { name, color, jobTitle });
+    setUser(res.data);
+    return res.data;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -63,6 +69,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateProfile,
       }}
     >
       {children}

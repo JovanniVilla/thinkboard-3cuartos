@@ -29,6 +29,14 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    color: {
+      type: String,
+      default: "#3B82F6",
+    },
+    jobTitle: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

@@ -1,12 +1,15 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { PlusIcon, Settings2Icon, LogOutIcon, UserIcon, ShieldIcon } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
 import toast from "react-hot-toast";
+import UserProfileModal from "./UserProfileModal";
 
 const Navbar = () => {
   const { user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -60,8 +63,9 @@ const Navbar = () => {
                   role="button"
                   className="btn btn-ghost btn-sm gap-2 pl-2 pr-3"
                 >
-                  <div className="w-8 h-8 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
-                    <span className="text-xs font-bold text-primary">{getInitials(user.name)}</span>
+                  <div className="w-8 h-8 rounded-full border border-base-content/10 flex items-center justify-center text-white font-bold text-xs shadow-sm"
+                       style={{ backgroundColor: user.color || "#3B82F6" }}>
+                    <span>{getInitials(user.name)}</span>
                   </div>
                   <span className="hidden md:inline text-sm font-medium text-base-content/80 max-w-[120px] truncate">
                     {user.name}
@@ -74,12 +78,13 @@ const Navbar = () => {
                   {/* User info header */}
                   <li className="pointer-events-none px-3 py-2 border-b border-base-content/10 mb-1">
                     <div className="flex items-center gap-3 p-0 hover:bg-transparent">
-                      <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center shrink-0">
-                        <span className="text-sm font-bold text-primary">{getInitials(user.name)}</span>
+                      <div className="w-10 h-10 rounded-full border border-base-content/10 flex items-center justify-center shrink-0 text-white font-bold text-sm shadow-sm"
+                           style={{ backgroundColor: user.color || "#3B82F6" }}>
+                        <span>{getInitials(user.name)}</span>
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-base-content truncate">{user.name}</p>
-                        <p className="text-xs text-base-content/50 truncate">{user.email}</p>
+                        <p className="text-xs text-base-content/50 truncate">{user.jobTitle || user.email}</p>
                         <div className="flex items-center gap-1 mt-0.5">
                           {isAdmin ? (
                             <span className="badge badge-primary badge-xs gap-1">
@@ -95,6 +100,17 @@ const Navbar = () => {
                         </div>
                       </div>
                     </div>
+                  </li>
+
+                  {/* Profile Config */}
+                  <li>
+                    <button
+                      onClick={() => setIsProfileModalOpen(true)}
+                      className="text-base-content hover:bg-base-200 font-medium gap-2"
+                    >
+                      <Settings2Icon className="size-4" />
+                      Configuración de perfil
+                    </button>
                   </li>
 
                   {/* Logout */}
@@ -113,6 +129,12 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+      {user && (
+        <UserProfileModal 
+          isOpen={isProfileModalOpen} 
+          onClose={() => setIsProfileModalOpen(false)} 
+        />
+      )}
     </header>
   );
 };

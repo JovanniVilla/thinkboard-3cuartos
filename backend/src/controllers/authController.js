@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import Note from "../models/Note.js";
 
 /**
  * Generates a JWT and sets it as an httpOnly cookie on the response.
@@ -150,6 +151,57 @@ export async function getMe(req, res) {
     res.status(200).json(req.user);
   } catch (error) {
     console.error("Error in getMe controller", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+/**
+ * PUT /api/auth/profile
+ * Update the user's profile (name, color, jobTitle).
+ * If name changes, updates associated Notes and Activities.
+ */
+export async function updateProfile(req, res) {
+  try {
+    const { name, color, jobTitle } = req.body;
+    
+    if (!name?.trim()) {
+      return res.status(400).json({ message: "El nombre es obligatorio" });
+    }
+
+    const user = req.user;
+    const oldName = user.name;
+    const newName = name.trim();
+
+    user.name = newName;
+    if (color) user.color = color;
+    if (jobTitle !== undefined) user.jobTitle = jobTitle;
+
+    await user.save();
+
+    // If the name changed, we need to update all notes and activities that use the old name
+    if (oldName !== newName) {
+      // Update note.user
+      await Note.updateMany(
+        { user: oldName },
+        { $set: { user: newName } }
+      );
+
+      // Update note.activities.user
+      await Note.updateMany(
+        { "activities.user": oldName },
+        { $set: { "activities.$[elem].user": newName } },
+        { arrayFilters: [{ "elem.user": oldName }] }
+      );
+
+      // Update mentions in activities (if they mention the old name)
+      // This is a bit complex as mentions is an array of strings, we'd need to use $set with $ map or positional array updates. 
+      // It's acceptable to just leave old mentions as they are text in comments usually, but let's do a simple pull/push if needed, 
+      // or we can just leave mentions since they are immutable history. We will leave mentions alone for now.
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error in updateProfile controller", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }

@@ -14,14 +14,15 @@ const getInitials = (name = "") => {
     .toUpperCase();
 };
 
-const NoteCard = ({ note, setNotes, statuses = [], priorities = [] }) => {
+const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }) => {
   const statusConfig = statuses.find((s) => s.name === note.status);
   const statusColor = statusConfig?.color || "#6B7280";
 
   const priorityConfig = priorities.find((p) => p.name === note.priority);
   const priorityColor = priorityConfig?.color || "#3B82F6";
 
-  const userColor = "#3B82F6";
+  const userConfig = users.find((u) => u.name === note.user);
+  const userColor = userConfig?.color || "#3B82F6";
 
   const handleDelete = async (e, id) => {
     e.preventDefault();

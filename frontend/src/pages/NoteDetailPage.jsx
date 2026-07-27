@@ -351,7 +351,9 @@ const NoteDetailPage = () => {
   const displayedChecklist = hideChecked ? checklistItems.filter((i) => !i.completed) : checklistItems;
 
   const currentStatus = note.status || "Pendiente";
-  const userColor = "#3B82F6"; // Default color as accounts lack a color field
+  const assignedUserConfig = accounts.find((a) => a.name === note.user);
+  const userColor = assignedUserConfig?.color || "#3B82F6";
+  const userJobTitle = assignedUserConfig?.jobTitle || "";
 
   // Comments & activity calculations
   const activities = note.activities || [];
@@ -640,8 +642,8 @@ const NoteDetailPage = () => {
                         >
                           <span className="flex items-center gap-2">
                             <span
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                              style={{ backgroundColor: "#3B82F6" }}
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
+                              style={{ backgroundColor: u.color || "#3B82F6" }}
                             >
                               {getInitials(u.name)}
                             </span>
@@ -1099,7 +1101,7 @@ const NoteDetailPage = () => {
                         <div className="flex items-start gap-2 text-xs">
                           <span
                             className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5 shadow-sm"
-                            style={{ backgroundColor: "#3B82F6" }}
+                            style={{ backgroundColor: accounts.find(a => a.name === act.user)?.color || "#3B82F6" }}
                           >
                             {getInitials(act.user)}
                           </span>
@@ -1234,7 +1236,7 @@ const NoteDetailPage = () => {
                               <div key={rep.id || rIdx} className="flex items-start gap-2 text-[11px]">
                                 <span
                                   className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0 mt-0.5 shadow-sm"
-                                  style={{ backgroundColor: "#10B981" }}
+                                  style={{ backgroundColor: accounts.find(a => a.name === rep.user)?.color || "#10B981" }}
                                 >
                                   {getInitials(rep.user)}
                                 </span>
