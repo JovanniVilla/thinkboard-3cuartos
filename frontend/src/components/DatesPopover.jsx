@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { es } from "date-fns/locale/es";
-import "react-datepicker/dist/react-datepicker.css";
-import { format } from "date-fns";
 import { CalendarIcon, XIcon } from "lucide-react";
 
 registerLocale("es", es);

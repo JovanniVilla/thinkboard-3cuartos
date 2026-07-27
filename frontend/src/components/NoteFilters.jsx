@@ -28,7 +28,6 @@ const NoteFilters = ({
   priorities = [],
   users = [],
   totalNotes = 0,
-  filteredCount = 0,
 }) => {
   const toggleSortOrder = () => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));

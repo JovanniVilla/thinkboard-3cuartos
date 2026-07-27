@@ -41,6 +41,37 @@ ul[data-type="taskList"] input[type="checkbox"] {
   word-break: break-all;
 }
   
-/* React DatePicker Flex Fix */  
-.react-datepicker { display: flex !important; }  
-.react-datepicker__time-container { border-left: 1px solid hsl(var(--bc) / 0.1); } 
+/* React DatePicker Fixes & Styling */  
+.react-datepicker { 
+  display: inline-flex !important; 
+  align-items: flex-start !important;
+  font-family: inherit !important;
+  background-color: hsl(var(--b1)) !important;
+  border-color: hsl(var(--bc) / 0.15) !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1) !important;
+  overflow: hidden !important;
+}  
+.react-datepicker__header {
+  background-color: hsl(var(--b2)) !important;
+  border-bottom-color: hsl(var(--bc) / 0.1) !important;
+}
+.react-datepicker__month-container {
+  float: left !important;
+}
+.react-datepicker__time-container { 
+  float: left !important;
+  border-left: 1px solid hsl(var(--bc) / 0.1) !important; 
+  width: 95px !important;
+} 
+.react-datepicker__time-box {
+  width: 100% !important;
+  height: 230px !important;
+  max-height: 230px !important;
+  overflow-y: auto !important;
+}
+.react-datepicker__time-list {
+  height: auto !important;
+  padding: 0 !important;
+}
+ 

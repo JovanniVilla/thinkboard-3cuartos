@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -64,6 +64,15 @@ const NoteDetailPage = () => {
   const [saving, setSaving] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   
+  const titleTextareaRef = useRef(null);
+
+  useEffect(() => {
+    if (titleTextareaRef.current) {
+      titleTextareaRef.current.style.height = "auto";
+      titleTextareaRef.current.style.height = `${titleTextareaRef.current.scrollHeight}px`;
+    }
+  }, [note?.title]);
+
   const { boardConfig } = useBoardConfig();
 
   // Comments and Activity state
@@ -559,22 +568,15 @@ const NoteDetailPage = () => {
               <div className="flex items-start gap-2.5">
                 <CheckCircle2Icon className="size-6 text-base-content/50 mt-1 flex-shrink-0" />
                 <textarea
+                  ref={titleTextareaRef}
                   className="w-full bg-transparent text-xl sm:text-2xl font-semibold tracking-normal text-base-content/95 font-sans border-0 border-b border-transparent focus:border-primary focus:outline-none transition-colors py-0.5 resize-none overflow-hidden leading-snug"
                   value={note.title}
                   rows={1}
                   onChange={(e) => {
                     setNote({ ...note, title: e.target.value });
-                    e.target.style.height = 'auto';
-                    e.target.style.height = e.target.scrollHeight + 'px';
                   }}
                   onBlur={() => handleSaveNote({ title: note.title })}
                   placeholder="Título de la tarjeta"
-                  ref={(textarea) => {
-                    if (textarea) {
-                      textarea.style.height = 'auto';
-                      textarea.style.height = textarea.scrollHeight + 'px';
-                    }
-                  }}
                 />
               </div>
 
