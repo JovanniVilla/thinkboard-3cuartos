@@ -61,6 +61,11 @@ const noteSchema = new mongoose.Schema(
         updatedAt: { type: Date },
       },
     ],
+    taskDriveLink: {
+      type: String,
+      trim: true,
+      default: "",
+    },
   },
   { timestamps: true } // createdAt, updatedAt
 );

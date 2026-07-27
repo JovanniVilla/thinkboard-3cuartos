@@ -147,6 +147,16 @@ const NoteDetailPage = () => {
     }
   };
 
+  const handleEditTaskLink = () => {
+    const currentLink = note.taskDriveLink || "";
+    const newLink = window.prompt("Introduce el enlace de Google Drive para los archivos de esta tarea:", currentLink);
+    if (newLink !== null) {
+      const trimmedLink = newLink.trim();
+      setNote({ ...note, taskDriveLink: trimmedLink });
+      handleSaveNote({ taskDriveLink: trimmedLink });
+    }
+  };
+
   const extractMentions = (text) => {
     const matches = [...text.matchAll(/data-id="([^"]+)"/g)];
     return [...new Set(matches.map(m => m[1]))];
@@ -458,6 +468,41 @@ const NoteDetailPage = () => {
           </div>
 
           <div className="flex items-center gap-2 text-base-content/60">
+            <div className="flex items-center gap-0.5 mr-2 bg-base-200/50 p-0.5 rounded-lg border border-base-content/10">
+              {note.taskDriveLink ? (
+                <>
+                  <a
+                    href={note.taskDriveLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-ghost gap-2 text-primary"
+                    title="Carpeta de archivos de esta tarea"
+                  >
+                    <FolderIcon className="size-4" />
+                    <span className="hidden sm:inline">Archivos Tarea</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleEditTaskLink}
+                    className="btn btn-sm btn-ghost btn-square text-base-content/60 hover:text-primary"
+                    title="Editar enlace de la carpeta"
+                  >
+                    <Edit3Icon className="size-3.5" />
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleEditTaskLink}
+                  className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-primary"
+                  title="Añadir carpeta de Google Drive"
+                >
+                  <FolderIcon className="size-4" />
+                  <span className="hidden sm:inline">+ Drive Tarea</span>
+                </button>
+              )}
+            </div>
+
             {boardConfig?.driveFolderLink && (
               <a 
                 href={boardConfig.driveFolderLink}

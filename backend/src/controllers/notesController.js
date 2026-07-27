@@ -71,7 +71,7 @@ export async function createNote(req, res) {
 
 export async function updateNote(req, res) {
   try {
-    const { title, content, status, priority, user, keyId, labels, checklist, activities } = req.body;
+    const { title, content, status, priority, user, keyId, labels, checklist, activities, taskDriveLink } = req.body;
 
     const currentNote = await Note.findById(req.params.id);
     if (!currentNote) return res.status(404).json({ message: "Note not found" });
@@ -108,6 +108,7 @@ export async function updateNote(req, res) {
         ...(keyId !== undefined && { keyId }),
         ...(labels !== undefined && { labels }),
         ...(checklist !== undefined && { checklist }),
+        ...(taskDriveLink !== undefined && { taskDriveLink }),
         activities: updatedActivities,
       },
       {
