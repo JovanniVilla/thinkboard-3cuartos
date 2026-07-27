@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Outlet } from "react-router";
 import Navbar from "../components/Navbar";
 import RateLimitedUI from "../components/RateLimitedUI";
 import api from "../lib/axios";
@@ -173,6 +174,7 @@ const HomePage = () => {
           </div>
         )}
       </div>
+      <Outlet />
     </div>
   );
 };

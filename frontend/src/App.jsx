@@ -28,9 +28,10 @@ const App = () => {
         <Route path="/register" element={<RegisterPage />} />
 
         {/* Protected routes */}
-        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>}>
+          <Route path="note/:id" element={<NoteDetailPage />} />
+        </Route>
         <Route path="/create" element={<ProtectedRoute><CreatePage /></ProtectedRoute>} />
-        <Route path="/note/:id" element={<ProtectedRoute><NoteDetailPage /></ProtectedRoute>} />
         <Route path="/board-settings" element={<ProtectedRoute adminOnly><BoardSettingsPage /></ProtectedRoute>} />
       </Routes>
     </div>
