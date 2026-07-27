@@ -96,7 +96,8 @@ const DatesPopover = ({
                     locale="es"
                     className="input input-sm input-bordered w-full text-xs"
                     wrapperClassName="w-full"
-                    withPortal
+                    popperPlacement="right-start"
+                    popperClassName="dates-popover-calendar"
                   />
                 )}
               </div>
@@ -124,7 +125,8 @@ const DatesPopover = ({
                     className="input input-sm input-bordered w-full text-xs"
                     wrapperClassName="w-full"
                     minDate={hasStartDate ? startDate : null}
-                    withPortal
+                    popperPlacement="right-start"
+                    popperClassName="dates-popover-calendar"
                   />
                 )}
               </div>
