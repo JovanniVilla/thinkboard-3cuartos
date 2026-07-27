@@ -80,7 +80,7 @@ const NoteDetailPage = () => {
 
   // Checklist state
   const [newChecklistTitle, setNewChecklistTitle] = useState("");
-  const [hideChecked, setHideChecked] = useState(false);
+  const [hideChecked, setHideChecked] = useState(true);
   const [editingChecklistId, setEditingChecklistId] = useState(null);
   const [editingChecklistTitle, setEditingChecklistTitle] = useState("");
   const [expandChecklist, setExpandChecklist] = useState(false);
