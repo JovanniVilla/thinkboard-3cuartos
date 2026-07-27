@@ -40,3 +40,7 @@ ul[data-type="taskList"] input[type="checkbox"] {
 .prose a {
   word-break: break-all;
 }
+  
+/* React DatePicker Flex Fix */  
+.react-datepicker { display: flex !important; }  
+.react-datepicker__time-container { border-left: 1px solid hsl(var(--bc) / 0.1); } 

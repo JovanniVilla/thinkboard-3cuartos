@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
-import DatePicker from "react-datepicker";
+import DatePicker, { registerLocale } from "react-datepicker";
+import { es } from "date-fns/locale/es";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
 import { CalendarIcon, XIcon } from "lucide-react";
+
+registerLocale("es", es);
 
 const DatesPopover = ({
   startDate: initialStartDate,
@@ -87,10 +90,11 @@ const DatesPopover = ({
                     selected={startDate}
                     onChange={(date) => setStartDate(date)}
                     showTimeSelect
-                    timeFormat="h:mm aa"
+                    timeFormat="HH:mm"
                     timeIntervals={15}
                     timeCaption="Hora"
-                    dateFormat="d MMMM yyyy h:mm aa"
+                    dateFormat="d MMMM yyyy HH:mm"
+                    locale="es"
                     className="input input-sm input-bordered w-full"
                     wrapperClassName="w-full"
                   />
@@ -112,10 +116,11 @@ const DatesPopover = ({
                     selected={dueDate}
                     onChange={(date) => setDueDate(date)}
                     showTimeSelect
-                    timeFormat="h:mm aa"
+                    timeFormat="HH:mm"
                     timeIntervals={15}
                     timeCaption="Hora"
-                    dateFormat="d MMMM yyyy h:mm aa"
+                    dateFormat="d MMMM yyyy HH:mm"
+                    locale="es"
                     className="input input-sm input-bordered w-full"
                     wrapperClassName="w-full"
                     minDate={hasStartDate ? startDate : null}
