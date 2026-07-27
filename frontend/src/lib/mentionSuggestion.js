@@ -2,9 +2,10 @@ import { ReactRenderer } from '@tiptap/react'
 import tippy from 'tippy.js'
 import MentionList from '../components/MentionList'
 
-export default function createMentionSuggestion(users = []) {
+export default function createMentionSuggestion(getUsers = () => []) {
   return {
     items: ({ query }) => {
+      const users = typeof getUsers === 'function' ? getUsers() : getUsers;
       return users.filter(item => item.toLowerCase().includes(query.toLowerCase())).slice(0, 5)
     },
     render: () => {

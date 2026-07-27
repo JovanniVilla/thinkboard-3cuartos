@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -143,6 +143,11 @@ const MarkdownEditor = ({
   compactToolbar = false,
   users = []
 }) => {
+  const usersRef = useRef(users);
+  useEffect(() => {
+    usersRef.current = users;
+  }, [users]);
+
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -150,7 +155,7 @@ const MarkdownEditor = ({
         HTMLAttributes: {
           class: 'mention bg-primary/10 text-primary font-bold px-1 py-0.5 rounded-md cursor-pointer hover:bg-primary/20',
         },
-        suggestion: createMentionSuggestion(users),
+        suggestion: createMentionSuggestion(() => usersRef.current),
       }),
       Link.configure({
         openOnClick: false,
