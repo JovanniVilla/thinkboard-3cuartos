@@ -40,7 +40,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
-            <h1 className="text-3xl font-bold text-primary font-mono tracking-tight">{boardConfig?.projectName || "ThinkBoard"}</h1>
+            <h1 className="hidden sm:block text-2xl md:text-3xl font-bold text-primary font-mono tracking-tight truncate max-w-[200px] md:max-w-[300px]">{boardConfig?.projectName || "ThinkBoard"}</h1>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
