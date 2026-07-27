@@ -550,7 +550,7 @@ const NoteDetailPage = () => {
         </div>
 
         {/* Main Content Layout: 2 Columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 min-h-[600px]">
+        <div className="grid grid-cols-1 lg:grid-cols-12">
           {/* Left Column (Main Card Content) */}
           <div className="lg:col-span-8 p-5 sm:p-6 space-y-4 border-b lg:border-b-0 lg:border-r border-base-content/10">
             {/* Title Section */}
