@@ -12,6 +12,11 @@ const statusConfigSchema = new mongoose.Schema(
       required: true,
       default: "#6B7280",
     },
+    category: {
+      type: String,
+      enum: ["todo", "in_progress", "done"],
+      default: "todo",
+    },
     order: {
       type: Number,
       default: 0,

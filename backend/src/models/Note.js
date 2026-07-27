@@ -66,6 +66,9 @@ const noteSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    startDate: { type: Date, default: null },
+    dueDate: { type: Date, default: null },
+    completedAt: { type: Date, default: null },
   },
   { timestamps: true } // createdAt, updatedAt
 );

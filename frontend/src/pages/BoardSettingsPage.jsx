@@ -37,9 +37,10 @@ const PRESET_COLORS = [
 ];
 
 // ─── Inline-edit row for Status / Priority ──────────────────────────────────
-const EditRow = ({ item, onSave, onCancel, endpoint, typeName }) => {
+const EditRow = ({ item, onSave, onCancel, endpoint, typeName, isStatus }) => {
   const [name, setName] = useState(item.name);
   const [color, setColor] = useState(item.color);
+  const [category, setCategory] = useState(item.category || "todo");
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -49,7 +50,7 @@ const EditRow = ({ item, onSave, onCancel, endpoint, typeName }) => {
     }
     setSaving(true);
     try {
-      const res = await api.put(`${endpoint}/${item._id}`, { name: name.trim(), color });
+      const res = await api.put(`${endpoint}/${item._id}`, { name: name.trim(), color, ...(isStatus && { category }) });
       onSave(res.data);
       toast.success(`${typeName} actualizado`);
     } catch {
@@ -105,6 +106,21 @@ const EditRow = ({ item, onSave, onCancel, endpoint, typeName }) => {
         ))}
       </div>
 
+      {isStatus && (
+        <div className="form-control mt-2">
+          <label className="label pt-0 pb-1"><span className="label-text text-xs">Clasificación</span></label>
+          <select 
+            className="select select-bordered select-sm w-full max-w-xs" 
+            value={category} 
+            onChange={e => setCategory(e.target.value)}
+          >
+            <option value="todo">No Iniciado (Por hacer)</option>
+            <option value="in_progress">En Proceso</option>
+            <option value="done">Completado</option>
+          </select>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 text-sm text-base-content/60">
         <span>Vista previa:</span>
         <span
@@ -150,6 +166,7 @@ const BoardSettingsPage = () => {
   // Create state
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState("#3B82F6");
+  const [newCategory, setNewCategory] = useState("todo");
   const [creating, setCreating] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
@@ -178,6 +195,7 @@ const BoardSettingsPage = () => {
     setActiveTab(tab);
     setNewName("");
     setNewColor("#3B82F6");
+    setNewCategory("todo");
     setEditingId(null);
   };
 
@@ -233,7 +251,7 @@ const BoardSettingsPage = () => {
     setCreating(true);
     try {
       if (activeTab === "statuses") {
-        const res = await api.post("/status", { name: newName.trim(), color: newColor });
+        const res = await api.post("/status", { name: newName.trim(), color: newColor, category: newCategory });
         setStatuses((prev) => [...prev, res.data]);
         toast.success("Estado creado");
       } else if (activeTab === "priorities") {
@@ -247,6 +265,7 @@ const BoardSettingsPage = () => {
       }
       setNewName("");
       setNewColor("#3B82F6");
+      setNewCategory("todo");
     } catch {
       toast.error("Error al crear el elemento");
     } finally {
@@ -552,6 +571,7 @@ const BoardSettingsPage = () => {
                               onCancel={() => setEditingId(null)}
                               endpoint="/status"
                               typeName="Estado"
+                              isStatus={true}
                             />
                           ) : (
                             <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-base-200 transition-colors group border border-transparent hover:border-base-content/10">
@@ -614,6 +634,18 @@ const BoardSettingsPage = () => {
                           />
                         ))}
                       </div>
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Clasificación</span></label>
+                      <select 
+                        className="select select-bordered" 
+                        value={newCategory} 
+                        onChange={e => setNewCategory(e.target.value)}
+                      >
+                        <option value="todo">No Iniciado (Por hacer)</option>
+                        <option value="in_progress">En Proceso</option>
+                        <option value="done">Completado</option>
+                      </select>
                     </div>
                     <div className="card-actions justify-end">
                       <button className="btn btn-primary gap-2" onClick={handleCreate} disabled={creating || !newName.trim()}>

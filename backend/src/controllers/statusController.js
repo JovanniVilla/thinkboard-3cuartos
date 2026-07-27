@@ -2,9 +2,9 @@ import StatusConfig from "../models/StatusConfig.js";
 import Note from "../models/Note.js";
 
 const DEFAULT_STATUSES = [
-  { name: "Pendiente", color: "#6B7280", order: 0 },
-  { name: "En Progreso", color: "#3B82F6", order: 1 },
-  { name: "Completado", color: "#10B981", order: 2 },
+  { name: "Pendiente", color: "#6B7280", order: 0, category: "todo" },
+  { name: "En Progreso", color: "#3B82F6", order: 1, category: "in_progress" },
+  { name: "Completado", color: "#10B981", order: 2, category: "done" },
 ];
 
 // Seed defaults if none exist
@@ -28,7 +28,7 @@ export async function getAllStatuses(_, res) {
 
 export async function createStatus(req, res) {
   try {
-    const { name, color, order } = req.body;
+    const { name, color, order, category } = req.body;
     if (!name?.trim()) {
       return res.status(400).json({ message: "El nombre del estado es requerido" });
     }
@@ -40,6 +40,7 @@ export async function createStatus(req, res) {
       name: name.trim(),
       color: color || "#6B7280",
       order: newOrder,
+      category: category || "todo",
     });
 
     const saved = await status.save();
@@ -52,10 +53,10 @@ export async function createStatus(req, res) {
 
 export async function updateStatus(req, res) {
   try {
-    const { name, color, order } = req.body;
+    const { name, color, order, category } = req.body;
     const updated = await StatusConfig.findByIdAndUpdate(
       req.params.id,
-      { ...(name && { name: name.trim() }), ...(color && { color }), ...(order !== undefined && { order }) },
+      { ...(name && { name: name.trim() }), ...(color && { color }), ...(order !== undefined && { order }), ...(category && { category }) },
       { new: true }
     );
 

@@ -33,6 +33,7 @@ import MarkdownEditor from "../components/MarkdownEditor";
 
 import { useLabels } from "../lib/useLabels";
 import { useBoardConfig } from "../lib/useBoardConfig";
+import DatesPopover from "../components/DatesPopover";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -588,14 +589,14 @@ const NoteDetailPage = () => {
                   <span>Etiqueta</span>
                 </button>
 
-                <button
-                  type="button"
-                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
-                  onClick={() => toast("Función de fechas próximamente", { icon: "📅" })}
-                >
-                  <CalendarIcon className="size-4" />
-                  <span>Dates</span>
-                </button>
+                <DatesPopover 
+                  startDate={note.startDate} 
+                  dueDate={note.dueDate}
+                  onSave={(dates) => {
+                    setNote({ ...note, ...dates });
+                    handleSaveNote(dates);
+                  }}
+                />
 
                 <button
                   type="button"
@@ -736,6 +737,34 @@ const NoteDetailPage = () => {
                 </div>
               </div>
             </div>
+
+            {/* Dates Display Section */}
+            {(note.startDate || note.dueDate) && (
+              <div className="flex items-center gap-4 py-2 text-sm">
+                {note.startDate && (
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Inicio:</span>
+                    <span className="badge badge-lg border border-base-content/10 bg-base-200 gap-1.5 font-medium">
+                      <CalendarIcon className="size-3.5 opacity-70" />
+                      {new Date(note.startDate).toLocaleString("es-ES", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                    </span>
+                  </div>
+                )}
+                {note.dueDate && (
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Vencimiento:</span>
+                    <span className={`badge badge-lg border gap-1.5 font-medium ${
+                      note.completedAt ? "bg-success/20 text-success border-success/30" : 
+                      new Date(note.dueDate) < new Date() ? "bg-error/20 text-error border-error/30" : "bg-base-200 border-base-content/10"
+                    }`}>
+                      <CalendarIcon className="size-3.5 opacity-70" />
+                      {new Date(note.dueDate).toLocaleString("es-ES", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      {note.completedAt && <CheckIcon className="size-3.5" />}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Description Section */}
             <div className="space-y-2 pt-0.5">

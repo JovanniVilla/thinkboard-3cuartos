@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, AtSignIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, AtSignIcon, CalendarIcon, CheckIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { Link } from "react-router";
 import { formatDate } from "../lib/utils";
@@ -253,6 +253,28 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                               <div className="flex items-center gap-1 bg-primary text-primary-content text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm" title={`Tienes ${getMentionCount(note)} mención(es)`}>
                                 <AtSignIcon className="size-3" />
                                 {getMentionCount(note)}
+                              </div>
+                            )}
+
+                            {/* Dates Badge */}
+                            {(note.startDate || note.dueDate) && (
+                              <div className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-sm border ${
+                                note.completedAt ? "bg-success/20 text-success border-success/30" : 
+                                (note.dueDate && new Date(note.dueDate) < new Date()) ? "bg-error/20 text-error border-error/30" : "bg-base-200 text-base-content/70 border-base-content/10"
+                              }`} title={
+                                note.dueDate ? `Vence: ${new Date(note.dueDate).toLocaleString()}` : `Inicia: ${new Date(note.startDate).toLocaleString()}`
+                              }>
+                                <CalendarIcon className="size-3" />
+                                {note.dueDate ? (
+                                  <span>
+                                    {new Date(note.dueDate).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
+                                  </span>
+                                ) : (
+                                  <span>
+                                    {new Date(note.startDate).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
+                                  </span>
+                                )}
+                                {note.completedAt && <CheckIcon className="size-3" />}
                               </div>
                             )}
                           </div>

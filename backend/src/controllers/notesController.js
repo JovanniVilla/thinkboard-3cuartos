@@ -1,5 +1,6 @@
 import Note from "../models/Note.js";
 import BoardConfig from "../models/BoardConfig.js";
+import StatusConfig from "../models/StatusConfig.js";
 
 export async function getAllNotes(_, res) {
   try {
@@ -24,7 +25,7 @@ export async function getNoteById(req, res) {
 
 export async function createNote(req, res) {
   try {
-    const { title, content, status, priority, user, labels, checklist } = req.body;
+    const { title, content, status, priority, user, labels, checklist, startDate, dueDate } = req.body;
 
     let boardConfig = await BoardConfig.findOne();
     let keyId = null;
@@ -40,6 +41,14 @@ export async function createNote(req, res) {
 
     const actor = user && user !== "Sin asignar" ? user : "Sistema";
 
+    let completedAt = null;
+    if (status) {
+      const statusConfig = await StatusConfig.findOne({ name: status });
+      if (statusConfig && statusConfig.category === "done") {
+        completedAt = new Date();
+      }
+    }
+
     const note = new Note({
       ...(keyId && { keyId }),
       title,
@@ -48,6 +57,9 @@ export async function createNote(req, res) {
       ...(priority && { priority }),
       ...(user && { user }),
       createdBy: req.user?._id || null,
+      startDate: startDate || null,
+      dueDate: dueDate || null,
+      completedAt,
       labels: labels || [],
       checklist: checklist || [],
       activities: [
@@ -71,7 +83,7 @@ export async function createNote(req, res) {
 
 export async function updateNote(req, res) {
   try {
-    const { title, content, status, priority, user, keyId, labels, checklist, activities, taskDriveLink } = req.body;
+    const { title, content, status, priority, user, keyId, labels, checklist, activities, taskDriveLink, startDate, dueDate } = req.body;
 
     const currentNote = await Note.findById(req.params.id);
     if (!currentNote) return res.status(404).json({ message: "Note not found" });
@@ -84,9 +96,17 @@ export async function updateNote(req, res) {
     }
 
     let updatedActivities = activities !== undefined ? activities : (currentNote.activities || []);
+    let completedAt = currentNote.completedAt;
     
     // Auto log status changes if status was modified and changed
     if (status !== undefined && status !== currentNote.status) {
+      const statusConfig = await StatusConfig.findOne({ name: status });
+      if (statusConfig && statusConfig.category === "done") {
+        completedAt = new Date();
+      } else if (currentNote.completedAt) {
+        completedAt = null; // Revert completion if moving out of 'done'
+      }
+
       const actor = user || currentNote.user || "Usuario";
       updatedActivities.push({
         id: Date.now().toString(),
@@ -109,6 +129,9 @@ export async function updateNote(req, res) {
         ...(labels !== undefined && { labels }),
         ...(checklist !== undefined && { checklist }),
         ...(taskDriveLink !== undefined && { taskDriveLink }),
+        ...(startDate !== undefined && { startDate }),
+        ...(dueDate !== undefined && { dueDate }),
+        completedAt,
         activities: updatedActivities,
       },
       {

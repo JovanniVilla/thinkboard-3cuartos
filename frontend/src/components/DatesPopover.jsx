@@ -1,0 +1,150 @@
+import { useState, useEffect } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { format } from "date-fns";
+import { CalendarIcon, XIcon } from "lucide-react";
+
+const DatesPopover = ({
+  startDate: initialStartDate,
+  dueDate: initialDueDate,
+  onSave,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [hasStartDate, setHasStartDate] = useState(!!initialStartDate);
+  const [hasDueDate, setHasDueDate] = useState(!!initialDueDate);
+  
+  const [startDate, setStartDate] = useState(initialStartDate ? new Date(initialStartDate) : new Date());
+  const [dueDate, setDueDate] = useState(initialDueDate ? new Date(initialDueDate) : new Date(new Date().setDate(new Date().getDate() + 1)));
+
+  // Sync internal state with props when opened
+  useEffect(() => {
+    if (isOpen) {
+      setHasStartDate(!!initialStartDate);
+      setHasDueDate(!!initialDueDate);
+      setStartDate(initialStartDate ? new Date(initialStartDate) : new Date());
+      setDueDate(initialDueDate ? new Date(initialDueDate) : new Date(new Date().setDate(new Date().getDate() + 1)));
+    }
+  }, [isOpen, initialStartDate, initialDueDate]);
+
+  const handleSave = () => {
+    onSave({
+      startDate: hasStartDate ? startDate.toISOString() : null,
+      dueDate: hasDueDate ? dueDate.toISOString() : null,
+    });
+    setIsOpen(false);
+  };
+
+  const handleRemove = () => {
+    onSave({ startDate: null, dueDate: null });
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <CalendarIcon className="size-4" />
+        <span>Fechas</span>
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop for closing popover */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          ></div>
+
+          {/* Popover Card */}
+          <div className="absolute left-0 top-full mt-2 w-72 bg-base-100 border border-base-content/10 rounded-xl shadow-2xl p-4 z-50 flex flex-col gap-4">
+            <div className="flex items-center justify-between pb-2 border-b border-base-content/10">
+              <span className="font-bold text-base-content text-sm text-center flex-1">Fechas</span>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="text-base-content/60 hover:text-base-content absolute right-4"
+              >
+                <XIcon className="size-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-sm">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-sm checkbox-primary"
+                    checked={hasStartDate}
+                    onChange={(e) => setHasStartDate(e.target.checked)}
+                  />
+                  <span className="font-semibold">Fecha de inicio</span>
+                </label>
+                {hasStartDate && (
+                  <DatePicker
+                    selected={startDate}
+                    onChange={(date) => setStartDate(date)}
+                    showTimeSelect
+                    timeFormat="h:mm aa"
+                    timeIntervals={15}
+                    timeCaption="Hora"
+                    dateFormat="d MMMM yyyy h:mm aa"
+                    className="input input-sm input-bordered w-full"
+                    wrapperClassName="w-full"
+                  />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="checkbox checkbox-sm checkbox-primary"
+                    checked={hasDueDate}
+                    onChange={(e) => setHasDueDate(e.target.checked)}
+                  />
+                  <span className="font-semibold">Fecha de vencimiento</span>
+                </label>
+                {hasDueDate && (
+                  <DatePicker
+                    selected={dueDate}
+                    onChange={(date) => setDueDate(date)}
+                    showTimeSelect
+                    timeFormat="h:mm aa"
+                    timeIntervals={15}
+                    timeCaption="Hora"
+                    dateFormat="d MMMM yyyy h:mm aa"
+                    className="input input-sm input-bordered w-full"
+                    wrapperClassName="w-full"
+                    minDate={hasStartDate ? startDate : null}
+                  />
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm w-full"
+                  onClick={handleSave}
+                >
+                  Guardar
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm w-full text-base-content/60 hover:bg-base-200"
+                  onClick={handleRemove}
+                >
+                  Quitar
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default DatesPopover;

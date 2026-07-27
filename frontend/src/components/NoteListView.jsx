@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon, CheckCircle2Icon, PlusIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon, CheckCircle2Icon, PlusIcon, CalendarIcon, CheckIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useLabels } from "../lib/useLabels";
 import { Link, useNavigate } from "react-router";
@@ -167,6 +167,11 @@ const NoteListView = ({
                 <div className="flex items-center gap-1">
                   <span>Prioridad</span>
                   {renderSortIndicator("priority")}
+                </div>
+              </th>
+              <th className="py-3.5 hidden md:table-cell">
+                <div className="flex items-center gap-1 text-base-content/70">
+                  <span>Fechas</span>
                 </div>
               </th>
               <th
@@ -402,6 +407,30 @@ const NoteListView = ({
                         ))}
                       </ul>
                     </div>
+                  </td>
+                  <td className="hidden md:table-cell">
+                    {(note.startDate || note.dueDate) ? (
+                      <div className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-sm border inline-flex ${
+                        note.completedAt ? "bg-success/20 text-success border-success/30" : 
+                        (note.dueDate && new Date(note.dueDate) < new Date()) ? "bg-error/20 text-error border-error/30" : "bg-base-200 text-base-content/70 border-base-content/10"
+                      }`} title={
+                        note.dueDate ? `Vence: ${new Date(note.dueDate).toLocaleString()}` : `Inicia: ${new Date(note.startDate).toLocaleString()}`
+                      }>
+                        <CalendarIcon className="size-3" />
+                        {note.dueDate ? (
+                          <span>
+                            {new Date(note.dueDate).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
+                          </span>
+                        ) : (
+                          <span>
+                            {new Date(note.startDate).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
+                          </span>
+                        )}
+                        {note.completedAt && <CheckIcon className="size-3" />}
+                      </div>
+                    ) : (
+                      <span className="text-xs text-base-content/40">-</span>
+                    )}
                   </td>
                   <td>
                     <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
