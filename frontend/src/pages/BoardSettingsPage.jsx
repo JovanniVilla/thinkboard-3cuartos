@@ -171,6 +171,7 @@ const BoardSettingsPage = () => {
   const [editingId, setEditingId] = useState(null);
 
   // Project Config state
+  const [projectNameInput, setProjectNameInput] = useState("");
   const [projectKeyInput, setProjectKeyInput] = useState("");
   const [taskCounterInput, setTaskCounterInput] = useState("");
   const [driveFolderLinkInput, setDriveFolderLinkInput] = useState("");
@@ -179,6 +180,7 @@ const BoardSettingsPage = () => {
 
   useEffect(() => {
     if (boardConfig) {
+      setProjectNameInput(boardConfig.projectName || "ThinkBoard");
       setProjectKeyInput(boardConfig.projectKey || "");
       setTaskCounterInput(boardConfig.taskCounter || 1);
       setDriveFolderLinkInput(boardConfig.driveFolderLink || "");
@@ -203,11 +205,13 @@ const BoardSettingsPage = () => {
     setSavingConfig(true);
     try {
       const res = await api.put("/board-config", {
+        projectName: projectNameInput.trim().substring(0, 25),
         projectKey: projectKeyInput.trim().toUpperCase(),
         taskCounter: Number(taskCounterInput) || 1,
         driveFolderLink: driveFolderLinkInput.trim(),
       });
       setBoardConfig(res.data);
+      setProjectNameInput(res.data.projectName || "ThinkBoard");
       setProjectKeyInput(res.data.projectKey || "");
       setTaskCounterInput(res.data.taskCounter || 1);
       setDriveFolderLinkInput(res.data.driveFolderLink || "");
@@ -430,6 +434,23 @@ const BoardSettingsPage = () => {
                   ) : (
                     <div className="space-y-6">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 p-5 bg-base-200/50 rounded-2xl border border-base-content/10">
+                        <div className="form-control sm:col-span-2">
+                          <label className="label pt-0 pb-1.5">
+                            <span className="label-text font-bold text-sm">Nombre del proyecto</span>
+                          </label>
+                          <input
+                            type="text"
+                            maxLength={25}
+                            placeholder="Ej: ThinkBoard"
+                            className="input input-bordered text-lg"
+                            value={projectNameInput}
+                            onChange={(e) => setProjectNameInput(e.target.value)}
+                          />
+                          <label className="label pb-0 pt-1">
+                            <span className="label-text-alt text-base-content/50">Se mostrará en la barra de navegación (máximo 25 caracteres).</span>
+                          </label>
+                        </div>
+
                         <div className="form-control">
                           <label className="label pt-0 pb-1.5">
                             <span className="label-text font-bold text-sm">Nombre clave del proyecto (Prefijo)</span>

@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const boardConfigSchema = new mongoose.Schema(
   {
+    projectName: {
+      type: String,
+      trim: true,
+      default: "ThinkBoard",
+      maxlength: 25,
+    },
     projectKey: {
       type: String,
       trim: true,

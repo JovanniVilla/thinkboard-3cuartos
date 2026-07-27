@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import api from "./axios";
 
 export function useBoardConfig() {
-  const [boardConfig, setBoardConfig] = useState({ projectKey: "", taskCounter: 1 });
+  const [boardConfig, setBoardConfig] = useState({ projectKey: "", taskCounter: 1, projectName: "ThinkBoard" });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {

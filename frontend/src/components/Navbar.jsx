@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router";
 import { PlusIcon, Settings2Icon, LogOutIcon, UserIcon, ShieldIcon } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
+import { useBoardConfig } from "../lib/useBoardConfig";
 import toast from "react-hot-toast";
 import UserProfileModal from "./UserProfileModal";
 
 const Navbar = () => {
   const { user, isAdmin, logout } = useAuth();
+  const { boardConfig } = useBoardConfig();
   const navigate = useNavigate();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
@@ -38,7 +40,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
-            <h1 className="text-3xl font-bold text-primary font-mono tracking-tight">ThinkBoard</h1>
+            <h1 className="text-3xl font-bold text-primary font-mono tracking-tight">{boardConfig?.projectName || "ThinkBoard"}</h1>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />

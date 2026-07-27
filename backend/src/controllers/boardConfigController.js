@@ -16,7 +16,7 @@ export async function getBoardConfig(req, res) {
 
 export async function updateBoardConfig(req, res) {
   try {
-    const { projectKey, taskCounter, driveFolderLink } = req.body;
+    const { projectKey, taskCounter, driveFolderLink, projectName } = req.body;
     let boardConfig = await BoardConfig.findOne();
     if (!boardConfig) {
       boardConfig = new BoardConfig();
@@ -36,6 +36,9 @@ export async function updateBoardConfig(req, res) {
     }
     if (driveFolderLink !== undefined) {
       boardConfig.driveFolderLink = driveFolderLink.trim();
+    }
+    if (projectName !== undefined) {
+      boardConfig.projectName = projectName.trim().substring(0, 25);
     }
 
     const newProjectKey = (boardConfig.projectKey || "").trim().toUpperCase();
