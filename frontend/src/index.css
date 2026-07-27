@@ -91,5 +91,8 @@ ul[data-type="taskList"] input[type="checkbox"] {
   background-color: hsl(var(--p)) !important;
   color: hsl(var(--pc)) !important;
 }
-
- 
+/* Portal overlay must sit above the task detail modal (z-50) */
+.react-datepicker__portal {
+  z-index: 9999 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
