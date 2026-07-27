@@ -88,12 +88,8 @@ export async function updateNote(req, res) {
     const currentNote = await Note.findById(req.params.id);
     if (!currentNote) return res.status(404).json({ message: "Note not found" });
 
-    // Authorization: only the creator or admin can update
-    const isOwner = currentNote.createdBy && req.user && currentNote.createdBy.toString() === req.user._id.toString();
-    const isAdmin = req.user?.role === "admin";
-    if (!isOwner && !isAdmin) {
-      return res.status(403).json({ message: "No tienes permiso para editar esta nota" });
-    }
+    // Authorization: In this board, any authenticated user can update the note.
+    // (This allows users to assign tasks, edit their comments, move tasks, etc.)
 
     let updatedActivities = activities !== undefined ? activities : (currentNote.activities || []);
     let completedAt = currentNote.completedAt;
