@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { es } from "date-fns/locale/es";
+import "react-datepicker/dist/react-datepicker.css";
 import { CalendarIcon, XIcon } from "lucide-react";
 
 registerLocale("es", es);
@@ -60,7 +61,7 @@ const DatesPopover = ({
           ></div>
 
           {/* Popover Card */}
-          <div className="absolute left-0 top-full mt-2 w-72 bg-base-100 border border-base-content/10 rounded-xl shadow-2xl p-4 z-50 flex flex-col gap-4">
+          <div className="absolute left-0 top-full mt-2 w-80 bg-base-100 border border-base-content/10 rounded-xl shadow-2xl p-4 z-50 flex flex-col gap-4">
             <div className="flex items-center justify-between pb-2 border-b border-base-content/10">
               <span className="font-bold text-base-content text-sm text-center flex-1">Fechas</span>
               <button
@@ -93,8 +94,9 @@ const DatesPopover = ({
                     timeCaption="Hora"
                     dateFormat="d MMMM yyyy HH:mm"
                     locale="es"
-                    className="input input-sm input-bordered w-full"
+                    className="input input-sm input-bordered w-full text-xs"
                     wrapperClassName="w-full"
+                    popperPlacement="bottom-start"
                   />
                 )}
               </div>
@@ -119,9 +121,10 @@ const DatesPopover = ({
                     timeCaption="Hora"
                     dateFormat="d MMMM yyyy HH:mm"
                     locale="es"
-                    className="input input-sm input-bordered w-full"
+                    className="input input-sm input-bordered w-full text-xs"
                     wrapperClassName="w-full"
                     minDate={hasStartDate ? startDate : null}
+                    popperPlacement="bottom-start"
                   />
                 )}
               </div>
