@@ -4,7 +4,7 @@ import StatusConfig from "../models/StatusConfig.js";
 
 export async function getAllNotes(_, res) {
   try {
-    const notes = await Note.find().sort({ createdAt: -1 }); // -1 will sort in desc. order (newest first)
+    const notes = await Note.find({ archived: { $ne: true } }).sort({ createdAt: -1 }); // -1 will sort in desc. order (newest first)
     res.status(200).json(notes);
   } catch (error) {
     console.error("Error in getAllNotes controller", error);
@@ -197,11 +197,11 @@ export async function deleteNote(req, res) {
     const isOwner = currentNote.createdBy && req.user && currentNote.createdBy.toString() === req.user._id.toString();
     const isAdmin = req.user?.role === "admin";
     if (!isOwner && !isAdmin) {
-      return res.status(403).json({ message: "No tienes permiso para eliminar esta nota" });
+      return res.status(403).json({ message: "No tienes permiso para archivar esta nota" });
     }
 
-    await Note.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "Note deleted successfully!" });
+    await Note.findByIdAndUpdate(req.params.id, { archived: true });
+    res.status(200).json({ message: "Note archived successfully!" });
   } catch (error) {
     console.error("Error in deleteNote controller", error);
     res.status(500).json({ message: "Internal server error" });

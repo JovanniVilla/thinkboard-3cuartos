@@ -22,6 +22,7 @@ import {
   PencilIcon,
   CheckIcon,
   FolderIcon,
+  ArchiveIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useStatuses } from "../lib/useStatuses";
@@ -125,15 +126,15 @@ const NoteDetailPage = () => {
   }, [id]);
 
   const handleDeleteNote = async () => {
-    if (!window.confirm("¿Estás seguro de que deseas eliminar esta tarea?")) return;
+    if (!window.confirm("¿Estás seguro de que deseas archivar esta tarea?")) return;
 
     try {
       await api.delete(`/notes/${id}`);
-      toast.success("Tarea eliminada");
+      toast.success("Tarea archivada");
       navigate("/");
     } catch (error) {
-      console.error("Error deleting the note:", error);
-      toast.error("Error al eliminar la tarea");
+      console.error("Error archiving the note:", error);
+      toast.error("Error al archivar la tarea");
     }
   };
 
@@ -993,8 +994,8 @@ const NoteDetailPage = () => {
                 onClick={handleDeleteNote}
                 className="btn btn-error btn-outline btn-sm gap-1.5 rounded-lg"
               >
-                <Trash2Icon className="size-4" />
-                <span>Eliminar Tarea</span>
+                <ArchiveIcon className="size-4" />
+                <span>Archivar Tarea</span>
               </button>
 
               <button
