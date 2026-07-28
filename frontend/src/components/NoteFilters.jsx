@@ -106,7 +106,7 @@ const NoteFilters = ({
                 <div className="badge badge-primary badge-xs size-2 p-0 absolute top-1 right-1 sm:static sm:top-auto sm:right-auto"></div>
               )}
             </div>
-            <ul tabIndex={0} className="dropdown-content z-[10] menu p-4 shadow-lg bg-base-100 rounded-box w-72 flex flex-col gap-4 mt-2 border border-base-content/10">
+            <ul tabIndex={0} className="dropdown-content z-50 menu p-4 shadow-lg bg-base-100 rounded-box w-72 flex flex-col gap-4 mt-2 border border-base-content/10">
               
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-sm">Filtros</span>
