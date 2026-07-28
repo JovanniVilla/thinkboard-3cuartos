@@ -117,26 +117,26 @@ const NoteListView = ({
 
   return (
     <div className="bg-base-100 rounded-xl shadow-sm border border-base-content/10 overflow-hidden">
-      <div className="overflow-x-auto">
+      <div className="overflow-auto max-h-[calc(100vh-220px)] min-h-[300px]">
         <table className="table w-full">
           {/* Table Header */}
-          <thead className="bg-base-200/60 text-base-content/70 text-xs uppercase tracking-wider">
+          <thead className="bg-base-200/95 backdrop-blur text-base-content/70 text-xs uppercase tracking-wider sticky top-0 z-10 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <tr>
               <th
-                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5 w-24"
+                className="cursor-pointer hover:bg-base-300 transition-colors py-3.5 w-24"
                 onClick={() => handleHeaderClick("keyId")}
               >
                 <div className="flex items-center gap-1">
-                  <span>Id de la tarea</span>
+                  <span>ID</span>
                   {renderSortIndicator("keyId")}
                 </div>
               </th>
               <th
-                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5"
+                className="cursor-pointer hover:bg-base-300 transition-colors py-3.5"
                 onClick={() => handleHeaderClick("title")}
               >
                 <div className="flex items-center gap-1">
-                  <span>Nombre de la tarea</span>
+                  <span>Nombre</span>
                   {renderSortIndicator("title")}
                 </div>
               </th>
