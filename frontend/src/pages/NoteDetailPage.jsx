@@ -398,16 +398,16 @@ const NoteDetailPage = () => {
       {/* Card Detail Modal Window Container */}
       <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-4 mb-12 flex-shrink-0" onClick={e => e.stopPropagation()}>
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-base-content/10 bg-base-100">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-base-content/10 bg-base-100 flex-wrap gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Status Dropdown Pill */}
             <div className="dropdown">
               <label
                 tabIndex={0}
-                className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1 sm:gap-2 rounded-lg cursor-pointer px-2 sm:px-3"
+                className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
               >
                 <span>{currentStatus}</span>
-                <ChevronDownIcon className="size-4 text-base-content/60" />
+                <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
               </label>
               <ul
                 tabIndex={0}
@@ -442,18 +442,18 @@ const NoteDetailPage = () => {
             <div className="dropdown">
               <label
                 tabIndex={0}
-                className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1 sm:gap-2 rounded-lg cursor-pointer px-2 sm:px-3"
+                className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
               >
                 {(() => {
                   const currentPriority = (priorities || []).find(p => p.name === note.priority);
                   return (
                     <>
-                      <ZapIcon className="size-4" style={{ color: currentPriority?.color || "#6B7280" }} />
+                      <ZapIcon className="size-4 flex-shrink-0" style={{ color: currentPriority?.color || "#6B7280" }} />
                       <span>{note.priority || "Media"}</span>
                     </>
                   );
                 })()}
-                <ChevronDownIcon className="size-4 text-base-content/60" />
+                <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
               </label>
               <ul
                 tabIndex={0}
