@@ -114,7 +114,7 @@ const HomePage = () => {
 
       {isRateLimited && <RateLimitedUI />}
 
-      <div className="w-full px-4 sm:px-8 mt-6">
+      <div className="w-full px-2 sm:px-4 mt-2">
         {loading && <div className="text-center text-primary py-10">Cargando tareas...</div>}
 
         {notes.length === 0 && !isRateLimited && !loading && <NotesNotFound />}

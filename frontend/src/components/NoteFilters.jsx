@@ -48,12 +48,12 @@ const NoteFilters = ({
   };
 
   return (
-    <div className="bg-base-100 rounded-xl p-3 sm:p-4 shadow-sm border border-base-content/10 mb-6 w-full">
-      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
+    <div className="bg-base-100 rounded-xl p-2 sm:p-3 shadow-sm border border-base-content/10 mb-3 w-full">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
         
         {/* Left Side: Title and Count */}
         <div className="flex items-center gap-2 pl-1">
-          <h2 className="font-bold text-lg text-base-content whitespace-nowrap">Mis Tareas</h2>
+          <h2 className="font-bold text-base sm:text-lg text-base-content whitespace-nowrap">Tareas</h2>
           <span className="badge badge-primary badge-sm font-semibold">{totalNotes}</span>
         </div>
 

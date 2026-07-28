@@ -216,7 +216,7 @@ const NoteListView = ({
                 >
                   <td className="font-medium text-base-content/70">
                     {note.keyId ? (
-                      <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30">
+                      <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 whitespace-nowrap">
                         {note.keyId}
                       </span>
                     ) : (
