@@ -398,8 +398,10 @@ const NoteDetailPage = () => {
       {/* Card Detail Modal Window Container */}
       <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-4 mb-12 flex-shrink-0" onClick={e => e.stopPropagation()}>
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-base-content/10 bg-base-100 flex-wrap gap-2">
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-start justify-between px-3 py-2 border-b border-base-content/10 bg-base-100 gap-2">
+          
+          {/* Main Group: Status, Priority, ID, and other tools (wraps internally) */}
+          <div className="flex flex-1 items-center gap-2 flex-wrap text-base-content/60">
             {/* Status Dropdown Pill */}
             <div className="dropdown">
               <label
@@ -486,9 +488,8 @@ const NoteDetailPage = () => {
                 {note.keyId}
               </span>
             )}
-          </div>
 
-          <div className="flex items-center gap-2 text-base-content/60">
+            {/* Other header tools */}
             <div className="flex items-center gap-0.5 mr-1 sm:mr-2 bg-base-200/50 p-0.5 rounded-lg border border-base-content/10">
               {note.taskDriveLink ? (
                 <>
@@ -536,7 +537,9 @@ const NoteDetailPage = () => {
                 <span className="hidden sm:inline">Carpeta del Proyecto</span>
               </a>
             )}
+            
             <ThemeToggle />
+            
             <button
               type="button"
               className="p-1.5 hover:bg-base-200 rounded-lg transition-colors"
@@ -544,6 +547,10 @@ const NoteDetailPage = () => {
             >
               <ImageIcon className="size-5" />
             </button>
+          </div>
+
+          {/* Right Group: More and Close (always top right) */}
+          <div className="flex items-center gap-1 text-base-content/60">
             <button
               type="button"
               className="p-1.5 hover:bg-base-200 rounded-lg transition-colors"
