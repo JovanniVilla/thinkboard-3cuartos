@@ -398,13 +398,13 @@ const NoteDetailPage = () => {
       {/* Card Detail Modal Window Container */}
       <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-4 mb-12 flex-shrink-0" onClick={e => e.stopPropagation()}>
         {/* Header Bar */}
-        <div className="flex items-center justify-between px-5 py-2.5 border-b border-base-content/10 bg-base-100">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-base-content/10 bg-base-100">
+          <div className="flex items-center gap-2">
             {/* Status Dropdown Pill */}
             <div className="dropdown">
               <label
                 tabIndex={0}
-                className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-semibold gap-2 rounded-lg cursor-pointer"
+                className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1 sm:gap-2 rounded-lg cursor-pointer px-2 sm:px-3"
               >
                 <span>{currentStatus}</span>
                 <ChevronDownIcon className="size-4 text-base-content/60" />
@@ -442,7 +442,7 @@ const NoteDetailPage = () => {
             <div className="dropdown">
               <label
                 tabIndex={0}
-                className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-semibold gap-2 rounded-lg cursor-pointer"
+                className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1 sm:gap-2 rounded-lg cursor-pointer px-2 sm:px-3"
               >
                 {(() => {
                   const currentPriority = (priorities || []).find(p => p.name === note.priority);
@@ -482,21 +482,21 @@ const NoteDetailPage = () => {
             </div>
 
             {note.keyId && (
-              <span className="badge bg-primary/20 text-primary border border-primary/30 font-mono font-bold text-xs px-2.5 py-2">
+              <span className="badge bg-primary/20 text-primary border border-primary/30 font-mono font-bold text-xs px-2 py-1 whitespace-nowrap">
                 {note.keyId}
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-2 text-base-content/60">
-            <div className="flex items-center gap-0.5 mr-2 bg-base-200/50 p-0.5 rounded-lg border border-base-content/10">
+            <div className="flex items-center gap-0.5 mr-1 sm:mr-2 bg-base-200/50 p-0.5 rounded-lg border border-base-content/10">
               {note.taskDriveLink ? (
                 <>
                   <a
                     href={note.taskDriveLink}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn btn-sm btn-ghost gap-2 text-primary"
+                    className="btn btn-xs sm:btn-sm btn-ghost gap-1 sm:gap-2 text-primary px-1.5 sm:px-3"
                     title="Carpeta de archivos de esta tarea"
                   >
                     <FolderIcon className="size-4" />
@@ -505,7 +505,7 @@ const NoteDetailPage = () => {
                   <button
                     type="button"
                     onClick={handleEditTaskLink}
-                    className="btn btn-sm btn-ghost btn-square text-base-content/60 hover:text-primary"
+                    className="btn btn-xs sm:btn-sm btn-ghost btn-square text-base-content/60 hover:text-primary"
                     title="Editar enlace de la carpeta"
                   >
                     <Edit3Icon className="size-3.5" />
@@ -515,7 +515,7 @@ const NoteDetailPage = () => {
                 <button
                   type="button"
                   onClick={handleEditTaskLink}
-                  className="btn btn-sm btn-ghost gap-2 text-base-content/60 hover:text-primary"
+                  className="btn btn-xs sm:btn-sm btn-ghost gap-1 sm:gap-2 text-base-content/60 hover:text-primary px-1.5 sm:px-3"
                   title="Añadir carpeta de Google Drive"
                 >
                   <FolderIcon className="size-4" />
@@ -564,7 +564,7 @@ const NoteDetailPage = () => {
         {/* Main Content Layout: 2 Columns */}
         <div className="grid grid-cols-1 lg:grid-cols-12">
           {/* Left Column (Main Card Content) */}
-          <div className="lg:col-span-8 p-5 sm:p-6 space-y-4 border-b lg:border-b-0 lg:border-r border-base-content/10">
+          <div className="lg:col-span-8 p-3 sm:p-5 space-y-4 border-b lg:border-b-0 lg:border-r border-base-content/10">
             {/* Title Section */}
             <div className="space-y-2.5">
               <div className="flex items-start gap-2.5">
