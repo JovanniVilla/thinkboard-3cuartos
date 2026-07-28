@@ -59,6 +59,12 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  const changePassword = async (newPassword) => {
+    const res = await api.put("/auth/change-password", { newPassword });
+    setUser(res.data);
+    return res.data;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -70,6 +76,7 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateProfile,
+        changePassword,
       }}
     >
       {children}

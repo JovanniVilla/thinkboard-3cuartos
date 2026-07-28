@@ -206,3 +206,32 @@ export async function updateProfile(req, res) {
   }
 }
 
+/**
+ * PUT /api/auth/change-password
+ * Change the user's password (e.g. after a forced reset).
+ */
+export async function changePassword(req, res) {
+  try {
+    const { newPassword } = req.body;
+
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ message: "La nueva contraseña debe tener al menos 6 caracteres" });
+    }
+
+    const user = req.user;
+    
+    // Hash password before saving - Wait, the schema has a pre-save hook that hashes the password automatically!
+    // So we just set it directly.
+    user.password = newPassword;
+    user.requiresPasswordChange = false;
+
+    await user.save();
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error in changePassword controller", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+

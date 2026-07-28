@@ -1063,6 +1063,27 @@ const BoardSettingsPage = () => {
 
                                 <td className="text-right">
                                   <div className="flex items-center justify-end gap-2">
+                                    <button
+                                      type="button"
+                                      className="btn btn-ghost btn-sm text-info hover:bg-info/10"
+                                      onClick={async () => {
+                                        if (!window.confirm(`¿Generar una contraseña temporal aleatoria para ${acc.name}?`)) return;
+                                        try {
+                                          const res = await api.put(`/accounts/${acc._id}/reset-password`);
+                                          // Ensure prompt is visible or use a modal, but standard alert/prompt works:
+                                          window.prompt(
+                                            "La contraseña ha sido restablecida. Copia la contraseña temporal y compártela con el usuario:", 
+                                            res.data.temporaryPassword
+                                          );
+                                        } catch (error) {
+                                          toast.error(error.response?.data?.message || "Error al restablecer contraseña");
+                                        }
+                                      }}
+                                      title="Restablecer contraseña"
+                                    >
+                                      <KeyRoundIcon className="size-4" />
+                                    </button>
+
                                     {!acc.isApproved ? (
                                       <button
                                         type="button"

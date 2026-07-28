@@ -5,6 +5,7 @@ import {
   rejectAccount,
   changeRole,
   deleteAccount,
+  resetUserPassword,
 } from "../controllers/accountController.js";
 import { protectRoute, requireAdmin } from "../middleware/auth.js";
 
@@ -21,6 +22,7 @@ router.use(requireAdmin);
 router.put("/:id/approve", approveAccount);
 router.put("/:id/reject", rejectAccount);
 router.put("/:id/role", changeRole);
+router.put("/:id/reset-password", resetUserPassword);
 router.delete("/:id", deleteAccount);
 
 export default router;

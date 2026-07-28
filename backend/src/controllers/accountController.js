@@ -122,3 +122,32 @@ export async function deleteAccount(req, res) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
+/**
+ * PUT /api/accounts/:id/reset-password
+ * Admin generates a temporary password for the user.
+ */
+export async function resetUserPassword(req, res) {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "Cuenta no encontrada" });
+    }
+
+    // Generate random 8-character password
+    const newPassword = Math.random().toString(36).slice(-8);
+
+    // Save and flag requires password change
+    user.password = newPassword;
+    user.requiresPasswordChange = true;
+    await user.save(); // Pre-save hook will hash the password
+
+    res.status(200).json({ 
+      message: "Contraseña restablecida correctamente", 
+      temporaryPassword: newPassword 
+    });
+  } catch (error) {
+    console.error("Error in resetUserPassword controller", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}

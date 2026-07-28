@@ -1,6 +1,7 @@
 import { Navigate } from "react-router";
 import { useAuth } from "../lib/AuthContext";
 import { LoaderIcon } from "lucide-react";
+import ForcePasswordChange from "./ForcePasswordChange";
 
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading, isAdmin } = useAuth();
@@ -15,6 +16,15 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user.requiresPasswordChange) {
+    return (
+      <>
+        {children}
+        <ForcePasswordChange />
+      </>
+    );
   }
 
   if (adminOnly && !isAdmin) {
