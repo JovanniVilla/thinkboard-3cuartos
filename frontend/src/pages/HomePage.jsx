@@ -12,6 +12,7 @@ import NoteListView from "../components/NoteListView";
 import NoteKanbanView from "../components/NoteKanbanView";
 import NoteFilters from "../components/NoteFilters";
 import { ListIcon, Columns3Icon } from "lucide-react";
+import { useAuth } from "../lib/AuthContext";
 
 const HomePage = () => {
   const [isRateLimited, setIsRateLimited] = useState(false);
@@ -21,6 +22,7 @@ const HomePage = () => {
   const { statuses } = useStatuses();
   const { priorities } = usePriorities();
   const { accounts } = useAccounts();
+  const { user: currentUser } = useAuth();
 
   // View Mode: "list" | "board"
   const [viewMode, setViewMode] = useState("list");
@@ -31,6 +33,7 @@ const HomePage = () => {
   const [selectedPriority, setSelectedPriority] = useState("");
   const [selectedUser, setSelectedUser] = useState("");
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showMyTasks, setShowMyTasks] = useState(false);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
 
@@ -75,6 +78,15 @@ const HomePage = () => {
       }
       if (!showCompleted && selectedStatus !== "Completado" && note.status?.toLowerCase() === "completado") {
         return false;
+      }
+      if (showMyTasks && currentUser?.name) {
+        const isAssigned = note.user === currentUser.name;
+        const isMentioned = (note.activities || []).some(
+          (act) => act.mentions && act.mentions.includes(currentUser.name)
+        );
+        if (!isAssigned && !isMentioned) {
+          return false;
+        }
       }
       return true;
     })
@@ -136,6 +148,8 @@ const HomePage = () => {
               setSelectedUser={setSelectedUser}
               showCompleted={showCompleted}
               setShowCompleted={setShowCompleted}
+              showMyTasks={showMyTasks}
+              setShowMyTasks={setShowMyTasks}
               sortBy={sortBy}
               setSortBy={setSortBy}
               sortOrder={sortOrder}

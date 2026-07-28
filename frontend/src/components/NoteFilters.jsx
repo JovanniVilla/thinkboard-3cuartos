@@ -21,6 +21,8 @@ const NoteFilters = ({
   setSelectedUser,
   showCompleted,
   setShowCompleted,
+  showMyTasks,
+  setShowMyTasks,
   sortBy,
   setSortBy,
   sortOrder,
@@ -38,13 +40,14 @@ const NoteFilters = ({
     if (sortBy !== "createdAt") setSortBy("createdAt");
   };
 
-  const hasActiveFilters = selectedStatus || selectedPriority || selectedUser || showCompleted;
+  const hasActiveFilters = selectedStatus || selectedPriority || selectedUser || showCompleted || showMyTasks;
 
   const clearFilters = () => {
     setSelectedStatus("");
     setSelectedPriority("");
     setSelectedUser("");
     setShowCompleted(false);
+    setShowMyTasks(false);
   };
 
   return (
@@ -165,6 +168,16 @@ const NoteFilters = ({
                   ))}
                 </select>
               </div>
+
+              <label className="label cursor-pointer gap-2 bg-base-200/30 border border-base-content/10 px-3 py-2 rounded-lg mt-1">
+                <span className="label-text text-sm whitespace-nowrap">Mis tareas</span>
+                <input
+                  type="checkbox"
+                  className="checkbox checkbox-sm checkbox-primary"
+                  checked={showMyTasks}
+                  onChange={(e) => setShowMyTasks(e.target.checked)}
+                />
+              </label>
 
               <label className="label cursor-pointer gap-2 bg-base-200/30 border border-base-content/10 px-3 py-2 rounded-lg mt-1">
                 <span className="label-text text-sm whitespace-nowrap">Mostrar completados</span>
