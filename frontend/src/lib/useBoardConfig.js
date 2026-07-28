@@ -20,5 +20,11 @@ export function useBoardConfig() {
     fetchBoardConfig();
   }, []);
 
+  useEffect(() => {
+    if (boardConfig?.projectName) {
+      document.title = boardConfig.projectName;
+    }
+  }, [boardConfig?.projectName]);
+
   return { boardConfig, setBoardConfig, loading };
 }
