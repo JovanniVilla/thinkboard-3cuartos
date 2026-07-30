@@ -19,6 +19,9 @@ import {
   ClockIcon,
   CheckCircle2Icon,
   TagIcon,
+  DatabaseIcon,
+  UploadIcon,
+  DownloadIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
@@ -153,7 +156,7 @@ const EditRow = ({ item, onSave, onCancel, endpoint, typeName, isStatus }) => {
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 const BoardSettingsPage = () => {
-  const [activeTab, setActiveTab] = useState("project"); // "project" | "statuses" | "priorities" | "users" | "accounts"
+  const [activeTab, setActiveTab] = useState("project"); // "project" | "statuses" | "priorities" | "users" | "accounts" | "database"
 
   // Data Hooks
   const { statuses, setStatuses, loading: loadingStatuses } = useStatuses();
@@ -177,6 +180,13 @@ const BoardSettingsPage = () => {
   const [driveFolderLinkInput, setDriveFolderLinkInput] = useState("");
   const [savingConfig, setSavingConfig] = useState(false);
   const [assigningKeys, setAssigningKeys] = useState(false);
+
+  // Database Backup State
+  const [exportingDB, setExportingDB] = useState(false);
+  const [importingDB, setImportingDB] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
+  const [backupFile, setBackupFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (boardConfig) {
@@ -329,6 +339,61 @@ const BoardSettingsPage = () => {
 
   const handleDragEnd = () => setDraggingId(null);
 
+  // ── Database Backup / Restore ─────────────────────────────────────────────
+  const handleExportDB = async () => {
+    setExportingDB(true);
+    try {
+      const res = await api.get("/database/export");
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(res.data, null, 2));
+      const downloadAnchorNode = document.createElement("a");
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", `thinkboard-backup-${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+      toast.success("Base de datos exportada");
+    } catch {
+      toast.error("Error al exportar la base de datos");
+    } finally {
+      setExportingDB(false);
+    }
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const json = JSON.parse(event.target.result);
+        setBackupFile(json);
+        const res = await api.post("/database/import/preview", json);
+        setPreviewData(res.data);
+      } catch (error) {
+        toast.error("El archivo no tiene un formato JSON válido");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImportDB = async () => {
+    if (!backupFile) return;
+    setImportingDB(true);
+    try {
+      const res = await api.post("/database/import", backupFile);
+      toast.success(res.data.message || "Base de datos importada");
+      setPreviewData(null);
+      setBackupFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      setTimeout(() => window.location.reload(), 1500);
+    } catch {
+      toast.error("Error al importar la base de datos");
+    } finally {
+      setImportingDB(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-base-200 pb-12">
       <div className="w-full px-4 sm:px-8 py-8">
@@ -411,6 +476,17 @@ const BoardSettingsPage = () => {
                   {accounts.filter((a) => !a.isApproved).length}
                 </span>
               )}
+            </button>
+
+            <button
+              type="button"
+              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+                activeTab === "database" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
+              }`}
+              onClick={() => switchTab("database")}
+            >
+              <DatabaseIcon className="w-4 h-4" />
+              <span>Respaldo BD</span>
             </button>
           </div>
 
@@ -1155,6 +1231,110 @@ const BoardSettingsPage = () => {
                       </table>
                     </div>
                   )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: DATABASE BACKUP / RESTORE */}
+          {activeTab === "database" && (
+            <div className="space-y-6">
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body p-6 sm:p-8 space-y-6">
+                  <div>
+                    <h2 className="text-xl font-extrabold flex items-center gap-2 text-base-content">
+                      <DatabaseIcon className="size-6 text-primary" />
+                      Respaldo y Restauración de Base de Datos
+                    </h2>
+                    <p className="text-sm text-base-content/60 mt-1 leading-relaxed max-w-3xl">
+                      Exporta toda la base de datos (usuarios, proyectos, estados, prioridades, etiquetas y tareas) en un archivo JSON seguro. También puedes restaurar la base de datos a partir de un respaldo previo.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Export */}
+                    <div className="p-6 bg-base-200/50 rounded-2xl border border-base-content/10 flex flex-col justify-between">
+                      <div>
+                        <h3 className="font-bold text-lg flex items-center gap-2 mb-2">
+                          <DownloadIcon className="size-5 text-success" />
+                          Exportar Base de Datos
+                        </h3>
+                        <p className="text-sm text-base-content/60 mb-6">
+                          Descarga un archivo JSON con todos los datos actuales del sistema. Guárdalo en un lugar seguro.
+                        </p>
+                      </div>
+                      <button
+                        className="btn btn-primary gap-2 w-full sm:w-auto"
+                        onClick={handleExportDB}
+                        disabled={exportingDB}
+                      >
+                        <DownloadIcon className="size-4" />
+                        {exportingDB ? "Exportando..." : "Descargar Respaldo JSON"}
+                      </button>
+                    </div>
+
+                    {/* Import */}
+                    <div className="p-6 bg-base-200/50 rounded-2xl border border-base-content/10 flex flex-col justify-between">
+                      <div>
+                        <h3 className="font-bold text-lg flex items-center gap-2 mb-2 text-error">
+                          <UploadIcon className="size-5" />
+                          Importar Base de Datos
+                        </h3>
+                        <p className="text-sm text-base-content/60 mb-6">
+                          Restaura la base de datos desde un archivo JSON. <strong className="text-error">Esto sobrescribirá (reemplazará) los registros con el mismo identificador interno.</strong>
+                        </p>
+                      </div>
+                      
+                      <div className="flex flex-col gap-2">
+                        <input
+                          type="file"
+                          accept=".json"
+                          className="file-input file-input-bordered w-full file-input-error"
+                          ref={fileInputRef}
+                          onChange={handleFileSelect}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Preview Modal for Import */}
+                  {previewData && (
+                    <div className="mt-6 p-6 bg-error/10 border-2 border-error/20 rounded-2xl">
+                      <h3 className="font-bold text-lg text-error flex items-center gap-2 mb-4">
+                        <CheckCircle2Icon className="size-5" />
+                        Vista Previa de Restauración
+                      </h3>
+                      <p className="text-sm text-base-content mb-4">
+                        El archivo JSON es válido. Se ha detectado lo siguiente:
+                      </p>
+                      <ul className="list-disc list-inside space-y-1 mb-6 text-sm">
+                        <li><strong>{previewData.existingCount}</strong> registros existentes que serán actualizados/reemplazados.</li>
+                        <li><strong>{previewData.newCount}</strong> registros nuevos que serán insertados.</li>
+                      </ul>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <button
+                          className="btn btn-error text-white flex-1 gap-2"
+                          onClick={handleImportDB}
+                          disabled={importingDB}
+                        >
+                          <UploadIcon className="size-4" />
+                          {importingDB ? "Importando..." : "Confirmar Restauración"}
+                        </button>
+                        <button
+                          className="btn btn-ghost flex-1"
+                          onClick={() => {
+                            setPreviewData(null);
+                            setBackupFile(null);
+                            if (fileInputRef.current) fileInputRef.current.value = "";
+                          }}
+                          disabled={importingDB}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               </div>
             </div>
