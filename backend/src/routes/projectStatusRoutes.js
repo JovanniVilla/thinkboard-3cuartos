@@ -1,12 +1,12 @@
 import express from "express";
 import { getProjectStatuses, createProjectStatus, updateProjectStatus, deleteProjectStatus } from "../controllers/projectStatusController.js";
-import { requireAuth, requireAdmin } from "../middleware/auth.js";
+import { protectRoute, requireAdmin } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.get("/", requireAuth, getProjectStatuses);
-router.post("/", requireAuth, requireAdmin, createProjectStatus);
-router.put("/:id", requireAuth, requireAdmin, updateProjectStatus);
-router.delete("/:id", requireAuth, requireAdmin, deleteProjectStatus);
+router.get("/", protectRoute, getProjectStatuses);
+router.post("/", protectRoute, requireAdmin, createProjectStatus);
+router.put("/:id", protectRoute, requireAdmin, updateProjectStatus);
+router.delete("/:id", protectRoute, requireAdmin, deleteProjectStatus);
 
 export default router;
