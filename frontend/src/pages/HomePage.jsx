@@ -121,6 +121,10 @@ const HomePage = () => {
         }
       } else if (sortBy === "user") {
         comparison = (a.user || "").localeCompare(b.user || "");
+      } else if (sortBy === "project") {
+        const projA = a.project ? (projects.find((p) => p._id === a.project)?.name || "") : "";
+        const projB = b.project ? (projects.find((p) => p._id === b.project)?.name || "") : "";
+        comparison = projA.localeCompare(projB);
       } else if (sortBy === "createdAt") {
         comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       }
@@ -179,6 +183,7 @@ const HomePage = () => {
                 statuses={statuses}
                 priorities={priorities}
                 users={accounts}
+                projects={projects}
                 sortBy={sortBy}
                 setSortBy={setSortBy}
                 sortOrder={sortOrder}

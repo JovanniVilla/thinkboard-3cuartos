@@ -23,6 +23,7 @@ const NoteListView = ({
   statuses = [],
   priorities = [],
   users = [],
+  projects = [],
   sortBy,
   setSortBy,
   sortOrder,
@@ -148,6 +149,15 @@ const NoteListView = ({
               <th className="py-3.5 hidden lg:table-cell">
                 <div className="flex items-center gap-1 text-base-content/70">
                   <span>Etiquetas</span>
+                </div>
+              </th>
+              <th
+                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5 hidden sm:table-cell"
+                onClick={() => handleHeaderClick("project")}
+              >
+                <div className="flex items-center gap-1">
+                  <span>Proyecto</span>
+                  {renderSortIndicator("project")}
                 </div>
               </th>
 
@@ -342,7 +352,49 @@ const NoteListView = ({
                       </ul>
                     </div>
                   </td>
-
+                  <td className="hidden sm:table-cell">
+                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        tabIndex={0}
+                        role="button"
+                        className="badge badge-sm font-medium whitespace-nowrap border"
+                        style={{
+                          backgroundColor: note.project ? (projects.find(p => p._id === note.project)?.color + "20" || "#6B728020") : "#6B728020",
+                          color: note.project ? (projects.find(p => p._id === note.project)?.color || "#6B7280") : "#6B7280",
+                          borderColor: note.project ? (projects.find(p => p._id === note.project)?.color + "50" || "#6B728050") : "#6B728050",
+                        }}
+                      >
+                        {note.project ? projects.find(p => p._id === note.project)?.name || "Sin asignar" : "Sin asignar"}
+                      </div>
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 border border-base-content/10">
+                        <li>
+                          <a
+                            onClick={() => {
+                              handleInlineEdit(note._id, "project", null);
+                              document.activeElement.blur();
+                            }}
+                            className={`text-xs py-1.5 px-2 ${!note.project ? "bg-primary/10 text-primary font-bold" : ""}`}
+                          >
+                            <span className="truncate">Sin asignar</span>
+                          </a>
+                        </li>
+                        {projects.map((p) => (
+                          <li key={p._id}>
+                            <a
+                              onClick={() => {
+                                handleInlineEdit(note._id, "project", p._id);
+                                document.activeElement.blur();
+                              }}
+                              className={`text-xs py-1.5 px-2 ${note.project === p._id ? "bg-primary/10 text-primary font-bold" : ""}`}
+                            >
+                              <span className="w-2.5 h-2.5 rounded-full mr-1 flex-shrink-0" style={{ backgroundColor: p.color || "#6B7280" }} />
+                              <span className="truncate">{p.name}</span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </td>
                   <td>
                     <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
                       <div
