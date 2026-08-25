@@ -4,6 +4,7 @@ import HomePage from "./pages/HomePage";
 import CreatePage from "./pages/CreatePage";
 import NoteDetailPage from "./pages/NoteDetailPage";
 import BoardSettingsPage from "./pages/BoardSettingsPage";
+import ProjectsPage from "./pages/ProjectsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
@@ -32,6 +33,7 @@ const App = () => {
           <Route path="note/:id" element={<NoteDetailPage />} />
         </Route>
         <Route path="/create" element={<ProtectedRoute><CreatePage /></ProtectedRoute>} />
+        <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
         <Route path="/board-settings" element={<ProtectedRoute adminOnly><BoardSettingsPage /></ProtectedRoute>} />
       </Routes>
     </div>

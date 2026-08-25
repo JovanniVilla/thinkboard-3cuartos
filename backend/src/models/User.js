@@ -22,8 +22,13 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
-      default: "user",
+      enum: ["client", "team", "admin"],
+      default: "client",
+    },
+    assignedProject: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+      default: null,
     },
     isApproved: {
       type: Boolean,

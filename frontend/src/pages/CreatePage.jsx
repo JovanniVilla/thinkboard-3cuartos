@@ -4,11 +4,10 @@ import toast from "react-hot-toast";
 import { Link, useNavigate } from "react-router";
 import api from "../lib/axios";
 import { useStatuses } from "../lib/useStatuses";
-import { usePriorities } from "../lib/usePriorities";
-import { useAccounts } from "../lib/useAccounts";
 import StatusSelect from "../components/StatusSelect";
 import PrioritySelect from "../components/PrioritySelect";
 import UserSelect from "../components/UserSelect";
+import { useProjects } from "../lib/useProjects";
 import MarkdownEditor from "../components/MarkdownEditor";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import ThemeToggle from "../components/ThemeToggle";
@@ -19,11 +18,13 @@ const CreatePage = () => {
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("Media");
   const [user, setUser] = useState("Sin asignar");
+  const [project, setProject] = useState("");
   const [loading, setLoading] = useState(false);
 
   const { statuses } = useStatuses();
   const { priorities } = usePriorities();
   const { accounts } = useAccounts();
+  const { projects } = useProjects();
   const { boardConfig } = useBoardConfig();
 
   const navigate = useNavigate();
@@ -44,6 +45,7 @@ const CreatePage = () => {
         status: status || statuses[0]?.name || "Pendiente",
         priority: priority || "Media",
         user: user || "Sin asignar",
+        project: project || null,
       });
 
       toast.success("¡Tarea creada exitosamente!");
@@ -133,6 +135,24 @@ const CreatePage = () => {
                     value={user}
                     onChange={setUser}
                   />
+                </div>
+
+                <div className="form-control md:col-span-3 lg:col-span-1">
+                  <label className="label pt-0 pb-1">
+                    <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/60">Proyecto</span>
+                  </label>
+                  <select
+                    className="select select-bordered w-full"
+                    value={project}
+                    onChange={(e) => setProject(e.target.value)}
+                  >
+                    <option value="">— Sin proyecto —</option>
+                    {projects.map((p) => (
+                      <option key={p._id} value={p._id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

@@ -2,9 +2,16 @@ import Note from "../models/Note.js";
 import BoardConfig from "../models/BoardConfig.js";
 import StatusConfig from "../models/StatusConfig.js";
 
-export async function getAllNotes(_, res) {
+export async function getAllNotes(req, res) {
   try {
-    const notes = await Note.find({ archived: { $ne: true } }).sort({ createdAt: -1 }); // -1 will sort in desc. order (newest first)
+    const filter = { archived: { $ne: true } };
+    
+    // Clients can only see notes assigned to their specific project
+    if (req.user && req.user.role === "client") {
+      filter.project = req.user.assignedProject;
+    }
+
+    const notes = await Note.find(filter).sort({ createdAt: -1 }); // -1 will sort in desc. order (newest first)
     res.status(200).json(notes);
   } catch (error) {
     console.error("Error in getAllNotes controller", error);
@@ -25,7 +32,7 @@ export async function getNoteById(req, res) {
 
 export async function createNote(req, res) {
   try {
-    const { title, content, status, priority, user, labels, checklist, startDate, dueDate } = req.body;
+    const { title, content, status, priority, user, project, labels, checklist, startDate, dueDate } = req.body;
 
     let boardConfig = await BoardConfig.findOne();
     let keyId = null;
@@ -56,6 +63,7 @@ export async function createNote(req, res) {
       ...(status && { status }),
       ...(priority && { priority }),
       ...(user && { user }),
+      ...(project && { project }),
       createdBy: req.user?._id || null,
       startDate: startDate || null,
       dueDate: dueDate || null,
@@ -83,7 +91,7 @@ export async function createNote(req, res) {
 
 export async function updateNote(req, res) {
   try {
-    const { title, content, status, priority, user, keyId, labels, checklist, activities, taskDriveLink, startDate, dueDate } = req.body;
+    const { title, content, status, priority, user, project, keyId, labels, checklist, activities, taskDriveLink, startDate, dueDate } = req.body;
 
     const currentNote = await Note.findById(req.params.id);
     if (!currentNote) return res.status(404).json({ message: "Note not found" });
@@ -121,6 +129,7 @@ export async function updateNote(req, res) {
         ...(status !== undefined && { status }),
         ...(priority !== undefined && { priority }),
         ...(user !== undefined && { user }),
+        ...(project !== undefined && { project: project === "" ? null : project }),
         ...(keyId !== undefined && { keyId }),
         ...(labels !== undefined && { labels }),
         ...(checklist !== undefined && { checklist }),

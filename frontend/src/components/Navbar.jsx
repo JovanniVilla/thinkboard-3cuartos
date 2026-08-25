@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { PlusIcon, Settings2Icon, LogOutIcon, UserIcon, ShieldIcon } from "lucide-react";
+import { PlusIcon, Settings2Icon, LogOutIcon, UserIcon, ShieldIcon, FolderKeyIcon } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
 import { useBoardConfig } from "../lib/useBoardConfig";
@@ -51,6 +51,10 @@ const Navbar = () => {
                 <Settings2Icon className="size-5" />
               </Link>
             )}
+
+            <Link to={"/projects"} className="btn btn-ghost btn-sm" title="Proyectos">
+              <FolderKeyIcon className="size-5" />
+            </Link>
 
             <Link to={"/create"} className="btn btn-primary">
               <PlusIcon className="size-5" />

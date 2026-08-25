@@ -8,6 +8,7 @@ import NotesNotFound from "../components/NotesNotFound";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
 import { useAccounts } from "../lib/useAccounts";
+import { useProjects } from "../lib/useProjects";
 import NoteListView from "../components/NoteListView";
 import NoteKanbanView from "../components/NoteKanbanView";
 import NoteFilters from "../components/NoteFilters";
@@ -22,6 +23,7 @@ const HomePage = () => {
   const { statuses } = useStatuses();
   const { priorities } = usePriorities();
   const { accounts } = useAccounts();
+  const { projects } = useProjects();
   const { user: currentUser } = useAuth();
 
   // View Mode: "list" | "board"
@@ -32,6 +34,7 @@ const HomePage = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedPriority, setSelectedPriority] = useState("");
   const [selectedUser, setSelectedUser] = useState("");
+  const [selectedProject, setSelectedProject] = useState("");
   const [showCompleted, setShowCompleted] = useState(false);
   const [showMyTasks, setShowMyTasks] = useState(false);
   const [sortBy, setSortBy] = useState("createdAt");
@@ -87,6 +90,10 @@ const HomePage = () => {
         if (!isAssigned && !isMentioned) {
           return false;
         }
+      }
+      if (selectedProject) {
+        if (selectedProject === "Sin asignar" && note.project) return false;
+        if (selectedProject !== "Sin asignar" && note.project !== selectedProject) return false;
       }
       return true;
     })
@@ -146,6 +153,8 @@ const HomePage = () => {
               setSelectedPriority={setSelectedPriority}
               selectedUser={selectedUser}
               setSelectedUser={setSelectedUser}
+              selectedProject={selectedProject}
+              setSelectedProject={setSelectedProject}
               showCompleted={showCompleted}
               setShowCompleted={setShowCompleted}
               showMyTasks={showMyTasks}
@@ -157,6 +166,7 @@ const HomePage = () => {
               statuses={statuses}
               priorities={priorities}
               users={accounts}
+              projects={projects}
               totalNotes={notes.length}
               filteredCount={filteredNotes.length}
             />

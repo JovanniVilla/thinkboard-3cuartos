@@ -41,3 +41,13 @@ export function requireAdmin(req, res, next) {
   }
   next();
 }
+
+/**
+ * Middleware that restricts access to admin or team users only.
+ */
+export function requireAdminOrTeam(req, res, next) {
+  if (req.user?.role !== "admin" && req.user?.role !== "team") {
+    return res.status(403).json({ message: "Acceso denegado — se requiere rol de equipo o administrador" });
+  }
+  next();
+}

@@ -29,6 +29,7 @@ import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
 import { useLabels } from "../lib/useLabels";
 import { useAccounts } from "../lib/useAccounts";
+import { useProjects } from "../lib/useProjects";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import { useAuth } from "../lib/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
@@ -163,6 +164,7 @@ const BoardSettingsPage = () => {
   const { priorities, setPriorities, loading: loadingPriorities } = usePriorities();
   const { labels, setLabels, loading: loadingLabels } = useLabels();
   const { accounts, setAccounts, loading: loadingAccounts } = useAccounts();
+  const { projects } = useProjects();
   const { boardConfig, setBoardConfig, loading: loadingConfig } = useBoardConfig();
   const { user: currentUser } = useAuth();
 
@@ -1064,7 +1066,8 @@ const BoardSettingsPage = () => {
                             <th>Usuario</th>
                             <th>Estado</th>
                             <th>Rol</th>
-                            <th>Fecha Registro</th>
+                            <th>Proyecto</th>
+                            <th>Registro</th>
                             <th className="text-right">Acciones</th>
                           </tr>
                         </thead>
@@ -1112,7 +1115,7 @@ const BoardSettingsPage = () => {
                                     onChange={async (e) => {
                                       const newRole = e.target.value;
                                       try {
-                                        const res = await api.put(`/accounts/${acc._id}/role`, { role: newRole });
+                                        const res = await api.put(`/accounts/${acc._id}/role`, { role: newRole, assignedProject: acc.assignedProject?._id || acc.assignedProject });
                                         setAccounts((prev) =>
                                           prev.map((a) => (a._id === acc._id ? res.data : a))
                                         );
@@ -1122,8 +1125,34 @@ const BoardSettingsPage = () => {
                                       }
                                     }}
                                   >
-                                    <option value="user">Usuario</option>
+                                    <option value="client">Cliente</option>
+                                    <option value="team">Equipo</option>
                                     <option value="admin">Administrador</option>
+                                  </select>
+                                </td>
+
+                                <td>
+                                  <select
+                                    className="select select-bordered select-sm font-semibold max-w-[130px]"
+                                    value={acc.assignedProject?._id || acc.assignedProject || ""}
+                                    disabled={isSelf || acc.role === "admin"}
+                                    onChange={async (e) => {
+                                      const newProject = e.target.value;
+                                      try {
+                                        const res = await api.put(`/accounts/${acc._id}/role`, { role: acc.role, assignedProject: newProject });
+                                        setAccounts((prev) =>
+                                          prev.map((a) => (a._id === acc._id ? res.data : a))
+                                        );
+                                        toast.success("Proyecto asignado correctamente");
+                                      } catch (error) {
+                                        toast.error(error.response?.data?.message || "Error al asignar proyecto");
+                                      }
+                                    }}
+                                  >
+                                    <option value="">Ninguno</option>
+                                    {projects.map(p => (
+                                      <option key={p._id} value={p._id}>{p.name}</option>
+                                    ))}
                                   </select>
                                 </td>
 

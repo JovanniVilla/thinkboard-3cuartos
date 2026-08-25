@@ -33,8 +33,10 @@ import ThemeToggle from "../components/ThemeToggle";
 import MarkdownEditor from "../components/MarkdownEditor";
 
 import { useLabels } from "../lib/useLabels";
+import { useProjects } from "../lib/useProjects";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import DatesPopover from "../components/DatesPopover";
+import { FolderKeyIcon } from "lucide-react";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -103,6 +105,7 @@ const NoteDetailPage = () => {
   const { labels: boardLabels } = useLabels();
   const { priorities } = usePriorities();
   const { accounts } = useAccounts();
+  const { projects } = useProjects();
   const accountsList = accounts.map((acc) => acc.name);
   const { user: currentUser } = useAuth();
 
@@ -476,6 +479,64 @@ const NoteDetailPage = () => {
                     >
                       <span className="flex items-center gap-2">
                         <ZapIcon className="size-4" style={{ color: p.color }} />
+                        {p.name}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Project Dropdown Pill */}
+            <div className="dropdown">
+              <label
+                tabIndex={0}
+                className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
+              >
+                {(() => {
+                  const currentProject = (projects || []).find(p => p._id === note.project);
+                  return (
+                    <>
+                      <FolderKeyIcon className="size-4 flex-shrink-0" style={{ color: currentProject?.color || "#6B7280" }} />
+                      <span>{currentProject?.name || "Sin proyecto"}</span>
+                    </>
+                  );
+                })()}
+                <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
+              </label>
+              <ul
+                tabIndex={0}
+                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
+              >
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNote({ ...note, project: "" });
+                      handleSaveNote({ project: "" });
+                    }}
+                    className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${
+                      !note.project ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                    }`}
+                  >
+                    <FolderKeyIcon className="size-4 text-base-content/60" />
+                    Sin proyecto
+                  </button>
+                </li>
+                {(projects || []).map((p) => (
+                  <li key={p._id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNote({ ...note, project: p._id });
+                        handleSaveNote({ project: p._id });
+                      }}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
+                        note.project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <FolderKeyIcon className="size-4" style={{ color: p.color }} />
                         {p.name}
                       </span>
                     </button>

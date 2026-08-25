@@ -45,7 +45,7 @@ export async function register(req, res) {
     // First user becomes admin and is auto-approved
     const userCount = await User.countDocuments();
     const isFirstUser = userCount === 0;
-    const role = isFirstUser ? "admin" : "user";
+    const role = isFirstUser ? "admin" : "client";
     const isApproved = isFirstUser; // only first user is auto-approved
 
     const user = new User({

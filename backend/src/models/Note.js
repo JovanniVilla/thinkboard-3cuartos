@@ -35,6 +35,11 @@ const noteSchema = new mongoose.Schema(
       type: String,
       default: "Sin asignar",
     },
+    project: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Project",
+      default: null,
+    },
     labels: [
       {
         name: { type: String, required: true },

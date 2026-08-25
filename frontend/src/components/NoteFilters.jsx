@@ -19,6 +19,8 @@ const NoteFilters = ({
   setSelectedPriority,
   selectedUser,
   setSelectedUser,
+  selectedProject,
+  setSelectedProject,
   showCompleted,
   setShowCompleted,
   showMyTasks,
@@ -30,6 +32,7 @@ const NoteFilters = ({
   statuses = [],
   priorities = [],
   users = [],
+  projects = [],
   totalNotes = 0,
 }) => {
   const [showMobileSearch, setShowMobileSearch] = useState(false);
@@ -40,12 +43,13 @@ const NoteFilters = ({
     if (sortBy !== "createdAt") setSortBy("createdAt");
   };
 
-  const hasActiveFilters = selectedStatus || selectedPriority || selectedUser || showCompleted || showMyTasks;
+  const hasActiveFilters = selectedStatus || selectedPriority || selectedUser || selectedProject || showCompleted || showMyTasks;
 
   const clearFilters = () => {
     setSelectedStatus("");
     setSelectedPriority("");
     setSelectedUser("");
+    setSelectedProject("");
     setShowCompleted(false);
     setShowMyTasks(false);
   };
@@ -164,6 +168,23 @@ const NoteFilters = ({
                   {users.map((u) => (
                     <option key={u._id} value={u.name}>
                       {u.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-base-content/70 ml-1">Proyecto</label>
+                <select
+                  className="select select-bordered select-sm w-full bg-base-200/50 font-normal"
+                  value={selectedProject}
+                  onChange={(e) => setSelectedProject(e.target.value)}
+                >
+                  <option value="">Todos los proyectos</option>
+                  <option value="Sin asignar">Sin proyecto</option>
+                  {projects.map((p) => (
+                    <option key={p._id} value={p._id}>
+                      {p.name}
                     </option>
                   ))}
                 </select>
