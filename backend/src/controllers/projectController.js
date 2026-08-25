@@ -12,7 +12,7 @@ export async function getAllProjects(req, res) {
 
 export async function createProject(req, res) {
   try {
-    const { name, color, description } = req.body;
+    const { name, color, description, projectType, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ message: "El nombre del proyecto es obligatorio" });
@@ -22,6 +22,15 @@ export async function createProject(req, res) {
       name: name.trim(),
       color: color || "#3B82F6",
       description: description || "",
+      projectType: projectType || "General",
+      endDate: endDate || null,
+      objective: objective || "",
+      status: status || "En planeación",
+      briefUrl: briefUrl || "",
+      assignedTo: assignedTo || "Sin asignar",
+      defaultAssignee: defaultAssignee || "Sin asignar",
+      folderUrl: folderUrl || "",
+      activities: [],
     });
 
     const savedProject = await newProject.save();
@@ -34,16 +43,25 @@ export async function createProject(req, res) {
 
 export async function updateProject(req, res) {
   try {
-    const { name, color, description } = req.body;
+    const { name, color, description, projectType, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, activities } = req.body;
     const project = await Project.findById(req.params.id);
 
     if (!project) {
       return res.status(404).json({ message: "Proyecto no encontrado" });
     }
 
-    if (name) project.name = name.trim();
-    if (color) project.color = color;
+    if (name !== undefined) project.name = name.trim();
+    if (color !== undefined) project.color = color;
     if (description !== undefined) project.description = description;
+    if (projectType !== undefined) project.projectType = projectType;
+    if (endDate !== undefined) project.endDate = endDate;
+    if (objective !== undefined) project.objective = objective;
+    if (status !== undefined) project.status = status;
+    if (briefUrl !== undefined) project.briefUrl = briefUrl;
+    if (assignedTo !== undefined) project.assignedTo = assignedTo;
+    if (defaultAssignee !== undefined) project.defaultAssignee = defaultAssignee;
+    if (folderUrl !== undefined) project.folderUrl = folderUrl;
+    if (activities !== undefined) project.activities = activities;
 
     const updatedProject = await project.save();
     res.status(200).json(updatedProject);

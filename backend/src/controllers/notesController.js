@@ -1,17 +1,17 @@
 import Note from "../models/Note.js";
 import BoardConfig from "../models/BoardConfig.js";
 import StatusConfig from "../models/StatusConfig.js";
+import Project from "../models/Project.js";
 
 export async function getAllNotes(req, res) {
   try {
     const filter = { archived: { $ne: true } };
     
-    // Clients can only see notes assigned to their specific project
     if (req.user && req.user.role === "client") {
       filter.project = req.user.assignedProject;
     }
 
-    const notes = await Note.find(filter).sort({ createdAt: -1 }); // -1 will sort in desc. order (newest first)
+    const notes = await Note.find(filter).sort({ createdAt: -1 }); 
     res.status(200).json(notes);
   } catch (error) {
     console.error("Error in getAllNotes controller", error);
@@ -32,7 +32,14 @@ export async function getNoteById(req, res) {
 
 export async function createNote(req, res) {
   try {
-    const { title, content, status, priority, user, project, labels, checklist, startDate, dueDate } = req.body;
+    let { title, content, status, priority, user, project, labels, checklist, startDate, dueDate } = req.body;
+
+    if (project && (!user || user === "Sin asignar")) {
+      const projDoc = await Project.findById(project);
+      if (projDoc && projDoc.defaultAssignee && projDoc.defaultAssignee !== "Sin asignar") {
+        user = projDoc.defaultAssignee;
+      }
+    }
 
     let boardConfig = await BoardConfig.findOne();
     let keyId = null;
@@ -99,6 +106,17 @@ export async function updateNote(req, res) {
     // Authorization: In this board, any authenticated user can update the note.
     // (This allows users to assign tasks, edit their comments, move tasks, etc.)
 
+    let finalUser = user !== undefined ? user : currentNote.user;
+
+    if (project !== undefined && project !== (currentNote.project?.toString() || "") && project !== "") {
+      if (!finalUser || finalUser === "Sin asignar") {
+        const projDoc = await Project.findById(project);
+        if (projDoc && projDoc.defaultAssignee && projDoc.defaultAssignee !== "Sin asignar") {
+          finalUser = projDoc.defaultAssignee;
+        }
+      }
+    }
+
     let updatedActivities = activities !== undefined ? activities : (currentNote.activities || []);
     let completedAt = currentNote.completedAt;
     
@@ -128,7 +146,7 @@ export async function updateNote(req, res) {
         ...(content !== undefined && { content }),
         ...(status !== undefined && { status }),
         ...(priority !== undefined && { priority }),
-        ...(user !== undefined && { user }),
+        user: finalUser,
         ...(project !== undefined && { project: project === "" ? null : project }),
         ...(keyId !== undefined && { keyId }),
         ...(labels !== undefined && { labels }),

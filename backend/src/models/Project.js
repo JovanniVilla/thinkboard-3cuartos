@@ -15,6 +15,47 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    projectType: {
+      type: String,
+      default: "General",
+    },
+    endDate: {
+      type: Date,
+      default: null,
+    },
+    objective: {
+      type: String,
+      default: "",
+    },
+    status: {
+      type: String,
+      default: "En planeación",
+    },
+    briefUrl: {
+      type: String,
+      default: "",
+    },
+    assignedTo: {
+      type: String,
+      default: "Sin asignar",
+    },
+    defaultAssignee: {
+      type: String,
+      default: "Sin asignar",
+    },
+    folderUrl: {
+      type: String,
+      default: "",
+    },
+    activities: [
+      {
+        id: { type: String },
+        type: { type: String, default: "comment" },
+        text: { type: String, required: true },
+        user: { type: String, default: "Usuario" },
+        createdAt: { type: Date, default: Date.now },
+      },
+    ],
   },
   { timestamps: true }
 );
