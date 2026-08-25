@@ -5,6 +5,7 @@ import CreatePage from "./pages/CreatePage";
 import NoteDetailPage from "./pages/NoteDetailPage";
 import BoardSettingsPage from "./pages/BoardSettingsPage";
 import ProjectsPage from "./pages/ProjectsPage";
+import ProjectDetailPage from "./pages/ProjectDetailPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
@@ -34,6 +35,7 @@ const App = () => {
         </Route>
         <Route path="/create" element={<ProtectedRoute><CreatePage /></ProtectedRoute>} />
         <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+        <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
         <Route path="/board-settings" element={<ProtectedRoute adminOnly><BoardSettingsPage /></ProtectedRoute>} />
       </Routes>
     </div>

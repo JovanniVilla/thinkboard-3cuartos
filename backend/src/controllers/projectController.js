@@ -1,8 +1,46 @@
 import Project from "../models/Project.js";
+import Note from "../models/Note.js";
+
+export async function getProjectById(req, res) {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ message: "Proyecto no encontrado" });
+    
+    const tasks = await Note.find({ project: project._id }).sort({ createdAt: -1 });
+    
+    res.status(200).json({ ...project.toObject(), tasks });
+  } catch (error) {
+    console.error("Error in getProjectById controller", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
 
 export async function getAllProjects(req, res) {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const projects = await Project.aggregate([
+      {
+        $lookup: {
+          from: "notes",
+          localField: "_id",
+          foreignField: "project",
+          as: "projectNotes",
+        },
+      },
+      {
+        $addFields: {
+          taskCount: { $size: "$projectNotes" },
+          noteStatuses: "$projectNotes.status",
+        },
+      },
+      {
+        $project: {
+          projectNotes: 0,
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
     res.status(200).json(projects);
   } catch (error) {
     console.error("Error in getAllProjects controller", error);

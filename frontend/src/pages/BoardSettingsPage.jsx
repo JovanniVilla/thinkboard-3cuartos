@@ -30,6 +30,8 @@ import { usePriorities } from "../lib/usePriorities";
 import { useLabels } from "../lib/useLabels";
 import { useAccounts } from "../lib/useAccounts";
 import { useProjects } from "../lib/useProjects";
+import { useProjectTypes } from "../lib/useProjectTypes";
+import { useProjectStatuses } from "../lib/useProjectStatuses";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import { useAuth } from "../lib/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
@@ -157,7 +159,7 @@ const EditRow = ({ item, onSave, onCancel, endpoint, typeName, isStatus }) => {
 
 // ─── Main page ───────────────────────────────────────────────────────────────
 const BoardSettingsPage = () => {
-  const [activeTab, setActiveTab] = useState("project"); // "project" | "statuses" | "priorities" | "users" | "accounts" | "database"
+  const [activeTab, setActiveTab] = useState("project"); // "project" | "statuses" | "priorities" | "project_types" | "project_statuses" | "users" | "accounts" | "database"
 
   // Data Hooks
   const { statuses, setStatuses, loading: loadingStatuses } = useStatuses();
@@ -165,6 +167,8 @@ const BoardSettingsPage = () => {
   const { labels, setLabels, loading: loadingLabels } = useLabels();
   const { accounts, setAccounts, loading: loadingAccounts } = useAccounts();
   const { projects } = useProjects();
+  const { projectTypes, setProjectTypes, loading: loadingProjectTypes } = useProjectTypes();
+  const { projectStatuses, setProjectStatuses, loading: loadingProjectStatuses } = useProjectStatuses();
   const { boardConfig, setBoardConfig, loading: loadingConfig } = useBoardConfig();
   const { user: currentUser } = useAuth();
 
@@ -278,6 +282,14 @@ const BoardSettingsPage = () => {
         const res = await api.post("/labels", { name: newName.trim(), color: newColor });
         setLabels((prev) => [...prev, res.data]);
         toast.success("Etiqueta creada");
+      } else if (activeTab === "project_types") {
+        const res = await api.post("/project-types", { name: newName.trim(), color: newColor });
+        setProjectTypes((prev) => [...prev, res.data]);
+        toast.success("Tipo de Proyecto creado");
+      } else if (activeTab === "project_statuses") {
+        const res = await api.post("/project-statuses", { name: newName.trim(), color: newColor, category: newCategory });
+        setProjectStatuses((prev) => [...prev, res.data]);
+        toast.success("Estado de Proyecto creado");
       }
       setNewName("");
       setNewColor("#3B82F6");
@@ -417,7 +429,7 @@ const BoardSettingsPage = () => {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="tabs tabs-boxed bg-base-100 p-1.5 rounded-xl shadow-sm border border-base-content/10 mb-6 flex">
+          <div className="tabs tabs-boxed bg-base-100 p-1.5 rounded-xl shadow-sm border border-base-content/10 mb-6 flex flex-wrap gap-1">
             <button
               type="button"
               className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
@@ -462,8 +474,27 @@ const BoardSettingsPage = () => {
               <span>Etiquetas ({labels.length})</span>
             </button>
 
+            <button
+              type="button"
+              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+                activeTab === "project_types" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
+              }`}
+              onClick={() => switchTab("project_types")}
+            >
+              <FolderKeyIcon className="w-4 h-4" />
+              <span>Tipos de Proyecto ({projectTypes.length})</span>
+            </button>
 
-
+            <button
+              type="button"
+              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+                activeTab === "project_statuses" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
+              }`}
+              onClick={() => switchTab("project_statuses")}
+            >
+              <LayersIcon className="w-4 h-4" />
+              <span>Estados de Proyecto ({projectStatuses.length})</span>
+            </button>
             <button
               type="button"
               className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all relative ${
@@ -990,6 +1021,250 @@ const BoardSettingsPage = () => {
             </div>
           )}
 
+          {/* PROJECT TYPES */}
+          {activeTab === "project_types" && (
+            <div className="space-y-6">
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="card-title text-lg">Tipos de Proyecto actuales</h2>
+                    <span className="text-xs text-base-content/40 flex items-center gap-1">
+                      <GripVerticalIcon className="h-3 w-3" />
+                      Arrastra para reordenar
+                    </span>
+                  </div>
+
+                  {loadingProjectTypes ? (
+                    <div className="text-center py-6 text-base-content/50">Cargando tipos de proyecto…</div>
+                  ) : projectTypes.length === 0 ? (
+                    <div className="text-center py-6 text-base-content/50">No hay tipos configurados</div>
+                  ) : (
+                    <ul className="space-y-2 mt-2">
+                      {projectTypes.map((type, index) => (
+                        <li
+                          key={type._id}
+                          draggable={editingId !== type._id}
+                          onDragStart={(e) => handleDragStart(e, index, type._id)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={() => handleDrop(projectTypes, setProjectTypes, "/project-types")}
+                          onDragEnd={handleDragEnd}
+                          className={`transition-all duration-150 ${
+                            draggingId === type._id ? "opacity-40 scale-95" : ""
+                          }`}
+                        >
+                          {editingId === type._id ? (
+                            <EditRow
+                              item={type}
+                              onSave={(updated) => {
+                                setProjectTypes((prev) => prev.map((l) => (l._id === updated._id ? updated : l)));
+                                setEditingId(null);
+                              }}
+                              onCancel={() => setEditingId(null)}
+                              endpoint="/project-types"
+                              typeName="Tipo de Proyecto"
+                            />
+                          ) : (
+                            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-base-200 transition-colors group border border-transparent hover:border-base-content/10">
+                              <GripVerticalIcon className="h-4 w-4 text-base-content/25 cursor-grab active:cursor-grabbing flex-shrink-0" />
+                              <FolderKeyIcon className="w-4 h-4 flex-shrink-0" style={{ color: type.color }} />
+                              <span
+                                className="px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-shrink-0"
+                                style={{
+                                  backgroundColor: type.color + "20",
+                                  color: type.color,
+                                  borderColor: type.color + "50",
+                                }}
+                              >
+                                {type.name}
+                              </span>
+                              <span className="flex-1" />
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button className="btn btn-ghost btn-xs gap-1" onClick={() => setEditingId(type._id)}>
+                                  Editar
+                                </button>
+                                <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete(type._id, "/project-types", "tipo", setProjectTypes)}>
+                                  <Trash2Icon className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              {/* Create Project Type */}
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body">
+                  <h2 className="card-title text-lg mb-4">Agregar nuevo tipo</h2>
+                  <div className="flex flex-col gap-4">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Nombre del tipo de proyecto</span></label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Marketing, Desarrollo..."
+                        className="input input-bordered"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Color</span></label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {PRESET_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setNewColor(color)}
+                            className="w-8 h-8 rounded-full transition-transform hover:scale-110"
+                            style={{ backgroundColor: color, outline: newColor === color ? `3px solid ${color}` : "none", outlineOffset: "2px" }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="card-actions justify-end">
+                      <button className="btn btn-primary gap-2" onClick={handleCreate} disabled={creating || !newName.trim()}>
+                        <PlusIcon className="h-4 w-4" />
+                        {creating ? "Creando…" : "Crear Tipo"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* PROJECT STATUSES */}
+          {activeTab === "project_statuses" && (
+            <div className="space-y-6">
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="card-title text-lg">Estados de Proyecto actuales</h2>
+                    <span className="text-xs text-base-content/40 flex items-center gap-1">
+                      <GripVerticalIcon className="h-3 w-3" />
+                      Arrastra para reordenar
+                    </span>
+                  </div>
+
+                  {loadingProjectStatuses ? (
+                    <div className="text-center py-6 text-base-content/50">Cargando estados de proyecto…</div>
+                  ) : projectStatuses.length === 0 ? (
+                    <div className="text-center py-6 text-base-content/50">No hay estados configurados</div>
+                  ) : (
+                    <ul className="space-y-2 mt-2">
+                      {projectStatuses.map((status, index) => (
+                        <li
+                          key={status._id}
+                          draggable={editingId !== status._id}
+                          onDragStart={(e) => handleDragStart(e, index, status._id)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={() => handleDrop(projectStatuses, setProjectStatuses, "/project-statuses")}
+                          onDragEnd={handleDragEnd}
+                          className={`transition-all duration-150 ${
+                            draggingId === status._id ? "opacity-40 scale-95" : ""
+                          }`}
+                        >
+                          {editingId === status._id ? (
+                            <EditRow
+                              item={status}
+                              onSave={(updated) => {
+                                setProjectStatuses((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
+                                setEditingId(null);
+                              }}
+                              onCancel={() => setEditingId(null)}
+                              endpoint="/project-statuses"
+                              typeName="Estado de Proyecto"
+                              isStatus={true}
+                            />
+                          ) : (
+                            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-base-200 transition-colors group border border-transparent hover:border-base-content/10">
+                              <GripVerticalIcon className="h-4 w-4 text-base-content/25 cursor-grab active:cursor-grabbing flex-shrink-0" />
+                              <div className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ backgroundColor: status.color }} />
+                              <span
+                                className="px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-shrink-0"
+                                style={{
+                                  backgroundColor: status.color + "20",
+                                  color: status.color,
+                                  borderColor: status.color + "50",
+                                }}
+                              >
+                                {status.name}
+                              </span>
+                              <span className="flex-1" />
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button className="btn btn-ghost btn-xs gap-1" onClick={() => setEditingId(status._id)}>
+                                  Editar
+                                </button>
+                                <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete(status._id, "/project-statuses", "estado", setProjectStatuses)}>
+                                  <Trash2Icon className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              {/* Create status */}
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body">
+                  <h2 className="card-title text-lg mb-4">Agregar nuevo estado</h2>
+                  <div className="flex flex-col gap-4">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Nombre del estado</span></label>
+                      <input
+                        type="text"
+                        placeholder="Ej: En Planeación, Activo, Cancelado…"
+                        className="input input-bordered"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Color</span></label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {PRESET_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setNewColor(color)}
+                            className="w-8 h-8 rounded-full transition-transform hover:scale-110"
+                            style={{ backgroundColor: color, outline: newColor === color ? `3px solid ${color}` : "none", outlineOffset: "2px" }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Clasificación</span></label>
+                      <select 
+                        className="select select-bordered" 
+                        value={newCategory} 
+                        onChange={e => setNewCategory(e.target.value)}
+                      >
+                        <option value="todo">No Iniciado (Planeación)</option>
+                        <option value="in_progress">En Proceso (Activo)</option>
+                        <option value="done">Finalizado / Cancelado</option>
+                      </select>
+                    </div>
+                    <div className="card-actions justify-end">
+                      <button className="btn btn-primary gap-2" onClick={handleCreate} disabled={creating || !newName.trim()}>
+                        <PlusIcon className="h-4 w-4" />
+                        {creating ? "Creando…" : "Crear Estado"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* TAB 4: CUENTAS Y AUTORIZACIONES */}
           {activeTab === "accounts" && (
