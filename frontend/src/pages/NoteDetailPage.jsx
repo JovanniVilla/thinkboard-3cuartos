@@ -359,6 +359,9 @@ const NoteDetailPage = () => {
   const userColor = assignedUserConfig?.color || "#3B82F6";
   const userJobTitle = assignedUserConfig?.jobTitle || "";
 
+  const currentUserConfig = accounts.find((a) => a.name === currentUser?.name);
+  const currentUserColor = currentUserConfig?.color || "#3B82F6";
+
   // Comments & activity calculations
   const activities = note.activities || [];
   const allComments = activities.filter((act) => act.type === "comment");
@@ -1091,9 +1094,9 @@ const NoteDetailPage = () => {
               <div className="flex items-start gap-2">
                 <span
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0 mt-1"
-                  style={{ backgroundColor: userColor }}
+                  style={{ backgroundColor: currentUserColor }}
                 >
-                  {getInitials(note.user)}
+                  {getInitials(currentUser?.name)}
                 </span>
                 <div className="flex-1 space-y-2">
                   <MarkdownEditor
