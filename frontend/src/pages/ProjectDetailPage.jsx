@@ -280,29 +280,36 @@ const ProjectDetailPage = () => {
               </ul>
             </div>
             {/* Start Date */}
-            <input 
-              type="date"
-              className="input input-sm input-bordered rounded-xl bg-transparent border-base-content/10 text-xs hover:border-base-content/30 cursor-pointer"
-              title="Fecha de Inicio"
-              value={project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : ""}
-              onChange={(e) => {
-                const newDate = e.target.value ? new Date(e.target.value).toISOString() : null;
-                setProject({ ...project, startDate: newDate });
-                handleSaveProject({ startDate: newDate });
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-base-content/50 uppercase">Inicio</span>
+              <input 
+                type="date"
+                className="input input-sm input-bordered rounded-xl bg-transparent border-base-content/10 text-xs hover:border-base-content/30 cursor-pointer"
+                title="Fecha de Inicio"
+                value={project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : ""}
+                onChange={(e) => {
+                  const newDate = e.target.value ? new Date(e.target.value).toISOString() : null;
+                  setProject({ ...project, startDate: newDate });
+                  handleSaveProject({ startDate: newDate });
+                }}
+              />
+            </div>
             
             {/* End Date */}
-            <input 
-              type="date"
-              className="input input-sm input-bordered rounded-xl bg-transparent border-base-content/10 text-xs hover:border-base-content/30 cursor-pointer"
-              value={project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ""}
-              onChange={(e) => {
-                const newDate = e.target.value ? new Date(e.target.value).toISOString() : null;
-                setProject({ ...project, endDate: newDate });
-                handleSaveProject({ endDate: newDate });
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-base-content/50 uppercase">Cierre</span>
+              <input 
+                type="date"
+                className="input input-sm input-bordered rounded-xl bg-transparent border-base-content/10 text-xs hover:border-base-content/30 cursor-pointer"
+                title="Fecha de Cierre"
+                value={project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ""}
+                onChange={(e) => {
+                  const newDate = e.target.value ? new Date(e.target.value).toISOString() : null;
+                  setProject({ ...project, endDate: newDate });
+                  handleSaveProject({ endDate: newDate });
+                }}
+              />
+            </div>
           </div>
 
           {/* Editable Objective */}

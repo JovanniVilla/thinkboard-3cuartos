@@ -50,7 +50,7 @@ export async function getAllProjects(req, res) {
 
 export async function createProject(req, res) {
   try {
-    const { name, color, description, projectType, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl } = req.body;
+    const { name, color, description, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ message: "El nombre del proyecto es obligatorio" });
@@ -61,6 +61,7 @@ export async function createProject(req, res) {
       color: color || "#3B82F6",
       description: description || "",
       projectType: projectType || "General",
+      startDate: startDate || null,
       endDate: endDate || null,
       objective: objective || "",
       status: status || "En planeación",
@@ -81,7 +82,7 @@ export async function createProject(req, res) {
 
 export async function updateProject(req, res) {
   try {
-    const { name, color, description, projectType, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, activities } = req.body;
+    const { name, color, description, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, activities } = req.body;
     const project = await Project.findById(req.params.id);
 
     if (!project) {
@@ -92,6 +93,7 @@ export async function updateProject(req, res) {
     if (color !== undefined) project.color = color;
     if (description !== undefined) project.description = description;
     if (projectType !== undefined) project.projectType = projectType;
+    if (startDate !== undefined) project.startDate = startDate;
     if (endDate !== undefined) project.endDate = endDate;
     if (objective !== undefined) project.objective = objective;
     if (status !== undefined) project.status = status;
