@@ -36,9 +36,15 @@ const ProjectDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
+  const [isEditingObjective, setIsEditingObjective] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [isEditingScope, setIsEditingScope] = useState(false);
-  const [isEditingAcceptance, setIsEditingAcceptance] = useState(false);
+  
+  const [newAcceptanceTitle, setNewAcceptanceTitle] = useState("");
+  const [editingAcceptanceId, setEditingAcceptanceId] = useState(null);
+  const [editingAcceptanceTitle, setEditingAcceptanceTitle] = useState("");
+  const [expandAcceptance, setExpandAcceptance] = useState(false);
+  const [hideCheckedAcceptance, setHideCheckedAcceptance] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [postingComment, setPostingComment] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
@@ -153,6 +159,46 @@ const ProjectDetailPage = () => {
       toast.error("Error al actualizar comentario");
     } finally {
       setEditingCommentId(null);
+    }
+  };
+
+  const handleAddAcceptance = () => {
+    if (!newAcceptanceTitle.trim()) return;
+    const newItem = { id: Date.now().toString(), title: newAcceptanceTitle.trim(), completed: false };
+    const updated = [...(project.acceptanceCriteria || []), newItem];
+    setProject({ ...project, acceptanceCriteria: updated });
+    handleSaveProject({ acceptanceCriteria: updated });
+    setNewAcceptanceTitle("");
+  };
+
+  const handleToggleAcceptance = (id) => {
+    const updated = (project.acceptanceCriteria || []).map(item =>
+      item.id === id ? { ...item, completed: !item.completed } : item
+    );
+    setProject({ ...project, acceptanceCriteria: updated });
+    handleSaveProject({ acceptanceCriteria: updated });
+  };
+
+  const handleDeleteAcceptance = (id) => {
+    const updated = (project.acceptanceCriteria || []).filter(item => item.id !== id);
+    setProject({ ...project, acceptanceCriteria: updated });
+    handleSaveProject({ acceptanceCriteria: updated });
+  };
+
+  const handleUpdateAcceptance = (id) => {
+    if (!editingAcceptanceTitle.trim()) return;
+    const updated = (project.acceptanceCriteria || []).map(item =>
+      item.id === id ? { ...item, title: editingAcceptanceTitle.trim() } : item
+    );
+    setProject({ ...project, acceptanceCriteria: updated });
+    handleSaveProject({ acceptanceCriteria: updated });
+    setEditingAcceptanceId(null);
+  };
+
+  const handleDeleteAllAcceptance = () => {
+    if (window.confirm("¿Estás seguro de que deseas eliminar todos los criterios de aceptación?")) {
+      setProject({ ...project, acceptanceCriteria: [] });
+      handleSaveProject({ acceptanceCriteria: [] });
     }
   };
 
@@ -319,25 +365,43 @@ const ProjectDetailPage = () => {
             <h3 className="text-sm font-bold flex items-center gap-2 mb-3 text-base-content/80">
               <TargetIcon className="size-4 text-primary" /> Objetivo Principal
             </h3>
-            <div className="mb-3 p-3 bg-base-200/50 rounded-xl border border-base-content/5 text-xs text-base-content/70">
-              <strong className="block text-base-content/90 mb-1">Redacta objetivos SMARTER:</strong>
-              <ul className="list-none space-y-0.5">
-                <li><strong className="text-base-content">S (Specific):</strong> Claro, sin dudas y fácil de entender.</li>
-                <li><strong className="text-base-content">M (Measurable):</strong> Con números/indicadores para medir el avance.</li>
-                <li><strong className="text-base-content">A (Achievable):</strong> Realista según los recursos.</li>
-                <li><strong className="text-base-content">R (Relevant):</strong> Que aporte valor real.</li>
-                <li><strong className="text-base-content">T (Time-bound):</strong> Con fecha límite clara.</li>
-                <li><strong className="text-base-content">E (Evaluated):</strong> Revisado de forma constante.</li>
-                <li><strong className="text-base-content">R (Reevaluated):</strong> Ajustable si cambian las condiciones.</li>
-              </ul>
-            </div>
-            <textarea
-              className="textarea textarea-bordered w-full h-24 text-sm"
-              placeholder="Ej. Aumentar las ventas en un 15% para diciembre de este año..."
-              value={project.objective || ""}
-              onChange={(e) => setProject({ ...project, objective: e.target.value })}
-              onBlur={() => handleSaveProject()}
-            />
+            <details className="mb-3 group bg-base-200/50 rounded-xl border border-base-content/5 text-xs text-base-content/70 cursor-pointer overflow-hidden">
+              <summary className="p-3 font-bold text-base-content/90 hover:bg-base-300/50 transition-colors flex items-center justify-between outline-none list-none [&::-webkit-details-marker]:hidden">
+                <span>Redacta objetivos SMARTER: <span className="text-primary font-medium ml-1">Ver</span></span>
+                <svg className="size-3 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <div className="px-3 pb-3 pt-0 border-t border-base-content/5">
+                <ul className="list-none space-y-0.5 mt-2">
+                  <li><strong className="text-base-content">S (Specific):</strong> Claro, sin dudas y fácil de entender.</li>
+                  <li><strong className="text-base-content">M (Measurable):</strong> Con números/indicadores para medir el avance.</li>
+                  <li><strong className="text-base-content">A (Achievable):</strong> Realista según los recursos.</li>
+                  <li><strong className="text-base-content">R (Relevant):</strong> Que aporte valor real.</li>
+                  <li><strong className="text-base-content">T (Time-bound):</strong> Con fecha límite clara.</li>
+                  <li><strong className="text-base-content">E (Evaluated):</strong> Revisado de forma constante.</li>
+                  <li><strong className="text-base-content">R (Reevaluated):</strong> Ajustable si cambian las condiciones.</li>
+                </ul>
+              </div>
+            </details>
+            
+            {isEditingObjective ? (
+              <div className="animate-in fade-in zoom-in-95 duration-200">
+                <MarkdownEditor
+                  value={project.objective || ""}
+                  onChange={(val) => setProject({ ...project, objective: val })}
+                  onSave={() => { setIsEditingObjective(false); handleSaveProject(); }}
+                  onCancel={() => { setIsEditingObjective(false); }}
+                />
+              </div>
+            ) : (
+              <div
+                className="cursor-text prose prose-sm md:prose-base max-w-none prose-headings:font-bold prose-a:text-primary min-h-[100px] p-2 -m-2 rounded-xl hover:bg-base-200/50 transition-colors"
+                onClick={() => setIsEditingObjective(true)}
+              >
+                {project.objective ? <MarkdownRenderer content={project.objective} /> : <span className="text-base-content/40 italic flex items-center gap-2 mt-4"><PencilIcon className="size-4" />Haz clic aquí para añadir el objetivo del proyecto...</span>}
+              </div>
+            )}
           </div>
 
           {/* Description */}
@@ -389,27 +453,176 @@ const ProjectDetailPage = () => {
           </div>
           
           {/* Criterios de Aceptación */}
-          <div className="bg-base-100 p-5 rounded-2xl border border-base-content/10 shadow-sm relative group min-h-[160px]">
-            <h3 className="text-sm font-bold flex items-center gap-2 mb-4 text-base-content/80">
-              <CheckSquareIcon className="size-4 text-primary" /> Criterios de Aceptación
-            </h3>
-            {isEditingAcceptance ? (
-              <div className="animate-in fade-in zoom-in-95 duration-200">
-                <MarkdownEditor
-                  value={project.acceptanceCriteria || ""}
-                  onChange={(val) => setProject({ ...project, acceptanceCriteria: val })}
-                  onSave={() => { setIsEditingAcceptance(false); handleSaveProject(); }}
-                  onCancel={() => { setIsEditingAcceptance(false); }}
+          <div className="bg-base-100 p-5 rounded-2xl border border-base-content/10 shadow-sm relative group">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold flex items-center gap-2 text-base-content/80">
+                <CheckSquareIcon className="size-4 text-primary" /> Criterios de Aceptación
+              </h3>
+              
+              <div className="flex items-center gap-2 text-xs flex-wrap justify-end">
+                  {(Array.isArray(project.acceptanceCriteria) ? project.acceptanceCriteria : []).length > 4 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandAcceptance(!expandAcceptance)}
+                      className="btn btn-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg px-2.5 font-medium"
+                    >
+                      {expandAcceptance ? "Contraer lista" : `Ver todos (${(project.acceptanceCriteria || []).length})`}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setHideCheckedAcceptance(!hideCheckedAcceptance)}
+                    className="btn btn-xs bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content rounded-lg px-2.5"
+                  >
+                    {hideCheckedAcceptance ? "Mostrar completados" : "Ocultar completados"}
+                  </button>
+                  {(Array.isArray(project.acceptanceCriteria) ? project.acceptanceCriteria : []).length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteAllAcceptance}
+                      className="btn btn-xs bg-error/20 hover:bg-error/30 text-error border border-error/30 rounded-lg px-2.5"
+                    >
+                      Eliminar
+                    </button>
+                  )}
+                </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-xs font-mono font-bold text-base-content/60 w-8">
+                {Array.isArray(project.acceptanceCriteria) && project.acceptanceCriteria.length > 0 
+                  ? Math.round((project.acceptanceCriteria.filter(i => i.completed).length / project.acceptanceCriteria.length) * 100) 
+                  : 0}%
+              </span>
+              <div className="w-full bg-base-300 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-primary h-2.5 transition-all duration-300 rounded-full"
+                  style={{ width: `${Array.isArray(project.acceptanceCriteria) && project.acceptanceCriteria.length > 0 ? Math.round((project.acceptanceCriteria.filter(i => i.completed).length / project.acceptanceCriteria.length) * 100) : 0}%` }}
                 />
               </div>
-            ) : (
-              <div
-                className="cursor-text prose prose-sm md:prose-base max-w-none prose-headings:font-bold prose-a:text-primary min-h-[100px] p-2 -m-2 rounded-xl hover:bg-base-200/50 transition-colors"
-                onClick={() => setIsEditingAcceptance(true)}
-              >
-                {project.acceptanceCriteria ? <MarkdownRenderer content={project.acceptanceCriteria} /> : <span className="text-base-content/40 italic flex items-center gap-2 mt-4"><PencilIcon className="size-4" />Haz clic aquí para definir los criterios de aceptación...</span>}
+            </div>
+
+            {/* Checklist Items */}
+            <div className="space-y-3">
+              <div className={`space-y-2 ${expandAcceptance ? "" : "max-h-[240px] overflow-y-auto pr-1"}`}>
+                {(Array.isArray(project.acceptanceCriteria) ? project.acceptanceCriteria : [])
+                  .filter(item => !hideCheckedAcceptance || !item.completed)
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group"
+                    >
+                      {editingAcceptanceId === item.id ? (
+                        <div className="flex items-center gap-2 flex-1 w-full">
+                          <input
+                            type="text"
+                            className="flex-1 bg-base-100 border border-base-content/20 text-sm text-base-content rounded px-2.5 py-1 focus:border-primary focus:outline-none"
+                            value={editingAcceptanceTitle}
+                            onChange={(e) => setEditingAcceptanceTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleUpdateAcceptance(item.id);
+                              } else if (e.key === "Escape") {
+                                setEditingAcceptanceId(null);
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateAcceptance(item.id)}
+                            className="text-success hover:text-success/80 transition-colors p-1"
+                            title="Guardar cambios"
+                          >
+                            <CheckIcon className="size-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingAcceptanceId(null)}
+                            className="text-base-content/40 hover:text-base-content transition-colors p-1"
+                            title="Cancelar"
+                          >
+                            <XIcon className="size-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0" onDoubleClick={() => {
+                              setEditingAcceptanceId(item.id);
+                              setEditingAcceptanceTitle(item.title);
+                            }}>
+                            <input
+                              type="checkbox"
+                              checked={item.completed}
+                              onChange={() => handleToggleAcceptance(item.id)}
+                              className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
+                            />
+                            <span
+                              className={`text-sm ${
+                                item.completed ? "line-through text-base-content/40" : "text-base-content"
+                              }`}
+                            >
+                              {item.title}
+                            </span>
+                          </label>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingAcceptanceId(item.id);
+                                setEditingAcceptanceTitle(item.title);
+                              }}
+                              className="text-base-content/40 hover:text-primary transition-colors p-1"
+                              title="Editar"
+                            >
+                              <PencilIcon className="size-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAcceptance(item.id)}
+                              className="text-base-content/40 hover:text-error transition-colors p-1"
+                              title="Eliminar"
+                            >
+                              <Trash2Icon className="size-3" />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
               </div>
-            )}
+
+              {/* Add New Acceptance Criteria Input */}
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex-1 relative">
+                  <input
+                    type="text"
+                    placeholder="Añadir criterio de aceptación..."
+                    className="input input-sm input-bordered w-full pr-10 rounded-lg text-sm bg-base-100 focus:outline-none focus:border-primary/50"
+                    value={newAcceptanceTitle}
+                    onChange={(e) => setNewAcceptanceTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddAcceptance();
+                      }
+                    }}
+                  />
+                  {newAcceptanceTitle.trim() && (
+                    <button
+                      type="button"
+                      onClick={handleAddAcceptance}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 p-1 text-primary hover:bg-primary/10 rounded-md transition-colors"
+                      title="Añadir"
+                    >
+                      <PlusIcon className="size-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
           
           <div className="bg-base-100 p-5 rounded-2xl border border-base-content/10 shadow-sm">

@@ -71,7 +71,7 @@ export async function createProject(req, res) {
       color: color || "#3B82F6",
       description: description || "",
       scope: scope || "",
-      acceptanceCriteria: acceptanceCriteria || "",
+      acceptanceCriteria: acceptanceCriteria || [],
       projectType: projectType || "General",
       startDate: startDate || null,
       endDate: endDate || null,

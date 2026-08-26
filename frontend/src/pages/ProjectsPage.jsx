@@ -195,18 +195,25 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
 
           <div className="form-control md:col-span-2">
             <label className="label font-bold text-sm">Objetivo Principal (Opcional)</label>
-            <div className="mb-3 p-3 bg-base-200/50 rounded-xl border border-base-content/5 text-xs text-base-content/70">
-              <strong className="block text-base-content/90 mb-1">Redacta objetivos SMARTER:</strong>
-              <ul className="list-none space-y-0.5">
-                <li><strong className="text-base-content">S (Specific):</strong> Claro, sin dudas y fácil de entender.</li>
-                <li><strong className="text-base-content">M (Measurable):</strong> Con números/indicadores para medir el avance.</li>
-                <li><strong className="text-base-content">A (Achievable):</strong> Realista según los recursos.</li>
-                <li><strong className="text-base-content">R (Relevant):</strong> Que aporte valor real.</li>
-                <li><strong className="text-base-content">T (Time-bound):</strong> Con fecha límite clara.</li>
-                <li><strong className="text-base-content">E (Evaluated):</strong> Revisado de forma constante.</li>
-                <li><strong className="text-base-content">R (Reevaluated):</strong> Ajustable si cambian las condiciones.</li>
-              </ul>
-            </div>
+            <details className="mb-3 group bg-base-200/50 rounded-xl border border-base-content/5 text-xs text-base-content/70 cursor-pointer overflow-hidden">
+              <summary className="p-3 font-bold text-base-content/90 hover:bg-base-300/50 transition-colors flex items-center justify-between outline-none list-none [&::-webkit-details-marker]:hidden">
+                <span>Redacta objetivos SMARTER: <span className="text-primary font-medium ml-1">Ver</span></span>
+                <svg className="size-3 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <div className="px-3 pb-3 pt-0 border-t border-base-content/5">
+                <ul className="list-none space-y-0.5 mt-2">
+                  <li><strong className="text-base-content">S (Specific):</strong> Claro, sin dudas y fácil de entender.</li>
+                  <li><strong className="text-base-content">M (Measurable):</strong> Con números/indicadores para medir el avance.</li>
+                  <li><strong className="text-base-content">A (Achievable):</strong> Realista según los recursos.</li>
+                  <li><strong className="text-base-content">R (Relevant):</strong> Que aporte valor real.</li>
+                  <li><strong className="text-base-content">T (Time-bound):</strong> Con fecha límite clara.</li>
+                  <li><strong className="text-base-content">E (Evaluated):</strong> Revisado de forma constante.</li>
+                  <li><strong className="text-base-content">R (Reevaluated):</strong> Ajustable si cambian las condiciones.</li>
+                </ul>
+              </div>
+            </details>
             <textarea
               className="textarea textarea-bordered w-full h-24 text-sm"
               value={objective}

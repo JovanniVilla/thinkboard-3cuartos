@@ -19,10 +19,13 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    acceptanceCriteria: {
-      type: String,
-      default: "",
-    },
+    acceptanceCriteria: [
+      {
+        id: { type: String, required: true },
+        title: { type: String, required: true },
+        completed: { type: Boolean, default: false }
+      }
+    ],
     projectType: {
       type: String,
       default: "General",
