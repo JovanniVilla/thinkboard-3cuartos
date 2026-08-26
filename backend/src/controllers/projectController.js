@@ -60,7 +60,7 @@ export async function getAllProjects(req, res) {
 
 export async function createProject(req, res) {
   try {
-    const { name, color, description, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl } = req.body;
+    const { name, color, description, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, contact } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ message: "El nombre del proyecto es obligatorio" });
@@ -79,6 +79,7 @@ export async function createProject(req, res) {
       assignedTo: assignedTo || "Sin asignar",
       defaultAssignee: defaultAssignee || "Sin asignar",
       folderUrl: folderUrl || "",
+      contact: contact || {},
       activities: [],
     });
 
@@ -92,7 +93,7 @@ export async function createProject(req, res) {
 
 export async function updateProject(req, res) {
   try {
-    const { name, color, description, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, activities } = req.body;
+    const { name, color, description, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, activities, contact } = req.body;
     const project = await Project.findById(req.params.id);
 
     if (!project) {
@@ -112,6 +113,7 @@ export async function updateProject(req, res) {
     if (defaultAssignee !== undefined) project.defaultAssignee = defaultAssignee;
     if (folderUrl !== undefined) project.folderUrl = folderUrl;
     if (activities !== undefined) project.activities = activities;
+    if (contact !== undefined) project.contact = { ...project.contact, ...contact };
 
     const updatedProject = await project.save();
     res.status(200).json(updatedProject);

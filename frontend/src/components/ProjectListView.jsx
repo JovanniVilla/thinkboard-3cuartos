@@ -1,5 +1,6 @@
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router";
-import { PenIcon, Trash2Icon, LinkIcon, FolderIcon } from "lucide-react";
+import { PenIcon, Trash2Icon, LinkIcon, FolderIcon, ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -14,6 +15,61 @@ const ProjectListView = ({ projects, projectStatuses, doneStatuses, canManagePro
     return s ? s.color : "#6B7280";
   };
 
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'ascending' });
+
+  const requestSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedProjects = useMemo(() => {
+    let sortableProjects = [...projects];
+    if (sortConfig.key !== null) {
+      sortableProjects.sort((a, b) => {
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+        
+        if (sortConfig.key === 'progress') {
+           const aTotal = a.taskCount || 0;
+           const aCompleted = a.noteStatuses ? a.noteStatuses.filter(s => doneStatuses.includes(s)).length : 0;
+           aVal = aTotal > 0 ? (aCompleted / aTotal) : 0;
+           
+           const bTotal = b.taskCount || 0;
+           const bCompleted = b.noteStatuses ? b.noteStatuses.filter(s => doneStatuses.includes(s)).length : 0;
+           bVal = bTotal > 0 ? (bCompleted / bTotal) : 0;
+        }
+
+        if (aVal === null || aVal === undefined) aVal = "";
+        if (bVal === null || bVal === undefined) bVal = "";
+
+        if (typeof aVal === 'string') aVal = aVal.toLowerCase();
+        if (typeof bVal === 'string') bVal = bVal.toLowerCase();
+
+        if (aVal < bVal) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (aVal > bVal) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableProjects;
+  }, [projects, sortConfig, doneStatuses]);
+
+  const getSortIcon = (columnName) => {
+    if (sortConfig.key !== columnName) {
+      return <ArrowUpDownIcon className="size-3 ml-1 opacity-40 inline" />;
+    }
+    if (sortConfig.direction === 'ascending') {
+      return <ArrowUpIcon className="size-3 ml-1 inline text-primary" />;
+    }
+    return <ArrowDownIcon className="size-3 ml-1 inline text-primary" />;
+  };
+
   return (
     <div className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -21,17 +77,27 @@ const ProjectListView = ({ projects, projectStatuses, doneStatuses, canManagePro
           <thead>
             <tr className="bg-base-200/50 text-base-content/60 text-xs">
               <th className="font-semibold py-4 w-4"></th>
-              <th className="font-semibold py-4">Proyecto</th>
-              <th className="font-semibold py-4">Estado</th>
-              <th className="font-semibold py-4">Responsable</th>
-              <th className="font-semibold py-4">Fechas</th>
-              <th className="font-semibold py-4">Progreso</th>
+              <th className="font-semibold py-4 cursor-pointer hover:bg-base-300/50 transition-colors select-none" onClick={() => requestSort('name')}>
+                Proyecto {getSortIcon('name')}
+              </th>
+              <th className="font-semibold py-4 cursor-pointer hover:bg-base-300/50 transition-colors select-none" onClick={() => requestSort('status')}>
+                Estado {getSortIcon('status')}
+              </th>
+              <th className="font-semibold py-4 cursor-pointer hover:bg-base-300/50 transition-colors select-none" onClick={() => requestSort('assignedTo')}>
+                Responsable {getSortIcon('assignedTo')}
+              </th>
+              <th className="font-semibold py-4 cursor-pointer hover:bg-base-300/50 transition-colors select-none" onClick={() => requestSort('startDate')}>
+                Fechas {getSortIcon('startDate')}
+              </th>
+              <th className="font-semibold py-4 cursor-pointer hover:bg-base-300/50 transition-colors select-none" onClick={() => requestSort('progress')}>
+                Progreso {getSortIcon('progress')}
+              </th>
               <th className="font-semibold py-4">Enlaces</th>
               {canManageProjects && <th className="font-semibold py-4 text-right">Acciones</th>}
             </tr>
           </thead>
           <tbody>
-            {projects.map((project) => {
+            {sortedProjects.map((project) => {
               const statusColor = getStatusColor(project.status);
               const totalTasks = project.taskCount || 0;
               const completedTasks = project.noteStatuses ? project.noteStatuses.filter(s => doneStatuses.includes(s)).length : 0;

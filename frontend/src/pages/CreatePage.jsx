@@ -10,7 +10,10 @@ import {
   ChevronDownIcon,
   ZapIcon,
   FolderKeyIcon,
-  UserIcon
+  UserIcon,
+  CheckSquareIcon,
+  PlusIcon,
+  Trash2Icon
 } from "lucide-react";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
@@ -38,6 +41,8 @@ const CreatePage = () => {
   const [user, setUser] = useState("Sin asignar");
   const [project, setProject] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checklist, setChecklist] = useState([]);
+  const [newChecklistItem, setNewChecklistItem] = useState("");
 
   // Initialize from query parameters
   useEffect(() => {
@@ -62,6 +67,31 @@ const CreatePage = () => {
     }
   }, [title]);
 
+  const handleAddChecklistItem = (e) => {
+    e.preventDefault();
+    if (!newChecklistItem.trim()) return;
+    setChecklist([...checklist, {
+      id: Date.now().toString(),
+      title: newChecklistItem.trim(),
+      completed: false
+    }]);
+    setNewChecklistItem("");
+  };
+
+  const handleToggleChecklistItem = (id) => {
+    setChecklist(checklist.map(item => 
+      item.id === id ? { ...item, completed: !item.completed } : item
+    ));
+  };
+
+  const handleDeleteChecklistItem = (id) => {
+    setChecklist(checklist.filter(item => item.id !== id));
+  };
+
+  const progressPercent = checklist.length === 0 
+    ? 0 
+    : Math.round((checklist.filter(i => i.completed).length / checklist.length) * 100);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -79,6 +109,7 @@ const CreatePage = () => {
         priority: priority || "Media",
         user: user || "Sin asignar",
         project: project || null,
+        checklist,
       });
 
       toast.success("¡Tarea creada exitosamente!");
@@ -226,6 +257,73 @@ const CreatePage = () => {
                </div>
              </div>
 
+             {/* Checklist Section */}
+             <div className="mt-8 flex gap-3 group relative">
+               <div className="mt-1 flex-shrink-0 text-base-content/50">
+                 <CheckSquareIcon className="size-5" />
+               </div>
+               <div className="flex-1 min-w-0 flex flex-col">
+                 <div className="flex items-center justify-between mb-2">
+                   <h3 className="font-bold text-base-content">Checklist</h3>
+                 </div>
+                 
+                 {checklist.length > 0 && (
+                   <div className="flex items-center gap-3 mb-4">
+                     <span className="text-xs font-mono font-bold text-base-content/60 w-8">{progressPercent}%</span>
+                     <div className="w-full bg-base-300 rounded-full h-2.5 overflow-hidden">
+                       <div
+                         className="bg-primary h-2.5 transition-all duration-300 rounded-full"
+                         style={{ width: `${progressPercent}%` }}
+                       />
+                     </div>
+                   </div>
+                 )}
+
+                 <div className="space-y-2">
+                   {checklist.map((item) => (
+                     <div key={item.id} className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group/item">
+                       <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                         <input
+                           type="checkbox"
+                           checked={item.completed}
+                           onChange={() => handleToggleChecklistItem(item.id)}
+                           className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
+                         />
+                         <span className={`text-sm ${item.completed ? "line-through text-base-content/40" : "text-base-content"}`}>
+                           {item.title}
+                         </span>
+                       </label>
+                       <button
+                         type="button"
+                         onClick={() => handleDeleteChecklistItem(item.id)}
+                         className="text-error/40 hover:text-error transition-colors p-1 opacity-0 group-hover/item:opacity-100"
+                         title="Eliminar"
+                       >
+                         <Trash2Icon className="size-4" />
+                       </button>
+                     </div>
+                   ))}
+                   
+                   <form onSubmit={handleAddChecklistItem} className="flex items-center gap-2 mt-2">
+                     <input
+                       type="text"
+                       className="input input-sm flex-1 bg-base-100 border border-base-content/20 text-sm focus:border-primary"
+                       placeholder="Añadir un elemento..."
+                       value={newChecklistItem}
+                       onChange={(e) => setNewChecklistItem(e.target.value)}
+                     />
+                     <button
+                       type="submit"
+                       disabled={!newChecklistItem.trim()}
+                       className="btn btn-sm btn-primary btn-square rounded-lg"
+                     >
+                       <PlusIcon className="size-4" />
+                     </button>
+                   </form>
+                 </div>
+               </div>
+             </div>
+
              <div className="mt-8 pt-4 border-t border-base-content/10 flex justify-end gap-3">
                <button className="btn btn-ghost" onClick={() => navigate("/")}>
                  Cancelar
@@ -298,7 +396,7 @@ const CreatePage = () => {
              <div className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center text-center opacity-50 space-y-3">
                <MessageSquareIcon className="size-10 mb-2 opacity-50" />
                <p className="text-sm font-medium">Guarda la tarea primero</p>
-               <p className="text-xs max-w-[200px]">Podrás añadir comentarios, checklists y ver el historial de actividad una vez creada la tarea.</p>
+               <p className="text-xs max-w-[200px]">Podrás añadir comentarios y ver el historial de actividad una vez creada la tarea.</p>
              </div>
           </div>
         </div>

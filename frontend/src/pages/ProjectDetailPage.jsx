@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import {
-  LoaderIcon, Trash2Icon, XIcon, PlusIcon, CalendarIcon, UsersIcon, MessageSquareIcon, CheckCircle2Icon, Edit3Icon, ChevronDownIcon, LinkIcon, SendIcon, FolderIcon, TargetIcon, LayersIcon, ZapIcon, PencilIcon, CheckIcon, FolderKeyIcon
+  LoaderIcon, Trash2Icon, XIcon, PlusIcon, CalendarIcon, UsersIcon, MessageSquareIcon, CheckCircle2Icon, Edit3Icon, ChevronDownIcon, LinkIcon, SendIcon, FolderIcon, TargetIcon, LayersIcon, ZapIcon, PencilIcon, CheckIcon, FolderKeyIcon, UserIcon, PhoneIcon, MailIcon, BriefcaseIcon
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useProjectTypes } from "../lib/useProjectTypes";
@@ -393,6 +393,61 @@ const ProjectDetailPage = () => {
         {/* RIGHT COLUMN: Sidebar (Activity / Config) */}
         <div className="w-full lg:w-96 flex-shrink-0 flex flex-col gap-6">
           
+          {/* Contacto Card */}
+          <div className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-base-content/5 bg-base-200/30">
+              <h3 className="text-sm font-bold flex items-center gap-2">
+                <UsersIcon className="size-4" /> Contacto del Proyecto
+              </h3>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-base-content/60 mb-1 flex items-center gap-1"><UserIcon className="size-3"/> Nombre</label>
+                <input
+                  type="text"
+                  className="input input-sm input-bordered w-full"
+                  placeholder="Nombre del contacto"
+                  value={project.contact?.name || ""}
+                  onChange={(e) => setProject({ ...project, contact: { ...project.contact, name: e.target.value } })}
+                  onBlur={() => handleSaveProject()}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-base-content/60 mb-1 flex items-center gap-1"><BriefcaseIcon className="size-3"/> Puesto</label>
+                <input
+                  type="text"
+                  className="input input-sm input-bordered w-full"
+                  placeholder="Cargo o Puesto"
+                  value={project.contact?.position || ""}
+                  onChange={(e) => setProject({ ...project, contact: { ...project.contact, position: e.target.value } })}
+                  onBlur={() => handleSaveProject()}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-base-content/60 mb-1 flex items-center gap-1"><PhoneIcon className="size-3"/> Teléfono</label>
+                <input
+                  type="tel"
+                  className="input input-sm input-bordered w-full"
+                  placeholder="Teléfono"
+                  value={project.contact?.phone || ""}
+                  onChange={(e) => setProject({ ...project, contact: { ...project.contact, phone: e.target.value } })}
+                  onBlur={() => handleSaveProject()}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-base-content/60 mb-1 flex items-center gap-1"><MailIcon className="size-3"/> Correo Electrónico</label>
+                <input
+                  type="email"
+                  className="input input-sm input-bordered w-full"
+                  placeholder="Correo"
+                  value={project.contact?.email || ""}
+                  onChange={(e) => setProject({ ...project, contact: { ...project.contact, email: e.target.value } })}
+                  onBlur={() => handleSaveProject()}
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Links Card */}
           <div className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm overflow-hidden">
             <div className="p-4 border-b border-base-content/5 bg-base-200/30">

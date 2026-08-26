@@ -43,6 +43,11 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
   const [startDate, setStartDate] = useState(project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : "");
   const [endDate, setEndDate] = useState(project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : "");
 
+  const [contactName, setContactName] = useState(project?.contact?.name || "");
+  const [contactPosition, setContactPosition] = useState(project?.contact?.position || "");
+  const [contactPhone, setContactPhone] = useState(project?.contact?.phone || "");
+  const [contactEmail, setContactEmail] = useState(project?.contact?.email || "");
+
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -56,7 +61,13 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
         name: name.trim(), color, description, projectType, status, objective,
         briefUrl, folderUrl, assignedTo, defaultAssignee,
         startDate: startDate ? new Date(startDate).toISOString() : null,
-        endDate: endDate ? new Date(endDate).toISOString() : null
+        endDate: endDate ? new Date(endDate).toISOString() : null,
+        contact: {
+          name: contactName,
+          position: contactPosition,
+          phone: contactPhone,
+          email: contactEmail
+        }
       };
 
       if (project) {
@@ -212,6 +223,54 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
               value={folderUrl}
               onChange={(e) => setFolderUrl(e.target.value)}
               placeholder="https://drive.google.com/..."
+            />
+          </div>
+
+          <div className="md:col-span-2 pt-4 mt-2 border-t border-base-content/10">
+            <h4 className="font-bold text-base-content/80 text-sm">Contacto del Proyecto</h4>
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Nombre del Contacto</label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              placeholder="Ej. Juan Pérez"
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Puesto</label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={contactPosition}
+              onChange={(e) => setContactPosition(e.target.value)}
+              placeholder="Ej. Gerente de Marketing"
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Teléfono</label>
+            <input
+              type="tel"
+              className="input input-bordered w-full"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              placeholder="Ej. +52 55..."
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Correo Electrónico</label>
+            <input
+              type="email"
+              className="input input-bordered w-full"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder="Ej. juan@empresa.com"
             />
           </div>
 

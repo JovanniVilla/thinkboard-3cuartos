@@ -51,6 +51,12 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    contact: {
+      name: { type: String, default: "" },
+      position: { type: String, default: "" },
+      phone: { type: String, default: "" },
+      email: { type: String, default: "" }
+    },
     activities: [
       {
         id: { type: String },
