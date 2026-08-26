@@ -1,4 +1,5 @@
 import ProjectStatusConfig from "../models/ProjectStatusConfig.js";
+import Project from "../models/Project.js";
 
 export async function getProjectStatuses(req, res) {
   try {
@@ -39,12 +40,23 @@ export async function updateProjectStatus(req, res) {
     const statusObj = await ProjectStatusConfig.findById(req.params.id);
     if (!statusObj) return res.status(404).json({ message: "Estado no encontrado" });
 
+    const oldName = statusObj.name;
+
     if (name !== undefined) statusObj.name = name.trim();
     if (color !== undefined) statusObj.color = color;
     if (category !== undefined) statusObj.category = category;
     if (order !== undefined) statusObj.order = order;
 
     const updated = await statusObj.save();
+
+    // If the name changed, update all projects that had the old status name
+    if (name !== undefined && name.trim() !== oldName) {
+      await Project.updateMany(
+        { status: oldName },
+        { $set: { status: name.trim() } }
+      );
+    }
+
     res.status(200).json(updated);
   } catch (error) {
     if (error.code === 11000) {
@@ -59,11 +71,22 @@ export async function deleteProjectStatus(req, res) {
   try {
     const statusObj = await ProjectStatusConfig.findById(req.params.id);
     if (!statusObj) return res.status(404).json({ message: "Estado no encontrado" });
-    
+
+    const deletedName = statusObj.name;
     await ProjectStatusConfig.findByIdAndDelete(req.params.id);
+
+    // Reassign projects that had the deleted status to the first available status
+    const fallback = await ProjectStatusConfig.findOne().sort({ order: 1, createdAt: 1 });
+    const fallbackName = fallback ? fallback.name : "En planeación";
+    await Project.updateMany(
+      { status: deletedName },
+      { $set: { status: fallbackName } }
+    );
+
     res.status(200).json({ message: "Estado eliminado correctamente" });
   } catch (error) {
     console.error("Error deleting project status", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
