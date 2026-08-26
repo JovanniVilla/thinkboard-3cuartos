@@ -117,8 +117,8 @@ const NoteListView = ({
   }
 
   return (
-    <div className="bg-base-100 rounded-xl shadow-sm border border-base-content/10 overflow-hidden">
-      <div className="overflow-auto max-h-[calc(100vh-220px)] min-h-[300px]">
+    <div className="bg-base-100 rounded-xl shadow-sm border border-base-content/10 overflow-hidden h-full flex flex-col">
+      <div className="overflow-auto flex-1">
         <table className="table w-full">
           {/* Table Header */}
           <thead className="bg-base-200/95 backdrop-blur text-base-content/70 text-xs uppercase tracking-wider sticky top-0 z-10 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">

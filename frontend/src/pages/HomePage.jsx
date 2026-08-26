@@ -132,18 +132,18 @@ const HomePage = () => {
     });
 
   return (
-    <div className="min-h-screen pb-12">
+    <div className="h-screen flex flex-col overflow-hidden pb-4">
       <Navbar />
 
       {isRateLimited && <RateLimitedUI />}
 
-      <div className="w-full px-2 sm:px-4 mt-2">
+      <div className="flex-1 flex flex-col min-h-0 w-full px-2 sm:px-4 mt-2">
         {loading && <div className="text-center text-primary py-10">Cargando tareas...</div>}
 
         {notes.length === 0 && !isRateLimited && !loading && <NotesNotFound />}
 
         {notes.length > 0 && !isRateLimited && !loading && (
-          <div>
+          <div className="flex-1 flex flex-col min-h-0">
             {/* View Switcher Bar */}
             {/* Filters panel */}
             <NoteFilters
@@ -176,7 +176,8 @@ const HomePage = () => {
             />
 
             {/* Render selected view */}
-            {viewMode === "list" && (
+            <div className="flex-1 min-h-0 mt-2">
+              {viewMode === "list" && (
               <NoteListView
                 notes={filteredNotes}
                 setNotes={setNotes}
@@ -200,6 +201,7 @@ const HomePage = () => {
                 users={accounts}
               />
             )}
+            </div>
           </div>
         )}
       </div>

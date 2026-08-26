@@ -105,8 +105,8 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
   };
 
   return (
-    <div className="overflow-x-auto pb-6">
-      <div className="flex items-start gap-6 min-w-max">
+    <div className="overflow-x-auto pb-6 h-full flex flex-col">
+      <div className="flex items-start gap-6 min-w-max flex-1 min-h-0">
         {statuses.map((status) => {
           const columnNotes = notes.filter(
             (n) => n.status === status.name || (!n.status && status.name === "Pendiente")
@@ -117,7 +117,7 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
           return (
             <div
               key={status._id}
-              className={`w-80 flex-shrink-0 bg-base-100 rounded-xl border border-base-content/10 shadow-sm flex flex-col max-h-[calc(100vh-250px)] transition-colors ${
+              className={`w-80 flex-shrink-0 bg-base-100 rounded-xl border border-base-content/10 shadow-sm flex flex-col max-h-full transition-colors ${
                 isOver ? "ring-2 ring-primary bg-base-200/50" : ""
               }`}
               onDragOver={(e) => handleDragOver(e, status.name)}
