@@ -122,9 +122,20 @@ const ProjectDetailPage = () => {
       toast.error("El título es obligatorio");
       return;
     }
+    // Only send known editable fields — avoid sending tasks, _id, __v, etc.
+    const {
+      name, color, description, scope, acceptanceCriteria, projectType,
+      startDate, endDate, objective, status, briefUrl, assignedTo,
+      defaultAssignee, folderUrl, activities, contact,
+    } = mergedProject;
+    const payload = {
+      name, color, description, scope, acceptanceCriteria, projectType,
+      startDate, endDate, objective, status, briefUrl, assignedTo,
+      defaultAssignee, folderUrl, activities, contact,
+    };
     setSaving(true);
     try {
-      const res = await api.put(`/projects/${id}`, mergedProject);
+      const res = await api.put(`/projects/${id}`, payload);
       setProject(res.data);
     } catch (error) {
       console.error("Error saving project:", error);
@@ -133,6 +144,7 @@ const ProjectDetailPage = () => {
       setSaving(false);
     }
   };
+
 
   const handleDeleteProject = async () => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar este proyecto?"))
