@@ -25,11 +25,10 @@ const userSchema = new mongoose.Schema(
       enum: ["client", "team", "admin"],
       default: "client",
     },
-    assignedProject: {
+    assignedProjects: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
-      default: null,
-    },
+    }],
     isApproved: {
       type: Boolean,
       default: false,

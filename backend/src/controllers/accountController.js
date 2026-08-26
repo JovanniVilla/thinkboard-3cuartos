@@ -8,7 +8,7 @@ export async function getAllAccounts(req, res) {
   try {
     const accounts = await User.find()
       .select("-password")
-      .populate("assignedProject")
+      .populate("assignedProjects")
       .sort({ createdAt: -1 });
     res.status(200).json(accounts);
   } catch (error) {
@@ -74,7 +74,7 @@ export async function rejectAccount(req, res) {
  */
 export async function changeRole(req, res) {
   try {
-    const { role, assignedProject } = req.body;
+    const { role, assignedProjects } = req.body;
 
     if (!["client", "team", "admin"].includes(role)) {
       return res.status(400).json({ message: "Rol inválido. Debe ser 'client', 'team' o 'admin'" });
@@ -91,8 +91,8 @@ export async function changeRole(req, res) {
     }
 
     user.role = role;
-    if (assignedProject !== undefined) {
-      user.assignedProject = assignedProject === "" ? null : assignedProject;
+    if (assignedProjects !== undefined) {
+      user.assignedProjects = Array.isArray(assignedProjects) ? assignedProjects : [];
     }
     
     await user.save();

@@ -17,7 +17,17 @@ export async function getProjectById(req, res) {
 
 export async function getAllProjects(req, res) {
   try {
+    const matchStage = {};
+    if (req.user && req.user.role === "client") {
+      if (req.user.assignedProjects && req.user.assignedProjects.length > 0) {
+        matchStage._id = { $in: req.user.assignedProjects };
+      } else {
+        matchStage._id = { $in: [] };
+      }
+    }
+
     const projects = await Project.aggregate([
+      { $match: matchStage },
       {
         $lookup: {
           from: "notes",

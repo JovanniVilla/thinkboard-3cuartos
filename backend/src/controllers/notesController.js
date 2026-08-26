@@ -8,7 +8,11 @@ export async function getAllNotes(req, res) {
     const filter = { archived: { $ne: true } };
     
     if (req.user && req.user.role === "client") {
-      filter.project = req.user.assignedProject;
+      if (req.user.assignedProjects && req.user.assignedProjects.length > 0) {
+        filter.project = { $in: req.user.assignedProjects };
+      } else {
+        filter.project = { $in: [] };
+      }
     }
 
     const notes = await Note.find(filter).sort({ createdAt: -1 }); 

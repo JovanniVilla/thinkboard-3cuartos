@@ -1390,7 +1390,7 @@ const BoardSettingsPage = () => {
                                     onChange={async (e) => {
                                       const newRole = e.target.value;
                                       try {
-                                        const res = await api.put(`/accounts/${acc._id}/role`, { role: newRole, assignedProject: acc.assignedProject?._id || acc.assignedProject });
+                                        const res = await api.put(`/accounts/${acc._id}/role`, { role: newRole, assignedProjects: acc.assignedProjects?.map(p => p._id || p) || [] });
                                         setAccounts((prev) =>
                                           prev.map((a) => (a._id === acc._id ? res.data : a))
                                         );
@@ -1407,28 +1407,47 @@ const BoardSettingsPage = () => {
                                 </td>
 
                                 <td>
-                                  <select
-                                    className="select select-bordered select-sm font-semibold max-w-[130px]"
-                                    value={acc.assignedProject?._id || acc.assignedProject || ""}
-                                    disabled={isSelf || acc.role === "admin"}
-                                    onChange={async (e) => {
-                                      const newProject = e.target.value;
-                                      try {
-                                        const res = await api.put(`/accounts/${acc._id}/role`, { role: acc.role, assignedProject: newProject });
-                                        setAccounts((prev) =>
-                                          prev.map((a) => (a._id === acc._id ? res.data : a))
-                                        );
-                                        toast.success("Proyecto asignado correctamente");
-                                      } catch (error) {
-                                        toast.error(error.response?.data?.message || "Error al asignar proyecto");
-                                      }
-                                    }}
-                                  >
-                                    <option value="">Ninguno</option>
-                                    {projects.map(p => (
-                                      <option key={p._id} value={p._id}>{p.name}</option>
-                                    ))}
-                                  </select>
+                                  <div className="dropdown dropdown-hover">
+                                    <div tabIndex={0} role="button" className={`btn btn-sm btn-outline border-base-content/20 text-xs truncate max-w-[130px] ${isSelf || acc.role === "admin" ? "btn-disabled" : ""}`}>
+                                      {acc.assignedProjects?.length ? `${acc.assignedProjects.length} proyectos` : "Ninguno"}
+                                    </div>
+                                    {!(isSelf || acc.role === "admin") && (
+                                      <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 max-h-64 overflow-y-auto flex-nowrap">
+                                        {projects.map(p => {
+                                          const isSelected = acc.assignedProjects?.some(ap => (ap._id || ap) === p._id);
+                                          return (
+                                            <li key={p._id}>
+                                              <label className="label cursor-pointer flex gap-2 justify-start">
+                                                <input 
+                                                  type="checkbox" 
+                                                  className="checkbox checkbox-sm"
+                                                  checked={isSelected}
+                                                  onChange={async (e) => {
+                                                    let newProjects = [...(acc.assignedProjects || [])].map(ap => ap._id || ap);
+                                                    if (e.target.checked) {
+                                                      newProjects.push(p._id);
+                                                    } else {
+                                                      newProjects = newProjects.filter(id => id !== p._id);
+                                                    }
+                                                    try {
+                                                      const res = await api.put(`/accounts/${acc._id}/role`, { role: acc.role, assignedProjects: newProjects });
+                                                      setAccounts((prev) =>
+                                                        prev.map((a) => (a._id === acc._id ? res.data : a))
+                                                      );
+                                                      toast.success("Proyectos asignados correctamente");
+                                                    } catch (error) {
+                                                      toast.error(error.response?.data?.message || "Error al asignar proyecto");
+                                                    }
+                                                  }}
+                                                />
+                                                <span className="label-text truncate">{p.name}</span>
+                                              </label>
+                                            </li>
+                                          );
+                                        })}
+                                      </ul>
+                                    )}
+                                  </div>
                                 </td>
 
                                 <td>
