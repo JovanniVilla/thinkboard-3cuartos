@@ -271,8 +271,9 @@ const ProjectDetailPage = () => {
       <div className="sticky top-0 z-30 bg-base-100/90 backdrop-blur-xl border-b border-base-content/10">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 max-w-screen-2xl mx-auto">
           <div className="flex items-center gap-3 self-start sm:self-auto">
-            <Link to="/projects" className="btn btn-ghost btn-circle btn-sm">
-              <XIcon className="h-5 w-5" />
+            <Link to="/projects" className="btn btn-ghost btn-sm gap-2 text-base-content/70 hover:text-base-content hover:bg-base-200">
+              <XIcon className="size-4" />
+              <span className="font-semibold">Cerrar</span>
             </Link>
             <div className="flex items-center gap-2 text-sm font-semibold text-base-content/70 bg-base-200 px-3 py-1.5 rounded-full">
               <FolderKeyIcon
@@ -1261,8 +1262,8 @@ const ProjectDetailPage = () => {
           {/* RIGHT COLUMN: Log de Actividad */}
           <div className="w-full lg:w-80 xl:w-96 flex-shrink-0 flex flex-col">
             <div
-              className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm flex flex-col sticky top-[64px]"
-              style={{ height: "calc(100vh - 80px)" }}
+              className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm flex flex-col sticky top-[80px]"
+              style={{ height: "calc(100vh - 120px)" }}
             >
               <div className="p-4 border-b border-base-content/5 bg-base-200/30 flex items-center justify-between">
                 <h3 className="text-sm font-bold flex items-center gap-2">
