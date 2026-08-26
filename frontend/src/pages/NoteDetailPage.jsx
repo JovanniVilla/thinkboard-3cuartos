@@ -219,7 +219,7 @@ const NoteDetailPage = () => {
     try {
       const res = await api.post(`/notes/${id}/comments`, {
         text: commentText.trim(),
-        user: note.user || "Usuario",
+        user: currentUser?.name || "Usuario",
         mentions: extractMentions(commentText),
       });
       setNote(res.data);
@@ -242,7 +242,7 @@ const NoteDetailPage = () => {
     try {
       const res = await api.post(`/notes/${id}/comments`, {
         text: replyText.trim(),
-        user: note.user || "Usuario",
+        user: currentUser?.name || "Usuario",
         parentId: parentId,
         mentions: extractMentions(replyText),
       });
