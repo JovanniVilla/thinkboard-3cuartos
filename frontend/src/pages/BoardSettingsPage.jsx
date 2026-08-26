@@ -409,9 +409,9 @@ const BoardSettingsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 pb-12">
-      <div className="w-full px-4 sm:px-8 py-8">
-        <div className="w-full">
+    <div className="h-screen bg-base-200 flex flex-col overflow-hidden">
+      <div className="w-full px-4 sm:px-8 pt-6 pb-2 flex-1 flex flex-col min-h-0">
+        <div className="w-full flex-1 flex flex-col min-h-0">
           <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
             <div className="flex items-center gap-4">
               <Link to="/" className="btn btn-ghost btn-sm gap-1">
@@ -523,9 +523,11 @@ const BoardSettingsPage = () => {
             </button>
           </div>
 
-          {/* TAB 0: PROYECTO / IDENTIFICADOR */}
-          {activeTab === "project" && (
-            <div className="space-y-6">
+          {/* Tab Content Wrapper */}
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* TAB 0: PROYECTO / IDENTIFICADOR */}
+            {activeTab === "project" && (
+              <div className="space-y-6 overflow-y-auto pr-1 pb-4 flex-1">
               <div className="card bg-base-100 shadow-sm border border-base-content/10">
                 <div className="card-body p-6 sm:p-8 space-y-6">
                   <div>
@@ -662,7 +664,7 @@ const BoardSettingsPage = () => {
 
           {/* TAB 1: ESTADOS */}
           {activeTab === "statuses" && (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-1 pb-4 flex-1">
               <div className="card bg-base-100 shadow-sm border border-base-content/10">
                 <div className="card-body">
                   <div className="flex items-center justify-between mb-2">
@@ -791,7 +793,7 @@ const BoardSettingsPage = () => {
 
           {/* TAB 2: PRIORIDADES */}
           {activeTab === "priorities" && (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-1 pb-4 flex-1">
               <div className="card bg-base-100 shadow-sm border border-base-content/10">
                 <div className="card-body">
                   <div className="flex items-center justify-between mb-2">
@@ -907,7 +909,7 @@ const BoardSettingsPage = () => {
 
           {/* TAB 3: ETIQUETAS */}
           {activeTab === "labels" && (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto pr-1 pb-4 flex-1">
               <div className="card bg-base-100 shadow-sm border border-base-content/10">
                 <div className="card-body">
                   <div className="flex items-center justify-between mb-2">
@@ -1023,7 +1025,7 @@ const BoardSettingsPage = () => {
 
           {/* PROJECT TYPES */}
           {activeTab === "project_types" && (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-1 pb-4 flex-1">
               <div className="card bg-base-100 shadow-sm border border-base-content/10">
                 <div className="card-body">
                   <div className="flex items-center justify-between mb-2">
@@ -1139,7 +1141,7 @@ const BoardSettingsPage = () => {
 
           {/* PROJECT STATUSES */}
           {activeTab === "project_statuses" && (
-            <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-1 pb-4 flex-1">
               <div className="card bg-base-100 shadow-sm border border-base-content/10">
                 <div className="card-body">
                   <div className="flex items-center justify-between mb-2">
@@ -1266,9 +1268,9 @@ const BoardSettingsPage = () => {
             </div>
           )}
 
-          {/* TAB 4: CUENTAS Y AUTORIZACIONES */}
-          {activeTab === "accounts" && (
-            <div className="space-y-6">
+            {/* TAB 4: CUENTAS Y AUTORIZACIONES */}
+            {activeTab === "accounts" && (
+              <div className="space-y-6 flex-1 flex flex-col min-h-0 pb-4">
               {/* Summary Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="card bg-base-100 border border-base-content/10 shadow-sm p-4">
@@ -1314,9 +1316,9 @@ const BoardSettingsPage = () => {
                 </div>
               </div>
 
-              {/* Accounts Card */}
-              <div className="card bg-base-100 shadow-sm border border-base-content/10">
-                <div className="card-body p-6">
+                {/* Accounts Card */}
+                <div className="card bg-base-100 shadow-sm border border-base-content/10 flex-1 flex flex-col min-h-0">
+                  <div className="card-body p-6 flex flex-col min-h-0">
                   <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                     <div>
                       <h2 className="card-title text-lg flex items-center gap-2">
@@ -1334,8 +1336,8 @@ const BoardSettingsPage = () => {
                   ) : accounts.length === 0 ? (
                     <div className="text-center py-8 text-base-content/50">No hay cuentas registradas</div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="table w-full">
+                    <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 rounded-lg border border-base-content/5">
+                      <table className="table w-full table-pin-rows">
                         <thead>
                           <tr className="border-b border-base-content/10 text-base-content/60">
                             <th>Usuario</th>
@@ -1561,7 +1563,7 @@ const BoardSettingsPage = () => {
 
           {/* TAB 6: DATABASE BACKUP / RESTORE */}
           {activeTab === "database" && (
-            <div className="space-y-6">
+            <div className="space-y-6 overflow-y-auto pr-1 pb-4 flex-1">
               <div className="card bg-base-100 shadow-sm border border-base-content/10">
                 <div className="card-body p-6 sm:p-8 space-y-6">
                   <div>
@@ -1663,6 +1665,7 @@ const BoardSettingsPage = () => {
             </div>
           )}
 
+          </div> {/* End Tab Content Wrapper */}
         </div>
       </div>
     </div>
