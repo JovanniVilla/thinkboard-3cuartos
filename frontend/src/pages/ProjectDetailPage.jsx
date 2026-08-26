@@ -355,7 +355,7 @@ const ProjectDetailPage = () => {
                 {tasks.map(task => (
                   <Link 
                     key={task._id} 
-                    to={`/notes/${task._id}`}
+                    to={`/note/${task._id}`}
                     className="flex items-center gap-3 p-3 rounded-xl border border-base-content/10 hover:border-primary/50 hover:bg-base-200/50 transition-colors group"
                   >
                     <div className={`w-2 h-2 rounded-full flex-shrink-0 ${task.status === "Completado" ? "bg-success" : "bg-primary"}`} />
