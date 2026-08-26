@@ -1,18 +1,27 @@
-import { ArrowLeftIcon } from "lucide-react";
-import { useState } from "react";
-import toast from "react-hot-toast";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import api from "../lib/axios";
+import toast from "react-hot-toast";
+import {
+  XIcon,
+  CheckCircle2Icon,
+  Edit3Icon,
+  MessageSquareIcon,
+  ChevronDownIcon,
+  ZapIcon,
+  FolderKeyIcon,
+  UserIcon
+} from "lucide-react";
 import { useStatuses } from "../lib/useStatuses";
-import StatusSelect from "../components/StatusSelect";
-import PrioritySelect from "../components/PrioritySelect";
-import UserSelect from "../components/UserSelect";
-import { useProjects } from "../lib/useProjects";
-import MarkdownEditor from "../components/MarkdownEditor";
-import { useBoardConfig } from "../lib/useBoardConfig";
-import ThemeToggle from "../components/ThemeToggle";
 import { usePriorities } from "../lib/usePriorities";
 import { useAccounts } from "../lib/useAccounts";
+import { useProjects } from "../lib/useProjects";
+import MarkdownEditor from "../components/MarkdownEditor";
+
+const getInitials = (name = "") => {
+  if (!name || name === "Sin asignar") return "?";
+  return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+};
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
@@ -27,9 +36,16 @@ const CreatePage = () => {
   const { priorities } = usePriorities();
   const { accounts } = useAccounts();
   const { projects } = useProjects();
-  const { boardConfig } = useBoardConfig();
-
   const navigate = useNavigate();
+
+  const titleTextareaRef = useRef(null);
+
+  useEffect(() => {
+    if (titleTextareaRef.current) {
+      titleTextareaRef.current.style.height = "auto";
+      titleTextareaRef.current.style.height = `${titleTextareaRef.current.scrollHeight}px`;
+    }
+  }, [title]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,10 +71,7 @@ const CreatePage = () => {
     } catch (error) {
       console.error("Error creating note", error);
       if (error.response?.status === 429) {
-        toast.error("¡Demasiadas solicitudes! Espera unos segundos", {
-          duration: 4000,
-          icon: "💀",
-        });
+        toast.error("¡Demasiadas solicitudes! Espera unos segundos");
       } else {
         toast.error("Error al crear la tarea");
       }
@@ -67,120 +80,211 @@ const CreatePage = () => {
     }
   };
 
+  const currentStatus = status || statuses[0]?.name || "Pendiente";
+  const statusColor = statuses.find(s => s.name === currentStatus)?.color || "#6B7280";
+  const priorityColor = priorities.find(p => p.name === priority)?.color || "#6B7280";
+  const currentProject = projects.find(p => p._id === project);
+
   return (
-    <div className="min-h-screen bg-base-200 pb-12">
-      <div className="w-full px-4 sm:px-8 py-8">
-        <div className="w-full">
-          <div className="flex items-center justify-between mb-6">
-            <Link to={"/"} className="btn btn-ghost gap-1">
-              <ArrowLeftIcon className="size-5" />
-              Volver al Tablero
-            </Link>
-            <ThemeToggle />
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto" onClick={() => navigate("/")}>
+      {/* Card Detail Modal Window Container */}
+      <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-4 mb-12 flex-shrink-0 flex flex-col" onClick={e => e.stopPropagation()}>
+        
+        {/* Header Bar */}
+        <div className="flex items-start justify-between px-3 py-2 border-b border-base-content/10 bg-base-100 gap-2">
+          
+          <div className="flex flex-1 items-center gap-2 flex-wrap text-base-content/60">
+            {/* Status Dropdown */}
+            <div className="dropdown">
+              <label tabIndex={0} className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap">
+                <span>{currentStatus}</span>
+                <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
+              </label>
+              <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1">
+                {statuses.map((st) => (
+                  <li key={st._id}>
+                    <button type="button" onClick={() => setStatus(st.name)} className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
+                      <span className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: st.color || "#6B7280" }} />
+                        {st.name}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Priority Dropdown */}
+            <div className="dropdown">
+              <label tabIndex={0} className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap">
+                <ZapIcon className="size-4 flex-shrink-0" style={{ color: priorityColor }} />
+                <span>{priority}</span>
+                <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
+              </label>
+              <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1">
+                {priorities.map((p) => (
+                  <li key={p._id}>
+                    <button type="button" onClick={() => setPriority(p.name)} className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${priority === p.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
+                      <span className="flex items-center gap-2">
+                        <ZapIcon className="size-4" style={{ color: p.color }} />
+                        {p.name}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Project Dropdown */}
+            <div className="dropdown">
+              <label tabIndex={0} className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap">
+                <FolderKeyIcon className="size-4 flex-shrink-0" style={{ color: currentProject?.color || "#6B7280" }} />
+                <span>{currentProject?.name || "Sin proyecto"}</span>
+                <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
+              </label>
+              <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1">
+                <li>
+                  <button type="button" onClick={() => setProject("")} className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${!project ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
+                    <FolderKeyIcon className="size-4 text-base-content/60" />
+                    Sin proyecto
+                  </button>
+                </li>
+                {projects.map((p) => (
+                  <li key={p._id}>
+                    <button type="button" onClick={() => setProject(p._id)} className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
+                      <span className="flex items-center gap-2">
+                        <FolderKeyIcon className="size-4" style={{ color: p.color }} />
+                        {p.name}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <span className="badge bg-base-200 text-base-content/50 border border-base-content/10 font-mono font-bold text-xs px-2 py-1 whitespace-nowrap italic">
+              Nueva Tarea
+            </span>
           </div>
 
-          <div className="card bg-base-100 shadow-sm border border-base-content/10">
-            <div className="card-body p-6 sm:p-8 space-y-6">
-              {/* Header section where Task Title is dominant! */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <div className="text-xs font-bold uppercase tracking-wider text-base-content/40">
-                    CREAR NUEVA TAREA
+          <button type="button" onClick={() => navigate("/")} className="btn btn-sm btn-ghost btn-square text-base-content/50 hover:text-base-content flex-shrink-0">
+             <XIcon className="size-5" />
+          </button>
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-[400px]">
+          {/* Left Column */}
+          <div className="flex-1 p-4 sm:p-5 md:p-6 overflow-y-auto bg-base-100 flex flex-col">
+             
+             {/* Title */}
+             <div className="flex items-start gap-3 mb-6">
+               <div className="mt-1 flex-shrink-0">
+                 <CheckCircle2Icon className="size-6 text-base-content/30" />
+               </div>
+               <textarea
+                 ref={titleTextareaRef}
+                 className="w-full resize-none overflow-hidden bg-transparent text-xl md:text-2xl font-bold text-base-content leading-tight focus:outline-none focus:ring-0 placeholder:text-base-content/30"
+                 placeholder="Título de la tarea"
+                 value={title}
+                 onChange={(e) => setTitle(e.target.value)}
+                 autoFocus
+                 rows={1}
+               />
+             </div>
+             
+             {/* Description */}
+             <div className="mt-2 flex gap-3 group relative flex-1">
+               <div className="mt-1 flex-shrink-0 text-base-content/50">
+                 <Edit3Icon className="size-5" />
+               </div>
+               <div className="flex-1 min-w-0 flex flex-col">
+                 <div className="flex items-center justify-between mb-2">
+                   <h3 className="font-bold text-base-content">Descripción</h3>
+                 </div>
+                 <div className="flex-1 border border-base-content/10 rounded-xl overflow-hidden focus-within:border-primary/50 transition-colors">
+                   <MarkdownEditor
+                     value={content}
+                     onChange={setContent}
+                   />
+                 </div>
+               </div>
+             </div>
+
+             <div className="mt-8 pt-4 border-t border-base-content/10 flex justify-end gap-3">
+               <button className="btn btn-ghost" onClick={() => navigate("/")}>
+                 Cancelar
+               </button>
+               <button
+                 className="btn btn-primary px-8"
+                 disabled={loading || !title.trim() || !content.trim()}
+                 onClick={handleSubmit}
+               >
+                 {loading ? "Creando..." : "Crear Tarea"}
+               </button>
+             </div>
+          </div>
+
+          {/* Right Column (Activity/Comments) */}
+          <div className="w-full md:w-80 lg:w-[380px] bg-base-200/50 flex-shrink-0 border-l border-base-content/10 flex flex-col relative h-[500px] md:h-auto overflow-hidden">
+             
+             {/* Members section in the right column */}
+             <div className="p-4 border-b border-base-content/10 bg-base-200/80">
+               <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
+                 <UserIcon className="size-4" /> Asignar a
+               </h3>
+               <div className="dropdown w-full">
+                  <div tabIndex={0} role="button" className="btn btn-sm btn-ghost gap-2 w-full justify-start border border-base-content/10 hover:border-base-content/30 rounded-xl bg-base-100">
+                    {user !== "Sin asignar" ? (
+                      <div className="avatar placeholder">
+                        <div className="bg-primary text-primary-content rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
+                          <span>{getInitials(user)}</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-base-content/40">
+                        <UserIcon className="size-3" />
+                      </div>
+                    )}
+                    <span className="truncate">{user}</span>
+                    <ChevronDownIcon className="size-4 ml-auto opacity-50" />
                   </div>
-                  {boardConfig?.projectKey && (
-                    <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30">
-                      Próximo ID: {boardConfig.projectKey.endsWith("-") ? boardConfig.projectKey : `${boardConfig.projectKey}-`}{boardConfig.taskCounter || 1}
-                    </span>
-                  )}
-                </div>
-                <input
-                  type="text"
-                  placeholder="Título de la tarea"
-                  className="text-2xl sm:text-3xl font-extrabold text-base-content w-full bg-transparent border-0 border-b border-base-content/15 focus:border-primary pb-2 focus:outline-none placeholder:text-base-content/30 transition-colors"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  autoFocus
-                />
-              </div>
-
-              {/* Status, Priority, User Selectors */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-base-200/50 rounded-xl border border-base-content/10">
-                <div className="form-control">
-                  <label className="label pt-0 pb-1">
-                    <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/60">Estado</span>
-                  </label>
-                  <StatusSelect
-                    statuses={statuses}
-                    value={status}
-                    onChange={setStatus}
-                    placeholder="— Seleccionar estado —"
-                  />
-                </div>
-
-                <div className="form-control">
-                  <label className="label pt-0 pb-1">
-                    <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/60">Prioridad</span>
-                  </label>
-                  <PrioritySelect
-                    priorities={priorities}
-                    value={priority}
-                    onChange={setPriority}
-                  />
-                </div>
-
-                <div className="form-control">
-                  <label className="label pt-0 pb-1">
-                    <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/60">Asignado a</span>
-                  </label>
-                  <UserSelect
-                    users={accounts}
-                    value={user}
-                    onChange={setUser}
-                  />
-                </div>
-
-                <div className="form-control md:col-span-3 lg:col-span-1">
-                  <label className="label pt-0 pb-1">
-                    <span className="label-text text-xs font-bold uppercase tracking-wider text-base-content/60">Proyecto</span>
-                  </label>
-                  <select
-                    className="select select-bordered w-full"
-                    value={project}
-                    onChange={(e) => setProject(e.target.value)}
-                  >
-                    <option value="">— Sin proyecto —</option>
-                    {projects.map((p) => (
-                      <option key={p._id} value={p._id}>
-                        {p.name}
-                      </option>
+                  <ul tabIndex={0} className="dropdown-content z-[60] menu p-2 shadow-xl bg-base-100 rounded-box w-full border border-base-content/10 mt-1 max-h-60 overflow-y-auto">
+                    <li>
+                      <button onClick={() => { setUser("Sin asignar"); document.activeElement.blur(); }} className={`text-sm py-2 rounded-lg font-medium ${user === "Sin asignar" ? "bg-primary/20 text-primary" : ""}`}>
+                        <div className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 mr-2">
+                          <UserIcon className="size-3" />
+                        </div>
+                        Sin asignar
+                      </button>
+                    </li>
+                    {accounts.map((acc) => (
+                      <li key={acc._id}>
+                        <button onClick={() => { setUser(acc.name); document.activeElement.blur(); }} className={`text-sm py-2 rounded-lg font-medium ${user === acc.name ? "bg-primary/20 text-primary" : ""}`}>
+                          <div className="avatar placeholder mr-2">
+                            <div className="bg-primary text-primary-content rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
+                              <span>{getInitials(acc.name)}</span>
+                            </div>
+                          </div>
+                          {acc.name}
+                        </button>
+                      </li>
                     ))}
-                  </select>
+                  </ul>
                 </div>
-              </div>
+             </div>
 
-              {/* Markdown Editor for Content */}
-              <div className="space-y-2">
-                <label className="label pt-0 pb-1">
-                  <span className="label-text font-bold text-base text-base-content">Contenido / Descripción (Markdown)</span>
-                </label>
-                <MarkdownEditor
-                  value={content}
-                  onChange={setContent}
-                  placeholder="Escribe los detalles de la tarea en Markdown (puedes usar listas, **negrita**, tablas, etc.)"
-                />
-              </div>
-
-              <div className="card-actions justify-end pt-4 border-t border-base-content/10">
-                <button
-                  type="button"
-                  className="btn btn-primary px-8 gap-2"
-                  disabled={loading || !title.trim() || !content.trim()}
-                  onClick={handleSubmit}
-                >
-                  {loading ? "Creando..." : "Crear Tarea"}
-                </button>
-              </div>
-            </div>
+             <div className="p-4 border-b border-base-content/10 flex items-center justify-between bg-base-200/80">
+               <h3 className="font-bold text-sm flex items-center gap-2">
+                 <MessageSquareIcon className="size-4" /> Comentarios y Actividad
+               </h3>
+             </div>
+             
+             <div className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center text-center opacity-50 space-y-3">
+               <MessageSquareIcon className="size-10 mb-2 opacity-50" />
+               <p className="text-sm font-medium">Guarda la tarea primero</p>
+               <p className="text-xs max-w-[200px]">Podrás añadir comentarios, checklists y ver el historial de actividad una vez creada la tarea.</p>
+             </div>
           </div>
         </div>
       </div>
