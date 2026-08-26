@@ -15,6 +15,14 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    scope: {
+      type: String,
+      default: "",
+    },
+    acceptanceCriteria: {
+      type: String,
+      default: "",
+    },
     projectType: {
       type: String,
       default: "General",

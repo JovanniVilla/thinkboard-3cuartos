@@ -194,13 +194,24 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
           </div>
 
           <div className="form-control md:col-span-2">
-            <label className="label font-bold text-sm">Objetivo (Opcional)</label>
-            <input
-              type="text"
-              className="input input-bordered w-full"
+            <label className="label font-bold text-sm">Objetivo Principal (Opcional)</label>
+            <div className="mb-3 p-3 bg-base-200/50 rounded-xl border border-base-content/5 text-xs text-base-content/70">
+              <strong className="block text-base-content/90 mb-1">Redacta objetivos SMARTER:</strong>
+              <ul className="list-none space-y-0.5">
+                <li><strong className="text-base-content">S (Specific):</strong> Claro, sin dudas y fácil de entender.</li>
+                <li><strong className="text-base-content">M (Measurable):</strong> Con números/indicadores para medir el avance.</li>
+                <li><strong className="text-base-content">A (Achievable):</strong> Realista según los recursos.</li>
+                <li><strong className="text-base-content">R (Relevant):</strong> Que aporte valor real.</li>
+                <li><strong className="text-base-content">T (Time-bound):</strong> Con fecha límite clara.</li>
+                <li><strong className="text-base-content">E (Evaluated):</strong> Revisado de forma constante.</li>
+                <li><strong className="text-base-content">R (Reevaluated):</strong> Ajustable si cambian las condiciones.</li>
+              </ul>
+            </div>
+            <textarea
+              className="textarea textarea-bordered w-full h-24 text-sm"
               value={objective}
               onChange={(e) => setObjective(e.target.value)}
-              placeholder="Ej. Lanzar v2 en Q3..."
+              placeholder="Ej. Aumentar las ventas en un 15% para diciembre de este año..."
             />
           </div>
 

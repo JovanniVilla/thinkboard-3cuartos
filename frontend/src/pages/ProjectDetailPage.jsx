@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import {
-  LoaderIcon, Trash2Icon, XIcon, PlusIcon, CalendarIcon, UsersIcon, MessageSquareIcon, CheckCircle2Icon, Edit3Icon, ChevronDownIcon, LinkIcon, SendIcon, FolderIcon, TargetIcon, LayersIcon, ZapIcon, PencilIcon, CheckIcon, FolderKeyIcon, UserIcon, PhoneIcon, MailIcon, BriefcaseIcon
+  LoaderIcon, Trash2Icon, XIcon, PlusIcon, CalendarIcon, UsersIcon, MessageSquareIcon, CheckCircle2Icon, Edit3Icon, ChevronDownIcon, LinkIcon, SendIcon, FolderIcon, TargetIcon, LayersIcon, ZapIcon, PencilIcon, CheckIcon, FolderKeyIcon, UserIcon, PhoneIcon, MailIcon, BriefcaseIcon, TelescopeIcon, CheckSquareIcon
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useProjectTypes } from "../lib/useProjectTypes";
@@ -37,6 +37,8 @@ const ProjectDetailPage = () => {
   const [saving, setSaving] = useState(false);
   
   const [isEditingDescription, setIsEditingDescription] = useState(false);
+  const [isEditingScope, setIsEditingScope] = useState(false);
+  const [isEditingAcceptance, setIsEditingAcceptance] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [postingComment, setPostingComment] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
@@ -317,9 +319,21 @@ const ProjectDetailPage = () => {
             <h3 className="text-sm font-bold flex items-center gap-2 mb-3 text-base-content/80">
               <TargetIcon className="size-4 text-primary" /> Objetivo Principal
             </h3>
+            <div className="mb-3 p-3 bg-base-200/50 rounded-xl border border-base-content/5 text-xs text-base-content/70">
+              <strong className="block text-base-content/90 mb-1">Redacta objetivos SMARTER:</strong>
+              <ul className="list-none space-y-0.5">
+                <li><strong className="text-base-content">S (Specific):</strong> Claro, sin dudas y fácil de entender.</li>
+                <li><strong className="text-base-content">M (Measurable):</strong> Con números/indicadores para medir el avance.</li>
+                <li><strong className="text-base-content">A (Achievable):</strong> Realista según los recursos.</li>
+                <li><strong className="text-base-content">R (Relevant):</strong> Que aporte valor real.</li>
+                <li><strong className="text-base-content">T (Time-bound):</strong> Con fecha límite clara.</li>
+                <li><strong className="text-base-content">E (Evaluated):</strong> Revisado de forma constante.</li>
+                <li><strong className="text-base-content">R (Reevaluated):</strong> Ajustable si cambian las condiciones.</li>
+              </ul>
+            </div>
             <textarea
-              className="textarea textarea-bordered w-full h-20 text-base"
-              placeholder="¿Cuál es el objetivo de este proyecto?"
+              className="textarea textarea-bordered w-full h-24 text-sm"
+              placeholder="Ej. Aumentar las ventas en un 15% para diciembre de este año..."
               value={project.objective || ""}
               onChange={(e) => setProject({ ...project, objective: e.target.value })}
               onBlur={() => handleSaveProject()}
@@ -346,6 +360,54 @@ const ProjectDetailPage = () => {
                 onClick={() => setIsEditingDescription(true)}
               >
                 {project.description ? <MarkdownRenderer content={project.description} /> : <span className="text-base-content/40 italic flex items-center gap-2 mt-4"><PencilIcon className="size-4" />Haz clic aquí para añadir una descripción detallada del proyecto...</span>}
+              </div>
+            )}
+          </div>
+          
+          {/* Alcances del Proyecto */}
+          <div className="bg-base-100 p-5 rounded-2xl border border-base-content/10 shadow-sm relative group min-h-[160px]">
+            <h3 className="text-sm font-bold flex items-center gap-2 mb-4 text-base-content/80">
+              <TelescopeIcon className="size-4 text-primary" /> Alcances del Proyecto
+            </h3>
+            {isEditingScope ? (
+              <div className="animate-in fade-in zoom-in-95 duration-200">
+                <MarkdownEditor
+                  value={project.scope || ""}
+                  onChange={(val) => setProject({ ...project, scope: val })}
+                  onSave={() => { setIsEditingScope(false); handleSaveProject(); }}
+                  onCancel={() => { setIsEditingScope(false); }}
+                />
+              </div>
+            ) : (
+              <div
+                className="cursor-text prose prose-sm md:prose-base max-w-none prose-headings:font-bold prose-a:text-primary min-h-[100px] p-2 -m-2 rounded-xl hover:bg-base-200/50 transition-colors"
+                onClick={() => setIsEditingScope(true)}
+              >
+                {project.scope ? <MarkdownRenderer content={project.scope} /> : <span className="text-base-content/40 italic flex items-center gap-2 mt-4"><PencilIcon className="size-4" />Haz clic aquí para detallar los alcances del proyecto...</span>}
+              </div>
+            )}
+          </div>
+          
+          {/* Criterios de Aceptación */}
+          <div className="bg-base-100 p-5 rounded-2xl border border-base-content/10 shadow-sm relative group min-h-[160px]">
+            <h3 className="text-sm font-bold flex items-center gap-2 mb-4 text-base-content/80">
+              <CheckSquareIcon className="size-4 text-primary" /> Criterios de Aceptación
+            </h3>
+            {isEditingAcceptance ? (
+              <div className="animate-in fade-in zoom-in-95 duration-200">
+                <MarkdownEditor
+                  value={project.acceptanceCriteria || ""}
+                  onChange={(val) => setProject({ ...project, acceptanceCriteria: val })}
+                  onSave={() => { setIsEditingAcceptance(false); handleSaveProject(); }}
+                  onCancel={() => { setIsEditingAcceptance(false); }}
+                />
+              </div>
+            ) : (
+              <div
+                className="cursor-text prose prose-sm md:prose-base max-w-none prose-headings:font-bold prose-a:text-primary min-h-[100px] p-2 -m-2 rounded-xl hover:bg-base-200/50 transition-colors"
+                onClick={() => setIsEditingAcceptance(true)}
+              >
+                {project.acceptanceCriteria ? <MarkdownRenderer content={project.acceptanceCriteria} /> : <span className="text-base-content/40 italic flex items-center gap-2 mt-4"><PencilIcon className="size-4" />Haz clic aquí para definir los criterios de aceptación...</span>}
               </div>
             )}
           </div>

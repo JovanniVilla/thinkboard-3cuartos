@@ -60,7 +60,7 @@ export async function getAllProjects(req, res) {
 
 export async function createProject(req, res) {
   try {
-    const { name, color, description, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, contact } = req.body;
+    const { name, color, description, scope, acceptanceCriteria, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, contact } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ message: "El nombre del proyecto es obligatorio" });
@@ -70,6 +70,8 @@ export async function createProject(req, res) {
       name: name.trim(),
       color: color || "#3B82F6",
       description: description || "",
+      scope: scope || "",
+      acceptanceCriteria: acceptanceCriteria || "",
       projectType: projectType || "General",
       startDate: startDate || null,
       endDate: endDate || null,
@@ -93,7 +95,7 @@ export async function createProject(req, res) {
 
 export async function updateProject(req, res) {
   try {
-    const { name, color, description, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, activities, contact } = req.body;
+    const { name, color, description, scope, acceptanceCriteria, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, activities, contact } = req.body;
     const project = await Project.findById(req.params.id);
 
     if (!project) {
@@ -103,6 +105,8 @@ export async function updateProject(req, res) {
     if (name !== undefined) project.name = name.trim();
     if (color !== undefined) project.color = color;
     if (description !== undefined) project.description = description;
+    if (scope !== undefined) project.scope = scope;
+    if (acceptanceCriteria !== undefined) project.acceptanceCriteria = acceptanceCriteria;
     if (projectType !== undefined) project.projectType = projectType;
     if (startDate !== undefined) project.startDate = startDate;
     if (endDate !== undefined) project.endDate = endDate;
