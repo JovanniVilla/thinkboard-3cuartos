@@ -39,6 +39,8 @@ const ProjectDetailPage = () => {
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [postingComment, setPostingComment] = useState(false);
+  const [editingCommentId, setEditingCommentId] = useState(null);
+  const [editingCommentText, setEditingCommentText] = useState("");
   
   const { projectTypes } = useProjectTypes();
   const { projectStatuses } = useProjectStatuses();
@@ -125,6 +127,30 @@ const ProjectDetailPage = () => {
       toast.error("Error al enviar comentario");
     } finally {
       setPostingComment(false);
+    }
+  };
+
+  const handleEditComment = async (activityId) => {
+    if (!editingCommentText.trim()) {
+      setEditingCommentId(null);
+      return;
+    }
+    
+    const updatedActivities = (project.activities || []).map(act => 
+      act.id === activityId || act._id === activityId 
+        ? { ...act, text: editingCommentText.trim(), editedAt: new Date().toISOString() } 
+        : act
+    );
+
+    try {
+      const res = await api.put(`/projects/${id}`, { activities: updatedActivities });
+      setProject(res.data);
+      toast.success("Comentario actualizado");
+    } catch (error) {
+      console.error("Error updating comment", error);
+      toast.error("Error al actualizar comentario");
+    } finally {
+      setEditingCommentId(null);
     }
   };
 
@@ -430,24 +456,75 @@ const ProjectDetailPage = () => {
               {(!project.activities || project.activities.length === 0) ? (
                 <p className="text-center text-sm text-base-content/40 py-10">No hay actividad registrada.</p>
               ) : (
-                project.activities.map((act) => (
-                  <div key={act.id || act._id} className="flex gap-3">
-                    <div className="avatar placeholder self-start">
-                      <div className="bg-primary/10 text-primary rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold border border-primary/20">
-                        <span>{getInitials(act.user)}</span>
+                project.activities.map((act) => {
+                  const actId = act.id || act._id;
+                  const isEditing = editingCommentId === actId;
+                  
+                  return (
+                    <div key={actId} className="flex gap-3 group/comment">
+                      <div className="avatar placeholder self-start">
+                        <div className="bg-primary/10 text-primary rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold border border-primary/20">
+                          <span>{getInitials(act.user)}</span>
+                        </div>
+                      </div>
+                      <div className="flex-1 bg-base-200/50 rounded-2xl rounded-tl-sm p-3 border border-base-content/5 relative">
+                        <div className="flex items-baseline justify-between gap-2 mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-xs">{act.user}</span>
+                            {act.editedAt && (
+                              <span className="text-[9px] font-medium text-base-content/40 italic">(editado)</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-base-content/50">{formatDateActivity(act.createdAt)}</span>
+                        </div>
+                        
+                        {isEditing ? (
+                          <div className="mt-2">
+                            <textarea
+                              className="textarea textarea-bordered w-full text-sm resize-none focus:outline-none focus:border-primary"
+                              value={editingCommentText}
+                              onChange={(e) => setEditingCommentText(e.target.value)}
+                              rows={2}
+                              autoFocus
+                            />
+                            <div className="flex justify-end gap-2 mt-2">
+                              <button 
+                                className="btn btn-xs btn-ghost" 
+                                onClick={() => setEditingCommentId(null)}
+                              >
+                                Cancelar
+                              </button>
+                              <button 
+                                className="btn btn-xs btn-primary"
+                                onClick={() => handleEditComment(actId)}
+                                disabled={!editingCommentText.trim()}
+                              >
+                                Guardar
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-sm prose prose-sm max-w-none prose-p:my-1 prose-a:text-primary relative">
+                            <MarkdownRenderer content={act.text} />
+                          </div>
+                        )}
+
+                        {act.type === "comment" && act.user === currentUser?.name && !isEditing && (
+                          <button 
+                            className="absolute top-2 right-2 btn btn-xs btn-ghost btn-square opacity-0 group-hover/comment:opacity-100 transition-opacity bg-base-100/50 hover:bg-base-200"
+                            onClick={() => {
+                              setEditingCommentId(actId);
+                              setEditingCommentText(act.text);
+                            }}
+                            title="Editar comentario"
+                          >
+                            <PencilIcon className="size-3 text-base-content/60 hover:text-primary" />
+                          </button>
+                        )}
                       </div>
                     </div>
-                    <div className="flex-1 bg-base-200/50 rounded-2xl rounded-tl-sm p-3 border border-base-content/5">
-                      <div className="flex items-baseline justify-between gap-2 mb-1">
-                        <span className="font-bold text-xs">{act.user}</span>
-                        <span className="text-[10px] text-base-content/50">{formatDateActivity(act.createdAt)}</span>
-                      </div>
-                      <div className="text-sm prose prose-sm max-w-none prose-p:my-1 prose-a:text-primary">
-                        <MarkdownRenderer content={act.text} />
-                      </div>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
             

@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { 
-  ArrowLeftIcon, PlusIcon, Trash2Icon, CheckIcon, XIcon, FolderKeyIcon, PenIcon,
-  CalendarIcon, UserIcon, LinkIcon, FileTextIcon, TargetIcon, LayersIcon
+  ArrowLeftIcon, PlusIcon, FolderKeyIcon, XIcon,
+  LayoutGridIcon, ListIcon, ColumnsIcon
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
@@ -13,6 +13,10 @@ import { useAccounts } from "../lib/useAccounts";
 import { useStatuses } from "../lib/useStatuses";
 import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
+
+import ProjectGridView from "../components/ProjectGridView";
+import ProjectListView from "../components/ProjectListView";
+import ProjectKanbanView from "../components/ProjectKanbanView";
 
 const PRESET_COLORS = [
   "#6B7280", "#EF4444", "#F97316", "#EAB308",
@@ -232,19 +236,18 @@ const ProjectsPage = () => {
   
   const [editingProject, setEditingProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem("project_view_mode") || "grid");
+
+  useEffect(() => {
+    localStorage.setItem("project_view_mode", viewMode);
+  }, [viewMode]);
 
   // Derive "done" task statuses to calculate progress
   const doneStatuses = useMemo(() => {
     return statuses.filter(s => s.category === "done").map(s => s.name);
   }, [statuses]);
 
-  const getStatusColor = (statusName) => {
-    const s = projectStatuses.find(p => p.name === statusName);
-    return s ? s.color : "#6B7280";
-  };
-
-  const handleDelete = async (id, e) => {
-    e.stopPropagation();
+  const handleDelete = async (id) => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar este proyecto? Las tareas vinculadas se quedarán sin proyecto.")) return;
     try {
       await api.delete(`/projects/${id}`);
@@ -269,20 +272,29 @@ const ProjectsPage = () => {
     setIsModalOpen(true);
   };
 
-  const openEditModal = (project, e) => {
-    e.stopPropagation();
+  const openEditModal = (project) => {
     setEditingProject(project);
     setIsModalOpen(true);
   };
   
   const canManageProjects = isAdmin || isTeam;
 
+  const viewProps = {
+    projects,
+    setProjects,
+    projectStatuses,
+    doneStatuses,
+    canManageProjects,
+    openEditModal,
+    handleDelete
+  };
+
   return (
     <div className="min-h-screen bg-base-200 pb-12">
       <div className="w-full px-4 sm:px-8 py-8">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <Link to="/" className="btn btn-ghost btn-sm gap-1 text-base-content/70 hover:text-base-content">
               <ArrowLeftIcon className="h-4 w-4" />
@@ -298,12 +310,37 @@ const ProjectsPage = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="join bg-base-100 rounded-xl border border-base-content/10 shadow-sm mr-2 p-1">
+              <button 
+                className={`join-item btn btn-sm ${viewMode === "grid" ? "btn-primary" : "btn-ghost text-base-content/60"}`}
+                onClick={() => setViewMode("grid")}
+                title="Vista de Tarjetas"
+              >
+                <LayoutGridIcon className="size-4" />
+              </button>
+              <button 
+                className={`join-item btn btn-sm ${viewMode === "list" ? "btn-primary" : "btn-ghost text-base-content/60"}`}
+                onClick={() => setViewMode("list")}
+                title="Vista de Lista"
+              >
+                <ListIcon className="size-4" />
+              </button>
+              <button 
+                className={`join-item btn btn-sm ${viewMode === "kanban" ? "btn-primary" : "btn-ghost text-base-content/60"}`}
+                onClick={() => setViewMode("kanban")}
+                title="Vista Kanban"
+              >
+                <ColumnsIcon className="size-4" />
+              </button>
+            </div>
+
             <ThemeToggle />
             {canManageProjects && (
               <button onClick={openNewModal} className="btn btn-primary shadow-lg shadow-primary/20">
                 <PlusIcon className="size-5" />
-                Nuevo Proyecto
+                <span className="hidden sm:inline">Nuevo Proyecto</span>
+                <span className="sm:hidden">Nuevo</span>
               </button>
             )}
           </div>
@@ -330,93 +367,10 @@ const ProjectsPage = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {projects.map((project) => {
-              const statusColor = getStatusColor(project.status);
-              
-              // Calculate progress
-              const totalTasks = project.taskCount || 0;
-              const completedTasks = project.noteStatuses ? project.noteStatuses.filter(s => doneStatuses.includes(s)).length : 0;
-              const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-              return (
-                <div 
-                  key={project._id} 
-                  onClick={() => navigate(`/projects/${project._id}`)}
-                  className="card bg-base-100 shadow-sm border border-base-content/10 hover:shadow-lg hover:border-primary/30 transition-all duration-300 group overflow-hidden cursor-pointer flex flex-col"
-                >
-                  <div 
-                    className="h-2 w-full flex-shrink-0"
-                    style={{ backgroundColor: project.color || "#3B82F6" }}
-                  />
-                  <div className="card-body p-5 flex flex-col flex-1">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h2 className="card-title text-xl mb-0 leading-tight text-base-content" title={project.name}>
-                        {project.name}
-                      </h2>
-                      <div 
-                        className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase whitespace-nowrap"
-                        style={{ backgroundColor: statusColor + '20', color: statusColor, border: `1px solid ${statusColor}40` }}
-                      >
-                        {project.status || "En planeación"}
-                      </div>
-                    </div>
-                    
-                    <p className="text-xs text-base-content/50 font-medium mb-3 flex items-center gap-1.5">
-                      <LayersIcon className="size-3.5" />
-                      {project.projectType || "General"}
-                    </p>
-                    
-                    {project.objective && (
-                      <p className="text-sm text-base-content/80 line-clamp-2 mb-4 flex-1">
-                        <span className="font-semibold text-base-content/50 text-xs uppercase block mb-0.5">Objetivo</span>
-                        {project.objective}
-                      </p>
-                    )}
-                    
-                    <div className="grid grid-cols-2 gap-y-3 gap-x-2 text-xs text-base-content/70 mt-auto bg-base-200/50 p-3 rounded-xl border border-base-content/5">
-                      <div className="flex items-center gap-1.5" title="Responsable">
-                        <UserIcon className="size-4 opacity-50" />
-                        <span className="truncate">{project.assignedTo || "Sin asignar"}</span>
-                      </div>
-                      {project.endDate && (
-                        <div className="flex items-center gap-1.5" title="Fecha límite">
-                          <CalendarIcon className="size-4 opacity-50" />
-                          <span className="truncate">{new Date(project.endDate).toLocaleDateString()}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="mt-4">
-                      <div className="flex items-center justify-between text-xs font-semibold mb-1 text-base-content/60">
-                        <span>Progreso ({completedTasks}/{totalTasks})</span>
-                        <span>{progress}%</span>
-                      </div>
-                      <progress className="progress progress-primary w-full h-2" value={progress} max="100"></progress>
-                    </div>
-                    
-                    {canManageProjects && (
-                      <div className="card-actions justify-end mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
-                          onClick={(e) => openEditModal(project, e)} 
-                          className="btn btn-sm btn-ghost btn-square text-base-content/60 hover:text-primary"
-                          title="Editar"
-                        >
-                          <PenIcon className="size-4" />
-                        </button>
-                        <button 
-                          onClick={(e) => handleDelete(project._id, e)} 
-                          className="btn btn-sm btn-ghost btn-square text-base-content/60 hover:text-error"
-                          title="Eliminar"
-                        >
-                          <Trash2Icon className="size-4" />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+          <div className="mt-4">
+            {viewMode === "grid" && <ProjectGridView {...viewProps} />}
+            {viewMode === "list" && <ProjectListView {...viewProps} />}
+            {viewMode === "kanban" && <ProjectKanbanView {...viewProps} />}
           </div>
         )}
       </div>
