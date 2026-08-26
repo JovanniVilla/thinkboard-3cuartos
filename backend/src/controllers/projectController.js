@@ -127,10 +127,6 @@ export async function updateProject(req, res) {
     res.status(200).json(updatedProject);
   } catch (error) {
     console.error("Error in updateProject controller", error);
-    if (error.name === 'ValidationError') {
-      console.error("Validation details:", JSON.stringify(error.errors, null, 2));
-      return res.status(400).json({ message: error.message, errors: Object.keys(error.errors) });
-    }
     res.status(500).json({ message: "Internal server error" });
   }
 }

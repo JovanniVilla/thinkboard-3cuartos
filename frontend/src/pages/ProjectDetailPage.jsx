@@ -139,7 +139,6 @@ const ProjectDetailPage = () => {
       setProject(res.data);
     } catch (error) {
       console.error("Error saving project:", error);
-      console.error("Server response:", error.response?.data);
       toast.error("Error al guardar el proyecto");
     } finally {
       setSaving(false);
