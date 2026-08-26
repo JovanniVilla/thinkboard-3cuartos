@@ -237,25 +237,26 @@ const ProjectDetailPage = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-6 lg:p-8 flex flex-col lg:flex-row gap-8">
+      <div className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-8">
         
-        {/* LEFT COLUMN: Main Details */}
-        <div className="flex-1 min-w-0 flex flex-col gap-8">
-          
-          {/* Header Title */}
-          <div className="flex flex-col gap-3">
-            <textarea
-              ref={titleTextareaRef}
-              className="w-full resize-none overflow-hidden bg-transparent text-3xl md:text-4xl font-black text-base-content leading-tight focus:outline-none focus:ring-0 placeholder:text-base-content/20"
-              value={project.name}
-              onChange={(e) => setProject({ ...project, name: e.target.value })}
-              onBlur={() => handleSaveProject()}
-              placeholder="Nombre del proyecto..."
-              rows={1}
-            />
-          </div>
+        {/* Header Title (Full Width) */}
+        <div className="flex flex-col gap-3">
+          <textarea
+            ref={titleTextareaRef}
+            className="w-full resize-none overflow-hidden bg-transparent text-3xl md:text-4xl font-black text-base-content leading-tight focus:outline-none focus:ring-0 placeholder:text-base-content/20"
+            value={project.name}
+            onChange={(e) => setProject({ ...project, name: e.target.value })}
+            onBlur={() => handleSaveProject()}
+            placeholder="Nombre del proyecto..."
+            rows={1}
+          />
+        </div>
 
-          {/* Inline Properties Row */}
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* LEFT COLUMN: Main Details */}
+          <div className="flex-1 min-w-0 flex flex-col gap-8">
+            
+            {/* Inline Properties Row */}
           <div className="flex flex-wrap items-center gap-4 p-4 bg-base-100 rounded-2xl border border-base-content/10 shadow-sm">
             {/* Status Dropdown */}
             <div className="dropdown dropdown-hover">
@@ -665,7 +666,7 @@ const ProjectDetailPage = () => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Sidebar (Activity / Config) */}
+        {/* RIGHT COLUMN: Sidebar (Config) */}
         <div className="w-full lg:w-96 flex-shrink-0 flex flex-col gap-6">
           
           {/* Contacto Card */}
@@ -798,7 +799,7 @@ const ProjectDetailPage = () => {
             </div>
           </div>
 
-          {/* Activity / Chat Log */}
+          {/* Activity / Chat Log (Moved to Left Column) */}
           <div className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm flex flex-col h-[500px]">
             <div className="p-4 border-b border-base-content/5 bg-base-200/30 flex items-center justify-between">
               <h3 className="text-sm font-bold flex items-center gap-2">
@@ -834,12 +835,14 @@ const ProjectDetailPage = () => {
                         
                         {isEditing ? (
                           <div className="mt-2">
-                            <textarea
-                              className="textarea textarea-bordered w-full text-sm resize-none focus:outline-none focus:border-primary"
+                            <MarkdownEditor
                               value={editingCommentText}
-                              onChange={(e) => setEditingCommentText(e.target.value)}
-                              rows={2}
-                              autoFocus
+                              onChange={setEditingCommentText}
+                              placeholder="Edita tu comentario..."
+                              minHeight="min-h-[60px]"
+                              hideFooter
+                              compactToolbar
+                              users={accountsList}
                             />
                             <div className="flex justify-end gap-2 mt-2">
                               <button 
@@ -882,35 +885,35 @@ const ProjectDetailPage = () => {
               )}
             </div>
             
-            <div className="p-3 border-t border-base-content/10 bg-base-200/20">
-              <div className="flex items-end gap-2">
-                <textarea
-                  className="textarea textarea-bordered w-full h-auto min-h-[2.5rem] py-2 px-3 text-sm focus:outline-none focus:border-primary resize-none"
-                  placeholder="Escribe un comentario o nota..."
-                  rows={2}
+            <div className="p-4 border-t border-base-content/10 bg-base-200/20">
+              <div className="flex flex-col gap-2">
+                <MarkdownEditor
                   value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handlePostComment();
-                    }
-                  }}
+                  onChange={setCommentText}
+                  placeholder="Escribe un comentario o nota..."
+                  minHeight="min-h-[80px]"
+                  hideFooter
+                  compactToolbar
+                  users={accountsList}
                 />
-                <button
-                  className="btn btn-primary btn-square btn-sm h-10 w-10 shrink-0 shadow-lg shadow-primary/20"
-                  onClick={handlePostComment}
-                  disabled={postingComment || !commentText.trim()}
-                >
-                  {postingComment ? <LoaderIcon className="size-4 animate-spin" /> : <SendIcon className="size-4" />}
-                </button>
+                <div className="flex justify-end">
+                  <button
+                    className="btn btn-primary btn-sm gap-2"
+                    onClick={handlePostComment}
+                    disabled={postingComment || !commentText.trim()}
+                  >
+                    {postingComment ? <LoaderIcon className="size-4 animate-spin" /> : <SendIcon className="size-4" />}
+                    <span>Comentar</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-
+          
         </div>
       </div>
     </div>
+  </div>
   );
 };
 
