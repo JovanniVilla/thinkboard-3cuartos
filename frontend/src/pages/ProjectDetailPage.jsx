@@ -269,7 +269,7 @@ const ProjectDetailPage = () => {
     <div className="min-h-screen bg-base-200 flex flex-col">
       {/* Top Bar */}
       <div className="sticky top-0 z-30 bg-base-100/90 backdrop-blur-xl border-b border-base-content/10">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 max-w-7xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 max-w-screen-2xl mx-auto">
           <div className="flex items-center gap-3 self-start sm:self-auto">
             <Link to="/projects" className="btn btn-ghost btn-circle btn-sm">
               <XIcon className="h-5 w-5" />
@@ -299,7 +299,7 @@ const ProjectDetailPage = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 w-full max-w-7xl mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-8">
+      <div className="flex-1 w-full max-w-screen-2xl mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-8">
         {/* Header Title (Full Width) */}
         <div className="flex flex-col gap-3">
           <textarea
@@ -313,7 +313,7 @@ const ProjectDetailPage = () => {
           />
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* LEFT COLUMN: Main Details */}
           <div className="flex-1 min-w-0 flex flex-col gap-8">
             {/* Inline Properties Row */}
@@ -1070,8 +1070,8 @@ const ProjectDetailPage = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Sidebar (Config) */}
-          <div className="w-full lg:w-96 flex-shrink-0 flex flex-col gap-6">
+          {/* CENTER COLUMN: Sidebar (Config) */}
+          <div className="w-full lg:w-72 xl:w-80 flex-shrink-0 flex flex-col gap-6">
             {/* Contacto Card */}
             <div className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-base-content/5 bg-base-200/30">
@@ -1254,6 +1254,136 @@ const ProjectDetailPage = () => {
                   automáticamente a este usuario si no se elige otro
                   explícitamente.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN: Log de Actividad */}
+          <div className="w-full lg:w-80 xl:w-96 flex-shrink-0 flex flex-col">
+            <div
+              className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm flex flex-col sticky top-[64px]"
+              style={{ height: "calc(100vh - 80px)" }}
+            >
+              <div className="p-4 border-b border-base-content/5 bg-base-200/30 flex items-center justify-between">
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <MessageSquareIcon className="size-4" /> Log de Actividad
+                </h3>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {!project.activities || project.activities.length === 0 ? (
+                  <p className="text-center text-sm text-base-content/40 py-10">
+                    No hay actividad registrada.
+                  </p>
+                ) : (
+                  project.activities.map((act) => {
+                    const actId = act.id || act._id;
+                    const isEditing = editingCommentId === actId;
+
+                    return (
+                      <div key={actId} className="flex gap-3 group/comment">
+                        <div className="avatar placeholder self-start">
+                          <div className="bg-primary/10 text-primary rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold border border-primary/20">
+                            <span>{getInitials(act.user)}</span>
+                          </div>
+                        </div>
+                        <div className="flex-1 bg-base-200/50 rounded-2xl rounded-tl-sm p-3 border border-base-content/5 relative">
+                          <div className="flex items-baseline justify-between gap-2 mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-xs">
+                                {act.user}
+                              </span>
+                              {act.editedAt && (
+                                <span className="text-[9px] font-medium text-base-content/40 italic">
+                                  (editado)
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-base-content/50">
+                              {formatDateActivity(act.createdAt)}
+                            </span>
+                          </div>
+
+                          {isEditing ? (
+                            <div className="mt-2">
+                              <MarkdownEditor
+                                value={editingCommentText}
+                                onChange={setEditingCommentText}
+                                placeholder="Edita tu comentario..."
+                                minHeight="min-h-[60px]"
+                                hideFooter
+                                compactToolbar
+                                users={accountsList}
+                              />
+                              <div className="flex justify-end gap-2 mt-2">
+                                <button
+                                  className="btn btn-xs btn-ghost"
+                                  onClick={() => setEditingCommentId(null)}
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  className="btn btn-xs btn-primary"
+                                  onClick={() => handleEditComment(actId)}
+                                  disabled={!editingCommentText.trim()}
+                                >
+                                  Guardar
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-sm prose prose-sm max-w-none prose-p:my-1 prose-a:text-primary relative">
+                              <MarkdownRenderer content={act.text} />
+                            </div>
+                          )}
+
+                          {act.type === "comment" &&
+                            act.user === currentUser?.name &&
+                            !isEditing && (
+                              <button
+                                className="absolute top-2 right-2 btn btn-xs btn-ghost btn-square opacity-0 group-hover/comment:opacity-100 transition-opacity bg-base-100/50 hover:bg-base-200"
+                                onClick={() => {
+                                  setEditingCommentId(actId);
+                                  setEditingCommentText(act.text);
+                                }}
+                                title="Editar comentario"
+                              >
+                                <PencilIcon className="size-3 text-base-content/60 hover:text-primary" />
+                              </button>
+                            )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="p-4 border-t border-base-content/10 bg-base-200/20">
+                <div className="flex flex-col gap-2">
+                  <MarkdownEditor
+                    value={commentText}
+                    onChange={setCommentText}
+                    placeholder="Escribe un comentario o nota..."
+                    minHeight="min-h-[80px]"
+                    hideFooter
+                    compactToolbar
+                    users={accountsList}
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      className="btn btn-primary btn-sm gap-2"
+                      onClick={handlePostComment}
+                      disabled={postingComment || !commentText.trim()}
+                    >
+                      {postingComment ? (
+                        <LoaderIcon className="size-4 animate-spin" />
+                      ) : (
+                        <SendIcon className="size-4" />
+                      )}
+                      <span>Comentar</span>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
