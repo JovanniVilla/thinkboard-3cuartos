@@ -106,7 +106,7 @@ export async function updateProject(req, res) {
     if (color !== undefined) project.color = color;
     if (description !== undefined) project.description = description;
     if (scope !== undefined) project.scope = scope;
-    if (acceptanceCriteria !== undefined) project.acceptanceCriteria = acceptanceCriteria;
+    if (acceptanceCriteria !== undefined && Array.isArray(acceptanceCriteria)) project.acceptanceCriteria = acceptanceCriteria;
     if (projectType !== undefined) project.projectType = projectType;
     if (startDate !== undefined) project.startDate = startDate;
     if (endDate !== undefined) project.endDate = endDate;
@@ -116,7 +116,7 @@ export async function updateProject(req, res) {
     if (assignedTo !== undefined) project.assignedTo = assignedTo;
     if (defaultAssignee !== undefined) project.defaultAssignee = defaultAssignee;
     if (folderUrl !== undefined) project.folderUrl = folderUrl;
-    if (activities !== undefined) project.activities = activities;
+    if (activities !== undefined && Array.isArray(activities)) project.activities = activities;
     if (contact !== undefined) project.contact = { ...project.contact, ...contact };
 
     const updatedProject = await project.save();
