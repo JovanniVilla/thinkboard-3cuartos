@@ -119,6 +119,10 @@ export async function updateProject(req, res) {
     if (activities !== undefined && Array.isArray(activities)) project.activities = activities;
     if (contact !== undefined) project.contact = { ...project.contact, ...contact };
 
+    // Sanitize subdocument arrays — fix corrupt data already in DB (e.g., stored as "")
+    if (!Array.isArray(project.acceptanceCriteria)) project.acceptanceCriteria = [];
+    if (!Array.isArray(project.activities)) project.activities = [];
+
     const updatedProject = await project.save();
     res.status(200).json(updatedProject);
   } catch (error) {
