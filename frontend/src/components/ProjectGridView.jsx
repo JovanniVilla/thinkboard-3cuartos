@@ -57,10 +57,14 @@ const ProjectGridView = ({ projects, projectStatuses, doneStatuses, canManagePro
                   <UserIcon className="size-4 opacity-50" />
                   <span className="truncate">{project.assignedTo || "Sin asignar"}</span>
                 </div>
-                {project.endDate && (
-                  <div className="flex items-center gap-1.5" title="Fecha límite">
-                    <CalendarIcon className="size-4 opacity-50" />
-                    <span className="truncate">{new Date(project.endDate).toLocaleDateString()}</span>
+                {(project.startDate || project.endDate) && (
+                  <div className="flex items-center gap-1.5" title="Fechas">
+                    <CalendarIcon className="size-4 opacity-50 flex-shrink-0" />
+                    <span className="truncate">
+                      {project.startDate ? new Date(project.startDate).toLocaleDateString() : "-"}
+                      {" - "}
+                      {project.endDate ? new Date(project.endDate).toLocaleDateString() : "-"}
+                    </span>
                   </div>
                 )}
               </div>

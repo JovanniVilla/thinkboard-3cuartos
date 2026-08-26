@@ -40,6 +40,7 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
   const [folderUrl, setFolderUrl] = useState(project?.folderUrl || "");
   const [assignedTo, setAssignedTo] = useState(project?.assignedTo || "Sin asignar");
   const [defaultAssignee, setDefaultAssignee] = useState(project?.defaultAssignee || "Sin asignar");
+  const [startDate, setStartDate] = useState(project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : "");
   const [endDate, setEndDate] = useState(project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : "");
 
   const [saving, setSaving] = useState(false);
@@ -54,6 +55,7 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
       const payload = {
         name: name.trim(), color, description, projectType, status, objective,
         briefUrl, folderUrl, assignedTo, defaultAssignee,
+        startDate: startDate ? new Date(startDate).toISOString() : null,
         endDate: endDate ? new Date(endDate).toISOString() : null
       };
 
@@ -74,8 +76,8 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
-      <div className="bg-base-100 w-full max-w-2xl rounded-2xl shadow-2xl p-6 relative border border-base-content/10 my-8">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-8">
+      <div className="bg-base-100 w-full max-w-2xl max-h-full overflow-y-auto rounded-2xl shadow-2xl p-4 sm:p-6 relative border border-base-content/10">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 btn btn-sm btn-circle btn-ghost"
@@ -158,6 +160,16 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
                 <option key={a._id} value={a.name}>{a.name}</option>
               ))}
             </select>
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Fecha de Inicio</label>
+            <input
+              type="date"
+              className="input input-bordered w-full"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
           </div>
 
           <div className="form-control">

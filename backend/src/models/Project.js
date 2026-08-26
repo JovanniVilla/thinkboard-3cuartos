@@ -19,6 +19,10 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: "General",
     },
+    startDate: {
+      type: Date,
+      default: null,
+    },
     endDate: {
       type: Date,
       default: null,

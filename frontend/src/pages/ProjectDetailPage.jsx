@@ -279,6 +279,18 @@ const ProjectDetailPage = () => {
                 ))}
               </ul>
             </div>
+            {/* Start Date */}
+            <input 
+              type="date"
+              className="input input-sm input-bordered rounded-xl bg-transparent border-base-content/10 text-xs hover:border-base-content/30 cursor-pointer"
+              title="Fecha de Inicio"
+              value={project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : ""}
+              onChange={(e) => {
+                const newDate = e.target.value ? new Date(e.target.value).toISOString() : null;
+                setProject({ ...project, startDate: newDate });
+                handleSaveProject({ startDate: newDate });
+              }}
+            />
             
             {/* End Date */}
             <input 

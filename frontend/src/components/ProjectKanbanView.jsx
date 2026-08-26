@@ -166,9 +166,11 @@ const ProjectKanbanView = ({ projects, setProjects, projectStatuses, doneStatuse
                         {project.assignedTo === "Sin asignar" ? "Sin resp." : project.assignedTo}
                       </span>
                     </div>
-                    {project.endDate && (
-                      <span className="text-[10px] font-semibold text-base-content/50">
-                        {new Date(project.endDate).toLocaleDateString()}
+                    {(project.startDate || project.endDate) && (
+                      <span className="text-[10px] font-semibold text-base-content/50 whitespace-nowrap">
+                        {project.startDate ? new Date(project.startDate).toLocaleDateString() : "-"}
+                        {" - "}
+                        {project.endDate ? new Date(project.endDate).toLocaleDateString() : "-"}
                       </span>
                     )}
                   </div>

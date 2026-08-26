@@ -24,7 +24,7 @@ const ProjectListView = ({ projects, projectStatuses, doneStatuses, canManagePro
               <th className="font-semibold py-4">Proyecto</th>
               <th className="font-semibold py-4">Estado</th>
               <th className="font-semibold py-4">Responsable</th>
-              <th className="font-semibold py-4">Fecha Límite</th>
+              <th className="font-semibold py-4">Fechas</th>
               <th className="font-semibold py-4">Progreso</th>
               <th className="font-semibold py-4">Enlaces</th>
               {canManageProjects && <th className="font-semibold py-4 text-right">Acciones</th>}
@@ -69,9 +69,11 @@ const ProjectListView = ({ projects, projectStatuses, doneStatuses, canManagePro
                     </div>
                   </td>
                   <td>
-                    {project.endDate ? (
-                      <span className="text-xs text-base-content/80 font-medium">
-                        {new Date(project.endDate).toLocaleDateString()}
+                    {(project.startDate || project.endDate) ? (
+                      <span className="text-xs text-base-content/80 font-medium whitespace-nowrap">
+                        {project.startDate ? new Date(project.startDate).toLocaleDateString() : "-"}
+                        {" - "}
+                        {project.endDate ? new Date(project.endDate).toLocaleDateString() : "-"}
                       </span>
                     ) : (
                       <span className="text-xs text-base-content/40">-</span>
