@@ -11,6 +11,8 @@ import { useProjects } from "../lib/useProjects";
 import MarkdownEditor from "../components/MarkdownEditor";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import ThemeToggle from "../components/ThemeToggle";
+import { usePriorities } from "../lib/usePriorities";
+import { useAccounts } from "../lib/useAccounts";
 
 const CreatePage = () => {
   const [title, setTitle] = useState("");
