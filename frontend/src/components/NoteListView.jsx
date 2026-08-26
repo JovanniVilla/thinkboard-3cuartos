@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PenSquareIcon, Trash2Icon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon, CheckCircle2Icon, PlusIcon, CalendarIcon, CheckIcon } from "lucide-react";
+import { PenSquareIcon, ArchiveIcon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon, CheckCircle2Icon, PlusIcon, CalendarIcon, CheckIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useLabels } from "../lib/useLabels";
 import { Link, useNavigate } from "react-router";
@@ -75,18 +75,18 @@ const NoteListView = ({
       return acc;
     }, 0);
   };
-  const handleDelete = async (e, id) => {
+  const handleArchive = async (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
+    if (!window.confirm("¿Estás seguro de que quieres archivar esta tarea?")) return;
 
     try {
       await api.delete(`/notes/${id}`);
       setNotes((prev) => prev.filter((n) => n._id !== id));
-      toast.success("Tarea eliminada exitosamente");
+      toast.success("Tarea archivada exitosamente");
     } catch (error) {
-      console.error("Error in handleDelete", error);
-      toast.error("Error al eliminar la tarea");
+      console.error("Error in handleArchive", error);
+      toast.error("Error al archivar la tarea");
     }
   };
 
@@ -198,7 +198,7 @@ const NoteListView = ({
                 onClick={() => handleHeaderClick("createdAt")}
               >
                 <div className="flex items-center gap-1">
-                  <span>Fecha</span>
+                  <span>Creación</span>
                   {renderSortIndicator("createdAt")}
                 </div>
               </th>
@@ -541,11 +541,11 @@ const NoteListView = ({
                       </Link>
                       <button
                         type="button"
-                        className="btn btn-ghost btn-xs btn-square text-error hover:bg-error/10"
-                        onClick={(e) => handleDelete(e, note._id)}
-                        title="Eliminar tarea"
+                        className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:bg-base-200"
+                        onClick={(e) => handleArchive(e, note._id)}
+                        title="Archivar tarea"
                       >
-                        <Trash2Icon className="size-4" />
+                        <ArchiveIcon className="size-4" />
                       </button>
                     </div>
                   </td>

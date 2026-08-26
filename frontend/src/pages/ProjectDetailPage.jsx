@@ -350,11 +350,16 @@ const ProjectDetailPage = () => {
             )}
           </div>
           
-          {/* Linked Tasks List */}
           <div className="bg-base-100 p-5 rounded-2xl border border-base-content/10 shadow-sm">
-            <h3 className="text-sm font-bold flex items-center gap-2 mb-4 text-base-content/80">
-              <CheckCircle2Icon className="size-4 text-primary" /> Tareas del Proyecto ({tasks.length})
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold flex items-center gap-2 text-base-content/80">
+                <CheckCircle2Icon className="size-4 text-primary" /> Tareas del Proyecto ({tasks.length})
+              </h3>
+              <Link to={`/create?projectId=${project._id}`} className="btn btn-xs btn-primary btn-outline gap-1">
+                <PlusIcon className="size-3" />
+                Nueva
+              </Link>
+            </div>
             {tasks.length === 0 ? (
               <p className="text-sm text-base-content/50 italic py-4 text-center">No hay tareas vinculadas a este proyecto todavía.</p>
             ) : (

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import {
@@ -24,6 +24,13 @@ const getInitials = (name = "") => {
 };
 
 const CreatePage = () => {
+  const { statuses } = useStatuses();
+  const { priorities } = usePriorities();
+  const { accounts } = useAccounts();
+  const { projects } = useProjects();
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("");
@@ -32,11 +39,19 @@ const CreatePage = () => {
   const [project, setProject] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { statuses } = useStatuses();
-  const { priorities } = usePriorities();
-  const { accounts } = useAccounts();
-  const { projects } = useProjects();
-  const navigate = useNavigate();
+  // Initialize from query parameters
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const projectId = searchParams.get("projectId");
+    
+    if (projectId && projects.length > 0 && !project) {
+      setProject(projectId);
+      const proj = projects.find(p => p._id === projectId);
+      if (proj && proj.defaultAssignee && proj.defaultAssignee !== "Sin asignar") {
+        setUser(proj.defaultAssignee);
+      }
+    }
+  }, [location.search, projects]);
 
   const titleTextareaRef = useRef(null);
 
