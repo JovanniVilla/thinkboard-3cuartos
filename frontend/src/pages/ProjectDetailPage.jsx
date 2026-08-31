@@ -125,12 +125,12 @@ const ProjectDetailPage = () => {
     // Only send known editable fields — avoid sending tasks, _id, __v, etc.
     const {
       name, color, description, scope, acceptanceCriteria, projectType,
-      startDate, endDate, objective, status, briefUrl, assignedTo,
+      startDate, endDate, objective, status, isActive, briefUrl, assignedTo,
       defaultAssignee, folderUrl, activities, contact,
     } = mergedProject;
     const payload = {
       name, color, description, scope, acceptanceCriteria, projectType,
-      startDate, endDate, objective, status, briefUrl, assignedTo,
+      startDate, endDate, objective, status, isActive, briefUrl, assignedTo,
       defaultAssignee, folderUrl, activities, contact,
     };
     setSaving(true);
@@ -419,6 +419,23 @@ const ProjectDetailPage = () => {
                     </li>
                   ))}
                 </ul>
+              </div>
+
+              {/* Active Toggle */}
+              <div className="flex items-center gap-2 px-2 py-1 border border-base-content/10 rounded-xl h-8">
+                <span className={`text-xs font-medium ${project.isActive ? 'text-success' : 'text-base-content/50'}`}>
+                  {project.isActive ? 'Activo' : 'Inactivo'}
+                </span>
+                <input
+                  type="checkbox"
+                  className="toggle toggle-sm toggle-success"
+                  checked={project.isActive !== false} // default to true if undefined
+                  onChange={(e) => {
+                    const newValue = e.target.checked;
+                    setProject({ ...project, isActive: newValue });
+                    handleSaveProject({ isActive: newValue });
+                  }}
+                />
               </div>
 
               {/* Assignee */}

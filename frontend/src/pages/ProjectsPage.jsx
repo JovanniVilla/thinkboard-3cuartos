@@ -35,6 +35,7 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
   
   const [projectType, setProjectType] = useState(project?.projectType || "General");
   const [status, setStatus] = useState(project?.status || "En planeación");
+  const [isActive, setIsActive] = useState(project?.isActive ?? true);
   const [objective, setObjective] = useState(project?.objective || "");
   const [briefUrl, setBriefUrl] = useState(project?.briefUrl || "");
   const [folderUrl, setFolderUrl] = useState(project?.folderUrl || "");
@@ -58,7 +59,7 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
     setSaving(true);
     try {
       const payload = {
-        name: name.trim(), color, description, projectType, status, objective,
+        name: name.trim(), color, description, projectType, status, isActive, objective,
         briefUrl, folderUrl, assignedTo, defaultAssignee,
         startDate: startDate ? new Date(startDate).toISOString() : null,
         endDate: endDate ? new Date(endDate).toISOString() : null,
@@ -151,6 +152,18 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
                 <option key={ps._id} value={ps.name}>{ps.name}</option>
               ))}
             </select>
+          </div>
+
+          <div className="form-control flex flex-row items-center gap-4 mt-8">
+            <label className="label font-bold text-sm cursor-pointer gap-2">
+              <span className="label-text font-bold text-sm">Proyecto Activo</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-success"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+              />
+            </label>
           </div>
           
           <div className="form-control">

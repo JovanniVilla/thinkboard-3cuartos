@@ -46,6 +46,10 @@ const projectSchema = new mongoose.Schema(
       type: String,
       default: "En planeación",
     },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
     briefUrl: {
       type: String,
       default: "",
