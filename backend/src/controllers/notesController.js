@@ -38,23 +38,36 @@ export async function createNote(req, res) {
   try {
     let { title, content, status, priority, user, project, labels, checklist, startDate, dueDate } = req.body;
 
-    if (project && (!user || user === "Sin asignar")) {
-      const projDoc = await Project.findById(project);
-      if (projDoc && projDoc.defaultAssignee && projDoc.defaultAssignee !== "Sin asignar") {
+    let projDoc = null;
+    if (project) {
+      projDoc = await Project.findById(project);
+      if (projDoc && (!user || user === "Sin asignar") && projDoc.defaultAssignee && projDoc.defaultAssignee !== "Sin asignar") {
         user = projDoc.defaultAssignee;
       }
     }
 
-    let boardConfig = await BoardConfig.findOne();
     let keyId = null;
-    if (boardConfig && boardConfig.projectKey && boardConfig.projectKey.trim()) {
-      const rawKey = boardConfig.projectKey.trim().toUpperCase();
+    if (projDoc && projDoc.projectKey && projDoc.projectKey.trim()) {
+      // Use Project specific counter and key
+      const rawKey = projDoc.projectKey.trim().toUpperCase();
       const prefix = rawKey.endsWith("-") ? rawKey : `${rawKey}-`;
-      const counter = boardConfig.taskCounter || 1;
+      const counter = projDoc.taskCounter || 1;
       keyId = `${prefix}${counter}`;
 
-      boardConfig.taskCounter = counter + 1;
-      await boardConfig.save();
+      projDoc.taskCounter = counter + 1;
+      await projDoc.save();
+    } else {
+      // Fallback to global BoardConfig
+      let boardConfig = await BoardConfig.findOne();
+      if (boardConfig && boardConfig.projectKey && boardConfig.projectKey.trim()) {
+        const rawKey = boardConfig.projectKey.trim().toUpperCase();
+        const prefix = rawKey.endsWith("-") ? rawKey : `${rawKey}-`;
+        const counter = boardConfig.taskCounter || 1;
+        keyId = `${prefix}${counter}`;
+
+        boardConfig.taskCounter = counter + 1;
+        await boardConfig.save();
+      }
     }
 
     const actor = user && user !== "Sin asignar" ? user : "Sistema";

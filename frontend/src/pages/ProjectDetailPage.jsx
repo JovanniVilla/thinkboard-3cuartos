@@ -125,12 +125,12 @@ const ProjectDetailPage = () => {
     // Only send known editable fields — avoid sending tasks, _id, __v, etc.
     const {
       name, color, description, scope, acceptanceCriteria, projectType,
-      startDate, endDate, objective, status, isActive, briefUrl, assignedTo,
+      startDate, endDate, objective, status, isActive, projectKey, briefUrl, assignedTo,
       defaultAssignee, folderUrl, activities, contact,
     } = mergedProject;
     const payload = {
       name, color, description, scope, acceptanceCriteria, projectType,
-      startDate, endDate, objective, status, isActive, briefUrl, assignedTo,
+      startDate, endDate, objective, status, isActive, projectKey, briefUrl, assignedTo,
       defaultAssignee, folderUrl, activities, contact,
     };
     setSaving(true);
@@ -435,6 +435,19 @@ const ProjectDetailPage = () => {
                     setProject({ ...project, isActive: newValue });
                     handleSaveProject({ isActive: newValue });
                   }}
+                />
+              </div>
+
+              {/* Project Key */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  className="input input-sm input-bordered rounded-xl bg-transparent border-base-content/10 text-xs hover:border-base-content/30 w-24 uppercase font-mono"
+                  placeholder="ID Clave (Ej. TB)"
+                  value={project.projectKey || ""}
+                  onChange={(e) => setProject({ ...project, projectKey: e.target.value.toUpperCase() })}
+                  onBlur={(e) => handleSaveProject({ projectKey: e.target.value.toUpperCase() })}
+                  maxLength={10}
                 />
               </div>
 

@@ -7,6 +7,15 @@ const projectSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    projectKey: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+    taskCounter: {
+      type: Number,
+      default: 1,
+    },
     color: {
       type: String,
       default: "#3B82F6",

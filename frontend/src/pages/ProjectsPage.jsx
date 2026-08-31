@@ -30,6 +30,7 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
   const { accounts } = useAccounts();
 
   const [name, setName] = useState(project?.name || "");
+  const [projectKey, setProjectKey] = useState(project?.projectKey || "");
   const [color, setColor] = useState(project?.color || "#3B82F6");
   const [description, setDescription] = useState(project?.description || "");
   
@@ -59,7 +60,7 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
     setSaving(true);
     try {
       const payload = {
-        name: name.trim(), color, description, projectType, status, isActive, objective,
+        name: name.trim(), projectKey: projectKey.trim(), color, description, projectType, status, isActive, objective,
         briefUrl, folderUrl, assignedTo, defaultAssignee,
         startDate: startDate ? new Date(startDate).toISOString() : null,
         endDate: endDate ? new Date(endDate).toISOString() : null,
@@ -103,15 +104,27 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="form-control md:col-span-2">
-            <label className="label font-bold text-sm">Nombre del proyecto</label>
+          <div className="form-control">
+            <label className="label font-bold text-sm">Nombre del Proyecto <span className="text-error">*</span></label>
             <input
               type="text"
               className="input input-bordered w-full"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ej. Rediseño Web, Campaña Marketing..."
+              placeholder="Ej. Rediseño de sitio web"
               autoFocus
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Clave / Identificador (Opcional)</label>
+            <input
+              type="text"
+              className="input input-bordered w-full uppercase"
+              value={projectKey}
+              onChange={(e) => setProjectKey(e.target.value.toUpperCase())}
+              placeholder="Ej. TB (Generará TB-1, TB-2...)"
+              maxLength={10}
             />
           </div>
 
