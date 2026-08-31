@@ -60,7 +60,7 @@ export async function getAllProjects(req, res) {
 
 export async function createProject(req, res) {
   try {
-    const { name, color, description, scope, acceptanceCriteria, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, contact } = req.body;
+    const { name, color, description, scope, acceptanceCriteria, projectType, startDate, endDate, objective, status, isActive, projectKey, briefUrl, assignedTo, defaultAssignee, folderUrl, contact } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ message: "El nombre del proyecto es obligatorio" });
@@ -77,6 +77,8 @@ export async function createProject(req, res) {
       endDate: endDate || null,
       objective: objective || "",
       status: status || "En planeación",
+      isActive: isActive !== undefined ? isActive : true,
+      projectKey: projectKey || "",
       briefUrl: briefUrl || "",
       assignedTo: assignedTo || "Sin asignar",
       defaultAssignee: defaultAssignee || "Sin asignar",
@@ -95,7 +97,7 @@ export async function createProject(req, res) {
 
 export async function updateProject(req, res) {
   try {
-    const { name, color, description, scope, acceptanceCriteria, projectType, startDate, endDate, objective, status, briefUrl, assignedTo, defaultAssignee, folderUrl, activities, contact } = req.body;
+    const { name, color, description, scope, acceptanceCriteria, projectType, startDate, endDate, objective, status, isActive, projectKey, briefUrl, assignedTo, defaultAssignee, folderUrl, activities, contact } = req.body;
     const project = await Project.findById(req.params.id);
 
     if (!project) {
@@ -112,6 +114,8 @@ export async function updateProject(req, res) {
     if (endDate !== undefined) project.endDate = endDate;
     if (objective !== undefined) project.objective = objective;
     if (status !== undefined) project.status = status;
+    if (isActive !== undefined) project.isActive = isActive;
+    if (projectKey !== undefined) project.projectKey = projectKey;
     if (briefUrl !== undefined) project.briefUrl = briefUrl;
     if (assignedTo !== undefined) project.assignedTo = assignedTo;
     if (defaultAssignee !== undefined) project.defaultAssignee = defaultAssignee;
