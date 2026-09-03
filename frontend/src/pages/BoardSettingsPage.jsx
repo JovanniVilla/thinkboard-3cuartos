@@ -458,7 +458,11 @@ const BoardSettingsPage = () => {
         const res = await api.post("/database/import/preview", json);
         setPreviewData(res.data);
       } catch (error) {
-        toast.error("El archivo no tiene un formato JSON válido");
+        if (error.response) {
+          toast.error(error.response.data?.message || "Error al leer el archivo con el servidor");
+        } else {
+          toast.error("El archivo no tiene un formato JSON válido");
+        }
       }
     };
     reader.readAsText(file);

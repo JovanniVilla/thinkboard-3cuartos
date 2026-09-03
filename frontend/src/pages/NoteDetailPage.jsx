@@ -357,12 +357,7 @@ const NoteDetailPage = () => {
   const displayedChecklist = hideChecked ? checklistItems.filter((i) => !i.completed) : checklistItems;
 
   const currentStatus = note.status || "Pendiente";
-  const assignedUserConfig = accounts.find((a) => a.name === note.user);
-  const userColor = assignedUserConfig?.color || "#3B82F6";
-  const userJobTitle = assignedUserConfig?.jobTitle || "";
 
-  const currentUserConfig = accounts.find((a) => a.name === currentUser?.name);
-  const currentUserColor = currentUserConfig?.color || "#3B82F6";
 
   // Comments & activity calculations
   const activities = note.activities || [];
@@ -1182,7 +1177,7 @@ const NoteDetailPage = () => {
               <div className="flex items-start gap-2">
                 <span
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0 mt-1"
-                  style={{ backgroundColor: currentUserColor }}
+                  style={{ backgroundColor: accounts.find(a => a.name === currentUser?.name)?.color || "#3B82F6" }}
                 >
                   {getInitials(currentUser?.name)}
                 </span>
