@@ -550,67 +550,7 @@ const NoteDetailPage = () => {
               </ul>
             </div>
 
-            {/* Task Size Dropdown Pill */}
-            <div className="dropdown">
-              <label
-                tabIndex={0}
-                className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
-              >
-                {(() => {
-                  const currentSizeId = typeof note.size === "object" ? note.size?._id : note.size;
-                  const currentSize = (taskSizes || []).find(s => s._id === currentSizeId);
-                  return (
-                    <>
-                      <ClockIcon className="size-4 flex-shrink-0" style={{ color: currentSize?.color || "#6B7280" }} />
-                      <span>{currentSize ? `${currentSize.name} (${currentSize.value}h)` : "Talla"}</span>
-                    </>
-                  );
-                })()}
-                <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
-              </label>
-              <ul
-                tabIndex={0}
-                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
-              >
-                <li>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setNote({ ...note, size: null });
-                      handleSaveNote({ size: "" });
-                    }}
-                    className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${
-                      !note.size ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                    }`}
-                  >
-                    <ClockIcon className="size-4 text-base-content/60" />
-                    Sin talla
-                  </button>
-                </li>
-                {(taskSizes || []).map((s) => {
-                  const isSelected = (typeof note.size === "object" ? note.size?._id : note.size) === s._id;
-                  return (
-                    <li key={s._id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNote({ ...note, size: s });
-                          handleSaveNote({ size: s._id });
-                        }}
-                        className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
-                          isSelected ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                        }`}
-                      >
-                        <span className="flex items-center gap-2">
-                          <ClockIcon className="size-4" style={{ color: s.color }} />
-                          {s.name} ({s.value}h)
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
+
 
             {note.keyId && (
               <span className="badge bg-primary/20 text-primary border border-primary/30 font-mono font-bold text-xs px-2 py-1 whitespace-nowrap">
@@ -910,14 +850,68 @@ const NoteDetailPage = () => {
             <div className="flex items-center gap-4 py-2 text-sm bg-base-200/50 p-3 rounded-xl border border-base-content/10">
               <div className="flex-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Tiempo Estimado:</span>
-                <span className="badge badge-lg border border-base-content/10 bg-base-100 gap-1.5 font-medium">
-                  <ClockIcon className="size-3.5 opacity-70" />
-                  {(() => {
-                    const currentSizeId = typeof note.size === "object" ? note.size?._id : note.size;
-                    const currentSize = (taskSizes || []).find(s => s._id === currentSizeId);
-                    return currentSize ? `${currentSize.value}h (${currentSize.name})` : "0h";
-                  })()}
-                </span>
+                <div className="dropdown">
+                  <label
+                    tabIndex={0}
+                    className="btn btn-sm bg-base-100 hover:bg-base-200 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-3 flex-nowrap whitespace-nowrap"
+                  >
+                    {(() => {
+                      const currentSizeId = typeof note.size === "object" ? note.size?._id : note.size;
+                      const currentSize = (taskSizes || []).find(s => s._id === currentSizeId);
+                      return (
+                        <>
+                          <ClockIcon className="size-4 flex-shrink-0" style={{ color: currentSize?.color || "#6B7280" }} />
+                          <span>{currentSize ? `${currentSize.value}h (${currentSize.name})` : "Asignar talla"}</span>
+                        </>
+                      );
+                    })()}
+                    <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0 ml-1" />
+                  </label>
+                  <ul
+                    tabIndex={0}
+                    className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 border border-base-content/10 z-50 mt-1"
+                  >
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNote({ ...note, size: null });
+                          handleSaveNote({ size: "" });
+                          document.activeElement?.blur();
+                        }}
+                        className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${
+                          !note.size ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                        }`}
+                      >
+                        <ClockIcon className="size-4 text-base-content/60" />
+                        Sin talla
+                      </button>
+                    </li>
+                    {(taskSizes || []).map((s) => {
+                      const isSelected = (typeof note.size === "object" ? note.size?._id : note.size) === s._id;
+                      return (
+                        <li key={s._id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNote({ ...note, size: s });
+                              handleSaveNote({ size: s._id });
+                              document.activeElement?.blur();
+                            }}
+                            className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
+                              isSelected ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                            }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <ClockIcon className="size-4" style={{ color: s.color }} />
+                              {s.name} ({s.value}h)
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               </div>
               <div className="flex-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Tiempo Invertido (h):</span>
