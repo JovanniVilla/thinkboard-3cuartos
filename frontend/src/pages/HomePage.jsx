@@ -12,6 +12,7 @@ import { useProjects } from "../lib/useProjects";
 import NoteListView from "../components/NoteListView";
 import NoteKanbanView from "../components/NoteKanbanView";
 import NoteFilters from "../components/NoteFilters";
+import { useTaskSizes } from "../lib/useTaskSizes";
 import { ListIcon, Columns3Icon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 
@@ -24,6 +25,7 @@ const HomePage = () => {
   const { priorities } = usePriorities();
   const { accounts } = useAccounts();
   const { projects } = useProjects();
+  const { taskSizes } = useTaskSizes();
   const { user: currentUser } = useAuth();
 
   // View Mode: "list" | "board"
@@ -125,6 +127,12 @@ const HomePage = () => {
         const projA = a.project ? (projects.find((p) => p._id === a.project)?.name || "") : "";
         const projB = b.project ? (projects.find((p) => p._id === b.project)?.name || "") : "";
         comparison = projA.localeCompare(projB);
+      } else if (sortBy === "size") {
+        const sizeAId = typeof a.size === "object" ? a.size?._id : a.size;
+        const sizeBId = typeof b.size === "object" ? b.size?._id : b.size;
+        const sizeAVal = taskSizes.find((s) => s._id === sizeAId)?.value ?? 0;
+        const sizeBVal = taskSizes.find((s) => s._id === sizeBId)?.value ?? 0;
+        comparison = sizeAVal - sizeBVal;
       } else if (sortBy === "createdAt") {
         comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       }
