@@ -6,7 +6,7 @@ export async function getProjectById(req, res) {
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: "Proyecto no encontrado" });
     
-    const tasks = await Note.find({ project: project._id }).sort({ createdAt: -1 });
+    const tasks = await Note.find({ project: project._id }).populate("size").sort({ createdAt: -1 });
     
     res.status(200).json({ ...project.toObject(), tasks });
   } catch (error) {

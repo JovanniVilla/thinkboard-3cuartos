@@ -74,6 +74,15 @@ const noteSchema = new mongoose.Schema(
     startDate: { type: Date, default: null },
     dueDate: { type: Date, default: null },
     completedAt: { type: Date, default: null },
+    size: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TaskSizeConfig",
+      default: null,
+    },
+    timeSpent: {
+      type: Number,
+      default: 0, // En horas
+    },
     archived: { type: Boolean, default: false },
   },
   { timestamps: true } // createdAt, updatedAt

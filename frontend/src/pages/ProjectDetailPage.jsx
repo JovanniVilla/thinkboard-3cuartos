@@ -374,6 +374,35 @@ const ProjectDetailPage = () => {
                 </ul>
               </div>
 
+              {/* Time Tracking Stats */}
+              <div className="flex items-center gap-4 px-4 py-1.5 border-l border-r border-base-content/10">
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] font-bold text-base-content/50 uppercase tracking-wider">Estimado</span>
+                  <span className="text-sm font-black text-base-content">
+                    {(() => {
+                      const totalEstimated = tasks.reduce((sum, task) => {
+                        if (!task.size) return sum;
+                        const sizeObj = typeof task.size === "object" ? task.size : null; // assuming populated
+                        return sum + (sizeObj?.value || 0);
+                      }, 0);
+                      return `${totalEstimated}h`;
+                    })()}
+                  </span>
+                </div>
+                <div className="h-6 w-px bg-base-content/10"></div>
+                <div className="flex flex-col items-center">
+                  <span className="text-[10px] font-bold text-base-content/50 uppercase tracking-wider">Invertido</span>
+                  <span className="text-sm font-black text-primary">
+                    {(() => {
+                      const totalSpent = tasks.reduce((sum, task) => {
+                        return sum + (Number(task.timeSpent) || 0);
+                      }, 0);
+                      return `${totalSpent}h`;
+                    })()}
+                  </span>
+                </div>
+              </div>
+
               {/* Type Dropdown */}
               <div className="dropdown dropdown-hover">
                 <div

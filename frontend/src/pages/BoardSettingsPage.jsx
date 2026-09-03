@@ -33,6 +33,7 @@ import { useProjects } from "../lib/useProjects";
 import { useProjectTypes } from "../lib/useProjectTypes";
 import { useProjectStatuses } from "../lib/useProjectStatuses";
 import { useBoardConfig } from "../lib/useBoardConfig";
+import { useTaskSizes } from "../lib/useTaskSizes";
 import { useAuth } from "../lib/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
 
@@ -157,6 +158,73 @@ const EditRow = ({ item, onSave, onCancel, endpoint, typeName, isStatus }) => {
 
 
 
+const EditTaskSizeRow = ({ item, onSave, onCancel, endpoint }) => {
+  const [name, setName] = useState(item.name);
+  const [color, setColor] = useState(item.color);
+  const [value, setValue] = useState(item.value || 0);
+  const [points, setPoints] = useState(item.points || 1);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      toast.error("El nombre de la talla es requerido");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await api.put(`${endpoint}/${item._id}`, { name: name.trim(), color, value: Number(value), points: Number(points) });
+      onSave(res.data);
+      toast.success("Tamaño actualizado");
+    } catch {
+      toast.error("Error al actualizar el tamaño");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-xl border-2 border-primary/40 bg-base-200 p-3 space-y-3">
+      <div className="flex items-center gap-3">
+        <label
+          className="relative w-9 h-9 rounded-full cursor-pointer flex-shrink-0 border-2 border-white/20 shadow-md overflow-hidden"
+          style={{ backgroundColor: color }}
+        >
+          <input
+            type="color"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+            className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+          />
+        </label>
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="input input-bordered input-sm flex-1 min-w-0"
+          placeholder="Nombre (Talla)"
+          autoFocus
+        />
+        <div className="form-control">
+          <label className="label py-0"><span className="label-text text-xs">Horas estimadas</span></label>
+          <input type="number" step="0.5" className="input input-bordered input-sm w-24" value={value} onChange={e => setValue(e.target.value)} />
+        </div>
+        <div className="form-control">
+          <label className="label py-0"><span className="label-text text-xs">Puntos Fib</span></label>
+          <input type="number" className="input input-bordered input-sm w-20" value={points} onChange={e => setPoints(e.target.value)} />
+        </div>
+      </div>
+      <div className="flex justify-end gap-2">
+        <button type="button" className="btn btn-ghost btn-sm gap-1" onClick={onCancel} disabled={saving}>
+          <XIcon className="h-4 w-4" /> Cancelar
+        </button>
+        <button type="button" className="btn btn-primary btn-sm gap-1" onClick={handleSave} disabled={saving || !name.trim()}>
+          <CheckIcon className="h-4 w-4" /> {saving ? "Guardando…" : "Guardar"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 // ─── Main page ───────────────────────────────────────────────────────────────
 const BoardSettingsPage = () => {
   const [activeTab, setActiveTab] = useState("project"); // "project" | "statuses" | "priorities" | "project_types" | "project_statuses" | "users" | "accounts" | "database"
@@ -170,6 +238,7 @@ const BoardSettingsPage = () => {
   const { projectTypes, setProjectTypes, loading: loadingProjectTypes } = useProjectTypes();
   const { projectStatuses, setProjectStatuses, loading: loadingProjectStatuses } = useProjectStatuses();
   const { boardConfig, setBoardConfig, loading: loadingConfig } = useBoardConfig();
+  const { taskSizes, setTaskSizes, loading: loadingTaskSizes } = useTaskSizes();
   const { user: currentUser } = useAuth();
 
   // Create state
@@ -286,6 +355,10 @@ const BoardSettingsPage = () => {
         const res = await api.post("/project-types", { name: newName.trim(), color: newColor });
         setProjectTypes((prev) => [...prev, res.data]);
         toast.success("Tipo de Proyecto creado");
+      } else if (activeTab === "task_sizes") {
+        const res = await api.post("/task-sizes", { name: newName.trim(), value: 1, points: 1, color: newColor });
+        setTaskSizes((prev) => [...prev, res.data]);
+        toast.success("Tamaño de Tarea creado");
       } else if (activeTab === "project_statuses") {
         const res = await api.post("/project-statuses", { name: newName.trim(), color: newColor, category: newCategory });
         setProjectStatuses((prev) => [...prev, res.data]);
@@ -483,6 +556,17 @@ const BoardSettingsPage = () => {
             >
               <FolderKeyIcon className="w-4 h-4" />
               <span>Tipos de Proyecto ({projectTypes.length})</span>
+            </button>
+
+            <button
+              type="button"
+              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+                activeTab === "task_sizes" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
+              }`}
+              onClick={() => switchTab("task_sizes")}
+            >
+              <ClockIcon className="w-4 h-4" />
+              <span>Tamaños de Tarea ({taskSizes.length})</span>
             </button>
 
             <button
@@ -1260,6 +1344,124 @@ const BoardSettingsPage = () => {
                       <button className="btn btn-primary gap-2" onClick={handleCreate} disabled={creating || !newName.trim()}>
                         <PlusIcon className="h-4 w-4" />
                         {creating ? "Creando…" : "Crear Estado"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TASK SIZES */}
+          {activeTab === "task_sizes" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-1 pb-4 flex-1">
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="card-title text-lg">Tamaños actuales</h2>
+                    <span className="text-xs text-base-content/40 flex items-center gap-1">
+                      <GripVerticalIcon className="h-3 w-3" />
+                      Arrastra para reordenar
+                    </span>
+                  </div>
+
+                  {loadingTaskSizes ? (
+                    <div className="text-center py-6 text-base-content/50">Cargando tamaños…</div>
+                  ) : taskSizes.length === 0 ? (
+                    <div className="text-center py-6 text-base-content/50">No hay tamaños configurados</div>
+                  ) : (
+                    <ul className="space-y-2 mt-2">
+                      {taskSizes.map((size, index) => (
+                        <li
+                          key={size._id}
+                          draggable={editingId !== size._id}
+                          onDragStart={(e) => handleDragStart(e, index, size._id)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={() => handleDrop(taskSizes, setTaskSizes, "/task-sizes")}
+                          onDragEnd={handleDragEnd}
+                          className={`transition-all duration-150 ${
+                            draggingId === size._id ? "opacity-40 scale-95" : ""
+                          }`}
+                        >
+                          {editingId === size._id ? (
+                            <EditTaskSizeRow
+                              item={size}
+                              onSave={(updated) => {
+                                setTaskSizes((prev) => prev.map((s) => (s._id === updated._id ? updated : s)));
+                                setEditingId(null);
+                              }}
+                              onCancel={() => setEditingId(null)}
+                              endpoint="/task-sizes"
+                            />
+                          ) : (
+                            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-base-200 transition-colors group border border-transparent hover:border-base-content/10">
+                              <GripVerticalIcon className="h-4 w-4 text-base-content/25 cursor-grab active:cursor-grabbing flex-shrink-0" />
+                              <div className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ backgroundColor: size.color }} />
+                              <span
+                                className="px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-shrink-0"
+                                style={{
+                                  backgroundColor: size.color + "20",
+                                  color: size.color,
+                                  borderColor: size.color + "50",
+                                }}
+                              >
+                                {size.name}
+                              </span>
+                              <span className="text-xs font-medium text-base-content/70">
+                                {size.value}h / {size.points}pts
+                              </span>
+                              <span className="flex-1" />
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button className="btn btn-ghost btn-xs gap-1" onClick={() => setEditingId(size._id)}>
+                                  Editar
+                                </button>
+                                <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete(size._id, "/task-sizes", "tamaño", setTaskSizes)}>
+                                  <Trash2Icon className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              {/* Create size */}
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body">
+                  <h2 className="card-title text-lg mb-4">Agregar nuevo tamaño</h2>
+                  <div className="flex flex-col gap-4">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Nombre de la talla</span></label>
+                      <input
+                        type="text"
+                        placeholder="Ej: XXL..."
+                        className="input input-bordered"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Color</span></label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {PRESET_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setNewColor(color)}
+                            className="w-8 h-8 rounded-full transition-transform hover:scale-110"
+                            style={{ backgroundColor: color, outline: newColor === color ? `3px solid ${color}` : "none", outlineOffset: "2px" }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="card-actions justify-end">
+                      <button className="btn btn-primary gap-2" onClick={handleCreate} disabled={creating || !newName.trim()}>
+                        <PlusIcon className="h-4 w-4" />
+                        {creating ? "Creando…" : "Crear Tamaño"}
                       </button>
                     </div>
                   </div>

@@ -15,7 +15,7 @@ export async function getAllNotes(req, res) {
       }
     }
 
-    const notes = await Note.find(filter).sort({ createdAt: -1 }); 
+    const notes = await Note.find(filter).populate("size").sort({ createdAt: -1 }); 
     res.status(200).json(notes);
   } catch (error) {
     console.error("Error in getAllNotes controller", error);
@@ -25,7 +25,7 @@ export async function getAllNotes(req, res) {
 
 export async function getNoteById(req, res) {
   try {
-    const note = await Note.findById(req.params.id);
+    const note = await Note.findById(req.params.id).populate("size");
     if (!note) return res.status(404).json({ message: "Note not found!" });
     res.json(note);
   } catch (error) {
@@ -36,7 +36,7 @@ export async function getNoteById(req, res) {
 
 export async function createNote(req, res) {
   try {
-    let { title, content, status, priority, user, project, labels, checklist, startDate, dueDate } = req.body;
+    let { title, content, status, priority, user, project, labels, checklist, startDate, dueDate, size, timeSpent } = req.body;
 
     let projDoc = null;
     if (project) {
@@ -91,6 +91,8 @@ export async function createNote(req, res) {
       createdBy: req.user?._id || null,
       startDate: startDate || null,
       dueDate: dueDate || null,
+      ...(size && { size }),
+      ...(timeSpent !== undefined && { timeSpent }),
       completedAt,
       labels: labels || [],
       checklist: checklist || [],
@@ -115,7 +117,7 @@ export async function createNote(req, res) {
 
 export async function updateNote(req, res) {
   try {
-    const { title, content, status, priority, user, project, keyId, labels, checklist, activities, taskDriveLink, startDate, dueDate } = req.body;
+    const { title, content, status, priority, user, project, keyId, labels, checklist, activities, taskDriveLink, startDate, dueDate, size, timeSpent } = req.body;
 
     const currentNote = await Note.findById(req.params.id);
     if (!currentNote) return res.status(404).json({ message: "Note not found" });
@@ -171,13 +173,15 @@ export async function updateNote(req, res) {
         ...(taskDriveLink !== undefined && { taskDriveLink }),
         ...(startDate !== undefined && { startDate }),
         ...(dueDate !== undefined && { dueDate }),
+        ...(size !== undefined && { size: size === "" ? null : size }),
+        ...(timeSpent !== undefined && { timeSpent }),
         completedAt,
         activities: updatedActivities,
       },
       {
         new: true,
       }
-    );
+    ).populate("size");
 
     res.status(200).json(updatedNote);
   } catch (error) {
