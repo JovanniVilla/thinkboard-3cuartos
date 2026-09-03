@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { PenSquareIcon, ArchiveIcon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon, CheckCircle2Icon, PlusIcon, CalendarIcon, CheckIcon } from "lucide-react";
+import { PenSquareIcon, ArchiveIcon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon, CheckCircle2Icon, PlusIcon, CalendarIcon, CheckIcon, ClockIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useLabels } from "../lib/useLabels";
+import { useTaskSizes } from "../lib/useTaskSizes";
 import { Link, useNavigate } from "react-router";
 import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
@@ -32,6 +33,7 @@ const NoteListView = ({
   const { user } = useAuth();
   const navigate = useNavigate();
   const { labels: boardLabels } = useLabels();
+  const { taskSizes } = useTaskSizes();
   const [editingTitleId, setEditingTitleId] = useState(null);
   const [editingTitleValue, setEditingTitleValue] = useState("");
 
@@ -158,6 +160,16 @@ const NoteListView = ({
                 <div className="flex items-center gap-1">
                   <span>Proyecto</span>
                   {renderSortIndicator("project")}
+                </div>
+              </th>
+
+              <th
+                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5"
+                onClick={() => handleHeaderClick("size")}
+              >
+                <div className="flex items-center gap-1">
+                  <span>Talla</span>
+                  {renderSortIndicator("size")}
                 </div>
               </th>
 
@@ -392,6 +404,56 @@ const NoteListView = ({
                             </a>
                           </li>
                         ))}
+                      </ul>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+                      <div
+                        tabIndex={0}
+                        role="button"
+                        className="badge badge-sm font-medium whitespace-nowrap border"
+                        style={{
+                          backgroundColor: (note.size && taskSizes.find(s => s._id === (note.size?._id || note.size))?.color) ? taskSizes.find(s => s._id === (note.size?._id || note.size)).color + "20" : "#6B728020",
+                          color: (note.size && taskSizes.find(s => s._id === (note.size?._id || note.size))?.color) ? taskSizes.find(s => s._id === (note.size?._id || note.size)).color : "#6B7280",
+                          borderColor: (note.size && taskSizes.find(s => s._id === (note.size?._id || note.size))?.color) ? taskSizes.find(s => s._id === (note.size?._id || note.size)).color + "50" : "#6B728050",
+                        }}
+                      >
+                        {(() => {
+                          const currentSizeId = typeof note.size === "object" ? note.size?._id : note.size;
+                          const currentSize = (taskSizes || []).find(s => s._id === currentSizeId);
+                          return currentSize ? `${currentSize.value}h (${currentSize.name})` : "Sin talla";
+                        })()}
+                      </div>
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 border border-base-content/10">
+                        <li>
+                          <a
+                            onClick={() => {
+                              handleInlineEdit(note._id, "size", null);
+                              document.activeElement.blur();
+                            }}
+                            className={`text-xs py-1.5 px-2 ${!note.size ? "bg-primary/10 text-primary font-bold" : ""}`}
+                          >
+                            <span className="truncate">Sin talla</span>
+                          </a>
+                        </li>
+                        {(taskSizes || []).map((sz) => {
+                          const isSelected = (typeof note.size === "object" ? note.size?._id : note.size) === sz._id;
+                          return (
+                            <li key={sz._id}>
+                              <a
+                                onClick={() => {
+                                  handleInlineEdit(note._id, "size", sz._id);
+                                  document.activeElement.blur();
+                                }}
+                                className={`text-xs py-1.5 px-2 ${isSelected ? "bg-primary/10 text-primary font-bold" : ""}`}
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full mr-1 flex-shrink-0" style={{ backgroundColor: sz.color || "#6B7280" }} />
+                                <span className="truncate">{sz.name} ({sz.value}h)</span>
+                              </a>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   </td>
