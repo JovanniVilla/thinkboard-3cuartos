@@ -5,13 +5,13 @@ import {
   updateTaskSize,
   deleteTaskSize,
 } from "../controllers/taskSizeController.js";
-import { protect } from "../middleware/auth.js";
+import { protectRoute } from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.get("/", protect, getTaskSizes);
-router.post("/", protect, createTaskSize);
-router.put("/:id", protect, updateTaskSize);
-router.delete("/:id", protect, deleteTaskSize);
+router.get("/", protectRoute, getTaskSizes);
+router.post("/", protectRoute, createTaskSize);
+router.put("/:id", protectRoute, updateTaskSize);
+router.delete("/:id", protectRoute, deleteTaskSize);
 
 export default router;
