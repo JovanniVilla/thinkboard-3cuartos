@@ -129,96 +129,98 @@ const NoteListView = ({
           {/* Table Header */}
           <thead className="bg-base-200/95 backdrop-blur text-base-content/70 text-xs uppercase tracking-wider sticky top-0 z-10 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <tr>
-              <th
-                className="cursor-pointer hover:bg-base-300 transition-colors py-3.5 w-24"
-                onClick={() => handleHeaderClick("keyId")}
-              >
-                <div className="flex items-center gap-1">
+              <th className="p-0 align-top border-r border-base-content/10 w-24">
+                <div
+                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[60px] p-3.5 cursor-pointer hover:bg-base-300 transition-colors"
+                  onClick={() => handleHeaderClick("keyId")}
+                >
                   <span>ID</span>
                   {renderSortIndicator("keyId")}
                 </div>
               </th>
-              <th
-                className="cursor-pointer hover:bg-base-300 transition-colors py-3.5"
-                onClick={() => handleHeaderClick("title")}
-              >
-                <div className="flex items-center gap-1">
+              <th className="p-0 align-top border-r border-base-content/10">
+                <div
+                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[150px] p-3.5 cursor-pointer hover:bg-base-300 transition-colors"
+                  onClick={() => handleHeaderClick("title")}
+                >
                   <span>Nombre</span>
                   {renderSortIndicator("title")}
                 </div>
               </th>
-              <th className="py-3.5 hidden md:table-cell">
-                <div className="flex items-center gap-1 text-base-content/70">
+              <th className="p-0 align-top border-r border-base-content/10 hidden md:table-cell">
+                <div className="flex items-center gap-1 text-base-content/70 resize-x overflow-hidden w-full min-w-[100px] p-3.5">
                   <span>Checklist</span>
                 </div>
               </th>
-              <th className="py-3.5 hidden lg:table-cell">
-                <div className="flex items-center gap-1 text-base-content/70">
+              <th className="p-0 align-top border-r border-base-content/10 hidden lg:table-cell">
+                <div className="flex items-center gap-1 text-base-content/70 resize-x overflow-hidden w-full min-w-[120px] p-3.5">
                   <span>Etiquetas</span>
                 </div>
               </th>
-              <th
-                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5 hidden sm:table-cell"
-                onClick={() => handleHeaderClick("project")}
-              >
-                <div className="flex items-center gap-1">
+              <th className="p-0 align-top border-r border-base-content/10 hidden sm:table-cell">
+                <div
+                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[100px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
+                  onClick={() => handleHeaderClick("project")}
+                >
                   <span>Proyecto</span>
                   {renderSortIndicator("project")}
                 </div>
               </th>
 
-              <th
-                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5"
-                onClick={() => handleHeaderClick("size")}
-              >
-                <div className="flex items-center gap-1">
+              <th className="p-0 align-top border-r border-base-content/10">
+                <div
+                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[80px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
+                  onClick={() => handleHeaderClick("size")}
+                >
                   <span>Talla</span>
                   {renderSortIndicator("size")}
                 </div>
               </th>
 
-              <th
-                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5"
-                onClick={() => handleHeaderClick("status")}
-              >
-                <div className="flex items-center gap-1">
+              <th className="p-0 align-top border-r border-base-content/10">
+                <div
+                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[100px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
+                  onClick={() => handleHeaderClick("status")}
+                >
                   <span>Estado</span>
                   {renderSortIndicator("status")}
                 </div>
               </th>
-              <th
-                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5"
-                onClick={() => handleHeaderClick("priority")}
-              >
-                <div className="flex items-center gap-1">
+              <th className="p-0 align-top border-r border-base-content/10">
+                <div
+                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[100px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
+                  onClick={() => handleHeaderClick("priority")}
+                >
                   <span>Prioridad</span>
                   {renderSortIndicator("priority")}
                 </div>
               </th>
-              <th className="py-3.5 hidden md:table-cell">
-                <div className="flex items-center gap-1 text-base-content/70">
+              <th className="p-0 align-top border-r border-base-content/10 hidden md:table-cell">
+                <div className="flex items-center gap-1 text-base-content/70 resize-x overflow-hidden w-full min-w-[80px] p-3.5">
                   <span>Fechas</span>
                 </div>
               </th>
-              <th
-                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5"
-                onClick={() => handleHeaderClick("user")}
-              >
-                <div className="flex items-center gap-1">
+              <th className="p-0 align-top border-r border-base-content/10">
+                <div
+                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[100px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
+                  onClick={() => handleHeaderClick("user")}
+                >
                   <span>Usuario</span>
                   {renderSortIndicator("user")}
                 </div>
               </th>
-              <th
-                className="cursor-pointer hover:bg-base-200 transition-colors py-3.5 hidden sm:table-cell"
-                onClick={() => handleHeaderClick("createdAt")}
-              >
-                <div className="flex items-center gap-1">
+              <th className="p-0 align-top border-r border-base-content/10 hidden sm:table-cell">
+                <div
+                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[100px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
+                  onClick={() => handleHeaderClick("createdAt")}
+                >
                   <span>Creación</span>
                   {renderSortIndicator("createdAt")}
                 </div>
               </th>
-              <th className="text-right py-3.5">Acciones</th>
+              <th className="p-3.5 text-right align-top w-24">
+                <span>Acciones</span>
+              </th>
             </tr>
           </thead>
 
