@@ -269,7 +269,7 @@ const CreatePage = () => {
                  <div className="flex items-center justify-between mb-2">
                    <h3 className="font-bold text-base-content">Descripción</h3>
                  </div>
-                 <div className="flex-1 border border-base-content/10 rounded-xl overflow-hidden focus-within:border-primary/50 transition-colors">
+                 <div className="flex-1 border border-base-content/10 rounded-xl overflow-hidden focus-within:border-primary/50 transition-colors max-h-[300px] overflow-y-auto">
                    <MarkdownEditor
                      value={content}
                      onChange={setContent}

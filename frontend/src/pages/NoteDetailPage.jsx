@@ -998,7 +998,7 @@ const NoteDetailPage = () => {
                 </button>
               </div>
 
-              <div className="bg-base-200/50 rounded-xl p-4 border border-base-content/10">
+              <div className="bg-base-200/50 rounded-xl p-4 border border-base-content/10 max-h-[400px] overflow-y-auto">
                 {isEditingDescription ? (
                   <div className="space-y-3">
                     <MarkdownEditor
