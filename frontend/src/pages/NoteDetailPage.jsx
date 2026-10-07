@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useOutletContext } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import {
@@ -113,6 +113,7 @@ const NoteDetailPage = () => {
 
   const navigate = useNavigate();
   const { id } = useParams();
+  const outletContext = useOutletContext();
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -135,6 +136,14 @@ const NoteDetailPage = () => {
 
     try {
       await api.delete(`/notes/${id}`);
+      if (outletContext?.onNoteDeleted) {
+        outletContext.onNoteDeleted(id);
+      }
+      window.dispatchEvent(
+        new CustomEvent("thinkboard:notes-updated", {
+          detail: { action: "delete", id },
+        })
+      );
       toast.success("Tarea archivada");
       navigate("/");
     } catch (error) {
@@ -154,6 +163,14 @@ const NoteDetailPage = () => {
     try {
       const res = await api.put(`/notes/${id}`, mergedNote);
       setNote(res.data);
+      if (outletContext?.onNoteUpdated) {
+        outletContext.onNoteUpdated(res.data);
+      }
+      window.dispatchEvent(
+        new CustomEvent("thinkboard:notes-updated", {
+          detail: { action: "update", note: res.data },
+        })
+      );
       toast.success("Tarea guardada exitosamente");
     } catch (error) {
       console.error("Error saving the note:", error);
@@ -225,6 +242,14 @@ const NoteDetailPage = () => {
         mentions: extractMentions(commentText),
       });
       setNote(res.data);
+      if (outletContext?.onNoteUpdated) {
+        outletContext.onNoteUpdated(res.data);
+      }
+      window.dispatchEvent(
+        new CustomEvent("thinkboard:notes-updated", {
+          detail: { action: "update", note: res.data },
+        })
+      );
       setCommentText("");
       toast.success("Comentario publicado");
     } catch (error) {
@@ -249,6 +274,14 @@ const NoteDetailPage = () => {
         mentions: extractMentions(replyText),
       });
       setNote(res.data);
+      if (outletContext?.onNoteUpdated) {
+        outletContext.onNoteUpdated(res.data);
+      }
+      window.dispatchEvent(
+        new CustomEvent("thinkboard:notes-updated", {
+          detail: { action: "update", note: res.data },
+        })
+      );
       setReplyText("");
       setReplyingToId(null);
       toast.success("Respuesta publicada");

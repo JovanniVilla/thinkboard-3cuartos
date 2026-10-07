@@ -16,7 +16,7 @@ const getInitials = (name = "") => {
     .toUpperCase();
 };
 
-const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], users = [] }) => {
+const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], users = [], highlightedNoteId }) => {
   const [draggingNoteId, setDraggingNoteId] = useState(null);
   const [dragOverStatus, setDragOverStatus] = useState(null);
   const { user } = useAuth();
@@ -174,7 +174,11 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                         draggable
                         onDragStart={(e) => handleDragStart(e, note)}
                         onDragEnd={handleDragEnd}
-                        className={`card bg-base-200/70 hover:bg-base-200 border border-base-content/10 transition-all duration-150 cursor-grab active:cursor-grabbing shadow-sm hover:shadow ${
+                        className={`card bg-base-200/70 hover:bg-base-200 border transition-all duration-300 cursor-grab active:cursor-grabbing shadow-sm hover:shadow ${
+                          highlightedNoteId === note._id
+                            ? "border-primary ring-2 ring-primary bg-primary/10 shadow-lg animate-pulse"
+                            : "border-base-content/10"
+                        } ${
                           draggingNoteId === note._id ? "opacity-40 scale-95" : ""
                         }`}
                       >

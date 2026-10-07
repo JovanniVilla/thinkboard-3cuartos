@@ -136,6 +136,9 @@ export async function createNote(req, res) {
     });
 
     const savedNote = await note.save();
+    if (savedNote.size) {
+      await savedNote.populate("size");
+    }
     res.status(201).json(savedNote);
   } catch (error) {
     console.error("Error in createNote controller", error);

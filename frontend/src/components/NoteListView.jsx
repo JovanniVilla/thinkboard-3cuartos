@@ -29,6 +29,7 @@ const NoteListView = ({
   setSortBy,
   sortOrder,
   setSortOrder,
+  highlightedNoteId,
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -236,7 +237,11 @@ const NoteListView = ({
               return (
                 <tr
                   key={note._id}
-                  className="hover:bg-base-200/50 transition-colors group cursor-pointer"
+                  className={`hover:bg-base-200/50 transition-all duration-300 group cursor-pointer ${
+                    highlightedNoteId === note._id
+                      ? "bg-primary/20 ring-2 ring-primary ring-inset animate-pulse"
+                      : ""
+                  }`}
                   onClick={() => navigate(`/note/${note._id}`)}
                 >
                   <td className="font-medium text-base-content/70">

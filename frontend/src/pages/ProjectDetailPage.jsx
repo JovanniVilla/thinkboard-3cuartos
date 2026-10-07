@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -98,23 +98,34 @@ const ProjectDetailPage = () => {
     }
   }, [project?.name]);
 
-  useEffect(() => {
-    const fetchProject = async () => {
-      try {
-        const res = await api.get(`/projects/${id}`);
-        const { tasks: projectTasks, ...projectData } = res.data;
-        setProject(projectData);
-        setTasks(projectTasks || []);
-      } catch (error) {
-        console.error("Error in fetching project", error);
-        toast.error("Error al cargar el proyecto");
-        navigate("/projects");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProject();
+  const fetchProject = useCallback(async () => {
+    try {
+      const res = await api.get(`/projects/${id}`);
+      const { tasks: projectTasks, ...projectData } = res.data;
+      setProject(projectData);
+      setTasks(projectTasks || []);
+    } catch (error) {
+      console.error("Error in fetching project", error);
+      toast.error("Error al cargar el proyecto");
+      navigate("/projects");
+    } finally {
+      setLoading(false);
+    }
   }, [id, navigate]);
+
+  useEffect(() => {
+    fetchProject();
+  }, [fetchProject]);
+
+  useEffect(() => {
+    const handleNotesEvent = () => {
+      fetchProject();
+    };
+    window.addEventListener("thinkboard:notes-updated", handleNotesEvent);
+    return () => {
+      window.removeEventListener("thinkboard:notes-updated", handleNotesEvent);
+    };
+  }, [fetchProject]);
 
   const handleSaveProject = async (updatedFields = {}) => {
     const mergedProject = { ...project, ...updatedFields };
@@ -975,6 +986,7 @@ const ProjectDetailPage = () => {
                 </h3>
                 <Link
                   to={`/create?projectId=${project._id}`}
+                  state={{ returnTo: `/projects/${project._id}` }}
                   className="btn btn-xs btn-primary btn-outline gap-1"
                 >
                   <PlusIcon className="size-3" />

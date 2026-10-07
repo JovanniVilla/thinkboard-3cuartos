@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Outlet } from "react-router";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Outlet, useLocation } from "react-router";
 import Navbar from "../components/Navbar";
 import RateLimitedUI from "../components/RateLimitedUI";
 import api from "../lib/axios";
@@ -20,6 +20,7 @@ const HomePage = () => {
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [highlightedNoteId, setHighlightedNoteId] = useState(null);
 
   const { statuses } = useStatuses();
   const { priorities } = usePriorities();
@@ -27,6 +28,8 @@ const HomePage = () => {
   const { projects } = useProjects();
   const { taskSizes } = useTaskSizes();
   const { user: currentUser } = useAuth();
+  const location = useLocation();
+  const prevPathRef = useRef(location.pathname);
 
   // View Mode: "list" | "board"
   const [viewMode, setViewMode] = useState("list");
@@ -42,26 +45,123 @@ const HomePage = () => {
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
 
+  const fetchNotes = useCallback(async () => {
+    try {
+      const res = await api.get("/notes");
+      setNotes(res.data);
+      setIsRateLimited(false);
+    } catch (error) {
+      console.error("Error fetching notes:", error);
+      if (error.response?.status === 429) {
+        setIsRateLimited(true);
+      } else {
+        toast.error("Error al cargar las tareas");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchNotes = async () => {
-      try {
-        const res = await api.get("/notes");
-        setNotes(res.data);
-        setIsRateLimited(false);
-      } catch (error) {
-        console.error("Error fetching notes:", error);
-        if (error.response?.status === 429) {
-          setIsRateLimited(true);
-        } else {
-          toast.error("Error al cargar las tareas");
-        }
-      } finally {
-        setLoading(false);
+    fetchNotes();
+  }, [fetchNotes]);
+
+  const resetFilters = useCallback(() => {
+    setSearchQuery("");
+    setSelectedStatus("");
+    setSelectedPriority("");
+    setSelectedUser("");
+    setSelectedProject("");
+    setShowCompleted(false);
+    setShowMyTasks(false);
+  }, []);
+
+  const handleNoteCreated = useCallback((newNote) => {
+    if (!newNote) return;
+
+    // Reset filters that would hide the new note so the user sees it immediately
+    setSearchQuery("");
+    if (selectedStatus && selectedStatus !== newNote.status) {
+      setSelectedStatus("");
+    }
+    if (selectedPriority && selectedPriority !== newNote.priority) {
+      setSelectedPriority("");
+    }
+    if (selectedUser && selectedUser !== newNote.user) {
+      setSelectedUser("");
+    }
+    if (selectedProject && selectedProject !== newNote.project) {
+      setSelectedProject("");
+    }
+    if (showMyTasks && currentUser?.name && newNote.user !== currentUser.name) {
+      setShowMyTasks(false);
+    }
+    if (newNote.status?.toLowerCase() === "completado") {
+      setShowCompleted(true);
+    }
+
+    // Optimistically add the new note at the beginning of the list
+    setNotes((prevNotes) => {
+      const exists = prevNotes.some((n) => n._id === newNote._id);
+      if (exists) {
+        return prevNotes.map((n) => (n._id === newNote._id ? newNote : n));
+      }
+      return [newNote, ...prevNotes];
+    });
+
+    // Visually highlight the newly created task so it stands out
+    setHighlightedNoteId(newNote._id);
+    setTimeout(() => {
+      setHighlightedNoteId(null);
+    }, 4000);
+
+    // Fetch full dataset from backend in background to ensure all relations are synced
+    fetchNotes();
+  }, [selectedStatus, selectedPriority, selectedUser, selectedProject, showMyTasks, currentUser?.name, fetchNotes]);
+
+  const handleNoteUpdated = useCallback((updatedNote) => {
+    if (!updatedNote) return;
+    setNotes((prevNotes) =>
+      prevNotes.map((n) => (n._id === updatedNote._id ? { ...n, ...updatedNote } : n))
+    );
+  }, []);
+
+  const handleNoteDeleted = useCallback((deletedNoteId) => {
+    if (!deletedNoteId) return;
+    setNotes((prevNotes) => prevNotes.filter((n) => n._id !== deletedNoteId));
+  }, []);
+
+  // When returning from child modal routes (/create or /note/:id) back to "/", automatically refetch
+  useEffect(() => {
+    if (
+      location.pathname === "/" &&
+      (prevPathRef.current?.startsWith("/create") || prevPathRef.current?.startsWith("/note/"))
+    ) {
+      fetchNotes();
+    }
+    prevPathRef.current = location.pathname;
+  }, [location.pathname, fetchNotes]);
+
+  // Global event listener for note updates across the application
+  useEffect(() => {
+    const handleNotesEvent = (e) => {
+      const { action, note, id } = e.detail || {};
+      if (action === "create" && note) {
+        handleNoteCreated(note);
+      } else if (action === "update" && note) {
+        handleNoteUpdated(note);
+      } else if (action === "delete" && id) {
+        handleNoteDeleted(id);
+      } else {
+        fetchNotes();
       }
     };
 
-    fetchNotes();
-  }, []);
+    window.addEventListener("thinkboard:notes-updated", handleNotesEvent);
+    return () => {
+      window.removeEventListener("thinkboard:notes-updated", handleNotesEvent);
+    };
+  }, [fetchNotes, handleNoteCreated, handleNoteUpdated, handleNoteDeleted]);
 
   // Filter and sort notes
   const filteredNotes = notes
@@ -195,34 +295,45 @@ const HomePage = () => {
             {/* Render selected view */}
             <div className="flex-1 min-h-0 mt-2">
               {viewMode === "list" && (
-              <NoteListView
-                notes={filteredNotes}
-                setNotes={setNotes}
-                statuses={statuses}
-                priorities={priorities}
-                users={accounts}
-                projects={projects}
-                sortBy={sortBy}
-                setSortBy={setSortBy}
-                sortOrder={sortOrder}
-                setSortOrder={setSortOrder}
-              />
-            )}
+                <NoteListView
+                  notes={filteredNotes}
+                  setNotes={setNotes}
+                  statuses={statuses}
+                  priorities={priorities}
+                  users={accounts}
+                  projects={projects}
+                  sortBy={sortBy}
+                  setSortBy={setSortBy}
+                  sortOrder={sortOrder}
+                  setSortOrder={setSortOrder}
+                  highlightedNoteId={highlightedNoteId}
+                />
+              )}
 
-            {viewMode === "board" && (
-              <NoteKanbanView
-                notes={filteredNotes}
-                setNotes={setNotes}
-                statuses={statuses}
-                priorities={priorities}
-                users={accounts}
-              />
-            )}
+              {viewMode === "board" && (
+                <NoteKanbanView
+                  notes={filteredNotes}
+                  setNotes={setNotes}
+                  statuses={statuses}
+                  priorities={priorities}
+                  users={accounts}
+                  highlightedNoteId={highlightedNoteId}
+                />
+              )}
             </div>
           </div>
         )}
       </div>
-      <Outlet />
+      <Outlet
+        context={{
+          fetchNotes,
+          onNoteCreated: handleNoteCreated,
+          onNoteUpdated: handleNoteUpdated,
+          onNoteDeleted: handleNoteDeleted,
+          resetFilters,
+          highlightedNoteId,
+        }}
+      />
     </div>
   );
 };

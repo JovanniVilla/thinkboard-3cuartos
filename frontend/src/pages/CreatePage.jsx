@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router";
+import { Link, useNavigate, useLocation, useOutletContext } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import {
@@ -33,6 +33,7 @@ const CreatePage = () => {
   const { projects } = useProjects();
   const navigate = useNavigate();
   const location = useLocation();
+  const outletContext = useOutletContext();
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -92,6 +93,10 @@ const CreatePage = () => {
     ? 0 
     : Math.round((checklist.filter(i => i.completed).length / checklist.length) * 100);
 
+  const handleClose = () => {
+    navigate(location.state?.returnTo || "/");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -102,7 +107,7 @@ const CreatePage = () => {
 
     setLoading(true);
     try {
-      await api.post("/notes", {
+      const res = await api.post("/notes", {
         title,
         content,
         status: status || statuses[0]?.name || "Pendiente",
@@ -112,8 +117,24 @@ const CreatePage = () => {
         checklist,
       });
 
+      const newNote = res.data;
       toast.success("¡Tarea creada exitosamente!");
-      navigate("/");
+
+      // Update parent list immediately so the new task appears without needing a manual refresh
+      if (outletContext?.onNoteCreated) {
+        outletContext.onNoteCreated(newNote);
+      } else if (outletContext?.fetchNotes) {
+        outletContext.fetchNotes();
+      }
+
+      // Notify global listeners (e.g. ProjectDetailPage or other subscribers)
+      window.dispatchEvent(
+        new CustomEvent("thinkboard:notes-updated", {
+          detail: { action: "create", note: newNote },
+        })
+      );
+
+      handleClose();
     } catch (error) {
       console.error("Error creating note", error);
       if (error.response?.status === 429) {
@@ -132,7 +153,7 @@ const CreatePage = () => {
   const currentProject = projects.find(p => p._id === project);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto" onClick={() => navigate("/")}>
+    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto" onClick={handleClose}>
       {/* Card Detail Modal Window Container */}
       <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-4 mb-12 flex-shrink-0 flex flex-col" onClick={e => e.stopPropagation()}>
         
@@ -213,7 +234,7 @@ const CreatePage = () => {
             </span>
           </div>
 
-          <button type="button" onClick={() => navigate("/")} className="btn btn-sm btn-ghost btn-square text-base-content/50 hover:text-base-content flex-shrink-0">
+          <button type="button" onClick={handleClose} className="btn btn-sm btn-ghost btn-square text-base-content/50 hover:text-base-content flex-shrink-0">
              <XIcon className="size-5" />
           </button>
         </div>
@@ -325,7 +346,7 @@ const CreatePage = () => {
              </div>
 
              <div className="mt-8 pt-4 border-t border-base-content/10 flex justify-end gap-3">
-               <button className="btn btn-ghost" onClick={() => navigate("/")}>
+               <button className="btn btn-ghost" onClick={handleClose}>
                  Cancelar
                </button>
                <button
