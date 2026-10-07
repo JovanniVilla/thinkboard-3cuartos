@@ -50,9 +50,16 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
         {/* Title and Status Badge */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-start gap-2 min-w-0 pt-0.5">
-            {note.keyId && (
-              <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0">
-                {note.keyId}
+            {(note.projectKeyId || note.keyId) && (
+              <span
+                className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0"
+                title={
+                  note.projectKeyId && note.globalKeyId
+                    ? `ID Proyecto: ${note.projectKeyId} | Global: ${note.globalKeyId}`
+                    : `ID: ${note.keyId || note.globalKeyId}`
+                }
+              >
+                {note.projectKeyId || note.keyId}
               </span>
             )}
             <h3 className="card-title text-base text-base-content break-words whitespace-normal">{note.title}</h3>

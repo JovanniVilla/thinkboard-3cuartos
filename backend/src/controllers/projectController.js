@@ -115,7 +115,41 @@ export async function updateProject(req, res) {
     if (objective !== undefined) project.objective = objective;
     if (status !== undefined) project.status = status;
     if (isActive !== undefined) project.isActive = isActive;
-    if (projectKey !== undefined) project.projectKey = projectKey;
+    if (projectKey !== undefined) {
+      const oldKey = (project.projectKey || "").trim().toUpperCase();
+      const newKey = projectKey.trim().toUpperCase();
+      project.projectKey = newKey;
+
+      if (newKey !== oldKey) {
+        const prefix = newKey ? (newKey.endsWith("-") ? newKey : `${newKey}-`) : "";
+        const projectNotes = await Note.find({ project: project._id }).sort({ createdAt: 1 });
+        let pCounter = project.taskCounter || 1;
+        let isModified = false;
+
+        for (const note of projectNotes) {
+          if (newKey) {
+            if (note.projectKeyId && note.projectKeyId.includes("-")) {
+              const parts = note.projectKeyId.split("-");
+              const num = parts[parts.length - 1];
+              note.projectKeyId = `${prefix}${num}`;
+            } else {
+              note.projectKeyId = `${prefix}${pCounter}`;
+              pCounter++;
+              isModified = true;
+            }
+            note.keyId = note.projectKeyId;
+          } else {
+            note.projectKeyId = null;
+            note.keyId = note.globalKeyId;
+          }
+          await note.save();
+        }
+
+        if (isModified) {
+          project.taskCounter = pCounter;
+        }
+      }
+    }
     if (briefUrl !== undefined) project.briefUrl = briefUrl;
     if (assignedTo !== undefined) project.assignedTo = assignedTo;
     if (defaultAssignee !== undefined) project.defaultAssignee = defaultAssignee;

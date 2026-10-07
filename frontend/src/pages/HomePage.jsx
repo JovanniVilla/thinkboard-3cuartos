@@ -68,9 +68,14 @@ const HomePage = () => {
     .filter((note) => {
       if (searchQuery.trim()) {
         const query = searchQuery.toLowerCase();
-        const matchesTitle = note.title.toLowerCase().includes(query);
-        const matchesContent = note.content.toLowerCase().includes(query);
-        if (!matchesTitle && !matchesContent) return false;
+        const matchesTitle = (note.title || "").toLowerCase().includes(query);
+        const matchesContent = (note.content || "").toLowerCase().includes(query);
+        const matchesKeyId = (note.keyId || "").toLowerCase().includes(query);
+        const matchesProjectKeyId = (note.projectKeyId || "").toLowerCase().includes(query);
+        const matchesGlobalKeyId = (note.globalKeyId || "").toLowerCase().includes(query);
+        if (!matchesTitle && !matchesContent && !matchesKeyId && !matchesProjectKeyId && !matchesGlobalKeyId) {
+          return false;
+        }
       }
       if (selectedStatus && note.status !== selectedStatus) {
         return false;
@@ -101,7 +106,11 @@ const HomePage = () => {
     })
     .sort((a, b) => {
       let comparison = 0;
-      if (sortBy === "title") {
+      if (sortBy === "keyId") {
+        const idA = a.projectKeyId || a.keyId || a.globalKeyId || "";
+        const idB = b.projectKeyId || b.keyId || b.globalKeyId || "";
+        comparison = idA.localeCompare(idB, undefined, { numeric: true, sensitivity: "base" });
+      } else if (sortBy === "title") {
         comparison = (a.title || "").localeCompare(b.title || "");
       } else if (sortBy === "content") {
         comparison = (a.content || "").localeCompare(b.content || "");

@@ -183,9 +183,16 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                             <div className="min-w-0 flex-1">
                               {(note.keyId || note.priority) && (
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                                  {note.keyId && (
-                                    <span className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30">
-                                      {note.keyId}
+                                  {(note.projectKeyId || note.keyId) && (
+                                    <span
+                                      className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30"
+                                      title={
+                                        note.projectKeyId && note.globalKeyId
+                                          ? `ID Proyecto: ${note.projectKeyId} | Global: ${note.globalKeyId}`
+                                          : `ID: ${note.keyId || note.globalKeyId}`
+                                      }
+                                    >
+                                      {note.projectKeyId || note.keyId}
                                     </span>
                                   )}
                                   {note.priority && (

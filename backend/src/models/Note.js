@@ -5,10 +5,23 @@ import mongoose from "mongoose";
 
 const noteSchema = new mongoose.Schema(
   {
+    globalKeyId: {
+      type: String,
+      trim: true,
+      default: null,
+      index: true,
+    },
+    projectKeyId: {
+      type: String,
+      trim: true,
+      default: null,
+      index: true,
+    },
     keyId: {
       type: String,
       trim: true,
       default: null,
+      index: true,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,

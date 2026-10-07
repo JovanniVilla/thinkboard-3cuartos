@@ -58,7 +58,10 @@ const NoteListView = ({
     setNotes(prev => prev.map(n => n._id === noteId ? { ...n, [field]: value } : n));
 
     try {
-      await api.put(`/notes/${noteId}`, { ...note, [field]: value });
+      const res = await api.put(`/notes/${noteId}`, { ...note, [field]: value });
+      if (res.data) {
+        setNotes(prev => prev.map(n => n._id === noteId ? res.data : n));
+      }
       toast.success("Tarea actualizada");
     } catch (error) {
       console.error("Error updating note", error);
@@ -237,9 +240,29 @@ const NoteListView = ({
                   onClick={() => navigate(`/note/${note._id}`)}
                 >
                   <td className="font-medium text-base-content/70">
-                    {note.keyId ? (
-                      <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 whitespace-nowrap">
-                        {note.keyId}
+                    {note.projectKeyId ? (
+                      <div className="flex flex-col items-start gap-0.5">
+                        <span
+                          className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 whitespace-nowrap"
+                          title="ID de Proyecto"
+                        >
+                          {note.projectKeyId}
+                        </span>
+                        {note.globalKeyId && (
+                          <span
+                            className="text-[10px] font-mono text-base-content/50 pl-0.5"
+                            title={`ID Global: ${note.globalKeyId}`}
+                          >
+                            #{note.globalKeyId}
+                          </span>
+                        )}
+                      </div>
+                    ) : (note.globalKeyId || note.keyId) ? (
+                      <span
+                        className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 whitespace-nowrap"
+                        title="ID Global de Tarea"
+                      >
+                        {note.globalKeyId || note.keyId}
                       </span>
                     ) : (
                       <span className="text-xs text-base-content/40">-</span>

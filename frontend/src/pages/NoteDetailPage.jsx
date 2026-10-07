@@ -547,11 +547,35 @@ const NoteDetailPage = () => {
 
 
 
-            {note.keyId && (
-              <span className="badge bg-primary/20 text-primary border border-primary/30 font-mono font-bold text-xs px-2 py-1 whitespace-nowrap">
-                {note.keyId}
-              </span>
-            )}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {note.projectKeyId ? (
+                <>
+                  <span
+                    className="badge bg-primary/20 text-primary border border-primary/30 font-mono font-bold text-xs px-2.5 py-1 whitespace-nowrap shadow-xs"
+                    title="ID de Tarea en el Proyecto"
+                  >
+                    {note.projectKeyId}
+                  </span>
+                  {note.globalKeyId && (
+                    <span
+                      className="badge bg-base-200/80 text-base-content/70 border border-base-content/15 font-mono text-[11px] px-2 py-0.5 whitespace-nowrap"
+                      title="ID Global de Tarea en el Tablero"
+                    >
+                      Global: {note.globalKeyId}
+                    </span>
+                  )}
+                </>
+              ) : (
+                (note.globalKeyId || note.keyId) && (
+                  <span
+                    className="badge bg-primary/20 text-primary border border-primary/30 font-mono font-bold text-xs px-2.5 py-1 whitespace-nowrap shadow-xs"
+                    title="ID Global de Tarea"
+                  >
+                    {note.globalKeyId || note.keyId}
+                  </span>
+                )
+              )}
+            </div>
 
             {/* Other header tools */}
             <div className="flex items-center gap-0.5 mr-1 sm:mr-2 bg-base-200/50 p-0.5 rounded-lg border border-base-content/10">

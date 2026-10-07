@@ -996,6 +996,11 @@ const ProjectDetailPage = () => {
                       <div
                         className={`w-2 h-2 rounded-full flex-shrink-0 ${task.status === "Completado" ? "bg-success" : "bg-primary"}`}
                       />
+                      {(task.projectKeyId || task.keyId) && (
+                        <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0">
+                          {task.projectKeyId || task.keyId}
+                        </span>
+                      )}
                       <div className="flex-1 min-w-0">
                         <p
                           className={`text-sm font-semibold truncate ${task.status === "Completado" ? "line-through opacity-60" : ""}`}
