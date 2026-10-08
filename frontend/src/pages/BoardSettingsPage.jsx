@@ -505,111 +505,114 @@ const BoardSettingsPage = () => {
             <ThemeToggle />
           </div>
 
-          {/* Navigation Tabs */}
-          <div className="tabs tabs-boxed bg-base-100 p-1.5 rounded-xl shadow-sm border border-base-content/10 mb-6 flex flex-nowrap overflow-x-auto gap-1">
-            <button
-              type="button"
-              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
-                activeTab === "project" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
-              }`}
-              onClick={() => switchTab("project")}
-            >
-              <FolderKeyIcon className="w-4 h-4" />
-              <span>Proyecto / ID</span>
-            </button>
+          {/* Main Layout */}
+          <div className="flex flex-1 min-h-0 gap-4 md:gap-6 flex-col md:flex-row">
+            {/* Sidebar Navigation */}
+            <div className="md:w-64 lg:w-72 flex-shrink-0 flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-y-auto bg-base-100 p-2 rounded-xl shadow-sm border border-base-content/10 h-fit md:max-h-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "project" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("project")}
+              >
+                <FolderKeyIcon className="w-5 h-5" />
+                <span>Proyecto / ID</span>
+              </button>
 
-            <button
-              type="button"
-              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
-                activeTab === "statuses" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
-              }`}
-              onClick={() => switchTab("statuses")}
-            >
-              <LayersIcon className="w-4 h-4" />
-              <span>Estados ({statuses.length})</span>
-            </button>
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "statuses" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("statuses")}
+              >
+                <LayersIcon className="w-5 h-5" />
+                <span>Estados ({statuses.length})</span>
+              </button>
 
-            <button
-              type="button"
-              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
-                activeTab === "priorities" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
-              }`}
-              onClick={() => switchTab("priorities")}
-            >
-              <ZapIcon className="w-4 h-4" />
-              <span>Prioridades ({priorities.length})</span>
-            </button>
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "priorities" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("priorities")}
+              >
+                <ZapIcon className="w-5 h-5" />
+                <span>Prioridades ({priorities.length})</span>
+              </button>
 
-            <button
-              type="button"
-              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
-                activeTab === "labels" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
-              }`}
-              onClick={() => switchTab("labels")}
-            >
-              <TagIcon className="w-4 h-4" />
-              <span>Etiquetas ({labels.length})</span>
-            </button>
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "labels" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("labels")}
+              >
+                <TagIcon className="w-5 h-5" />
+                <span>Etiquetas ({labels.length})</span>
+              </button>
 
-            <button
-              type="button"
-              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
-                activeTab === "project_types" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
-              }`}
-              onClick={() => switchTab("project_types")}
-            >
-              <FolderKeyIcon className="w-4 h-4" />
-              <span>Tipos de Proyecto ({projectTypes.length})</span>
-            </button>
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "project_types" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("project_types")}
+              >
+                <FolderKeyIcon className="w-5 h-5" />
+                <span>Tipos de Proyecto ({projectTypes.length})</span>
+              </button>
 
-            <button
-              type="button"
-              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
-                activeTab === "task_sizes" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
-              }`}
-              onClick={() => switchTab("task_sizes")}
-            >
-              <ClockIcon className="w-4 h-4" />
-              <span>Tamaños de Tarea ({taskSizes.length})</span>
-            </button>
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "task_sizes" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("task_sizes")}
+              >
+                <ClockIcon className="w-5 h-5" />
+                <span>Tamaños de Tarea ({taskSizes.length})</span>
+              </button>
 
-            <button
-              type="button"
-              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
-                activeTab === "project_statuses" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
-              }`}
-              onClick={() => switchTab("project_statuses")}
-            >
-              <LayersIcon className="w-4 h-4" />
-              <span>Estados de Proyecto ({projectStatuses.length})</span>
-            </button>
-            <button
-              type="button"
-              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all relative ${
-                activeTab === "accounts" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
-              }`}
-              onClick={() => switchTab("accounts")}
-            >
-              <KeyRoundIcon className="w-4 h-4" />
-              <span>Cuentas / Accesos ({accounts.length})</span>
-              {accounts.some((a) => !a.isApproved) && (
-                <span className="badge badge-warning badge-xs absolute -top-1 -right-1 animate-pulse">
-                  {accounts.filter((a) => !a.isApproved).length}
-                </span>
-              )}
-            </button>
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "project_statuses" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("project_statuses")}
+              >
+                <LayersIcon className="w-5 h-5" />
+                <span>Estados de Proyecto ({projectStatuses.length})</span>
+              </button>
 
-            <button
-              type="button"
-              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
-                activeTab === "database" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
-              }`}
-              onClick={() => switchTab("database")}
-            >
-              <DatabaseIcon className="w-4 h-4" />
-              <span>Respaldo BD</span>
-            </button>
-          </div>
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap relative ${
+                  activeTab === "accounts" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("accounts")}
+              >
+                <KeyRoundIcon className="w-5 h-5" />
+                <span>Cuentas / Accesos ({accounts.length})</span>
+                {accounts.some((a) => !a.isApproved) && (
+                  <span className="badge badge-warning badge-xs absolute top-3 right-3 animate-pulse">
+                    {accounts.filter((a) => !a.isApproved).length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "database" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("database")}
+              >
+                <DatabaseIcon className="w-5 h-5" />
+                <span>Respaldo BD</span>
+              </button>
+            </div>
 
           {/* Tab Content Wrapper */}
           <div className="flex-1 flex flex-col min-h-0">
@@ -1872,6 +1875,7 @@ const BoardSettingsPage = () => {
           )}
 
           </div> {/* End Tab Content Wrapper */}
+          </div> {/* End Main Layout */}
         </div>
       </div>
     </div>
