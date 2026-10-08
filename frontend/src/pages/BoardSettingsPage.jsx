@@ -489,20 +489,22 @@ const BoardSettingsPage = () => {
     <div className="h-screen bg-base-200 flex flex-col overflow-hidden">
       <div className="w-full px-4 sm:px-8 pt-6 pb-2 flex-1 flex flex-col min-h-0">
         <div className="w-full flex-1 flex flex-col min-h-0">
-          <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-            <div className="flex items-center gap-4">
-              <Link to="/" className="btn btn-ghost btn-sm gap-1">
+          <div className="relative mb-6 flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-1 md:gap-4 w-full md:w-auto">
+              <Link to="/" className="btn btn-ghost btn-sm gap-1 -ml-3 md:ml-0">
                 <ArrowLeftIcon className="h-4 w-4" />
                 Volver al Tablero
               </Link>
-              <div>
-                <h1 className="text-2xl font-bold">Gestión del Tablero</h1>
-                <p className="text-base-content/60 text-sm">
+              <div className="mt-2 md:mt-0">
+                <h1 className="text-3xl md:text-2xl font-extrabold md:font-bold tracking-tight">Gestión del Tablero</h1>
+                <p className="text-base-content/60 text-sm mt-1 md:mt-0">
                   Personaliza estados, prioridades y miembros del equipo
                 </p>
               </div>
             </div>
-            <ThemeToggle />
+            <div className="absolute top-0 right-0 md:relative md:top-auto md:right-auto">
+              <ThemeToggle />
+            </div>
           </div>
 
           {/* Main Layout */}
