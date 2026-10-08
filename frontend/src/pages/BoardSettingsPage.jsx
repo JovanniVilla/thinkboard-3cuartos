@@ -506,10 +506,10 @@ const BoardSettingsPage = () => {
           </div>
 
           {/* Navigation Tabs */}
-          <div className="tabs tabs-boxed bg-base-100 p-1.5 rounded-xl shadow-sm border border-base-content/10 mb-6 flex flex-wrap gap-1">
+          <div className="tabs tabs-boxed bg-base-100 p-1.5 rounded-xl shadow-sm border border-base-content/10 mb-6 flex flex-nowrap overflow-x-auto gap-1">
             <button
               type="button"
-              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
                 activeTab === "project" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
               }`}
               onClick={() => switchTab("project")}
@@ -520,7 +520,7 @@ const BoardSettingsPage = () => {
 
             <button
               type="button"
-              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
                 activeTab === "statuses" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
               }`}
               onClick={() => switchTab("statuses")}
@@ -531,7 +531,7 @@ const BoardSettingsPage = () => {
 
             <button
               type="button"
-              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
                 activeTab === "priorities" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
               }`}
               onClick={() => switchTab("priorities")}
@@ -542,7 +542,7 @@ const BoardSettingsPage = () => {
 
             <button
               type="button"
-              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
                 activeTab === "labels" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
               }`}
               onClick={() => switchTab("labels")}
@@ -553,7 +553,7 @@ const BoardSettingsPage = () => {
 
             <button
               type="button"
-              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
                 activeTab === "project_types" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
               }`}
               onClick={() => switchTab("project_types")}
@@ -564,7 +564,7 @@ const BoardSettingsPage = () => {
 
             <button
               type="button"
-              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
                 activeTab === "task_sizes" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
               }`}
               onClick={() => switchTab("task_sizes")}
@@ -575,7 +575,7 @@ const BoardSettingsPage = () => {
 
             <button
               type="button"
-              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
                 activeTab === "project_statuses" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
               }`}
               onClick={() => switchTab("project_statuses")}
@@ -585,7 +585,7 @@ const BoardSettingsPage = () => {
             </button>
             <button
               type="button"
-              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all relative ${
+              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all relative ${
                 activeTab === "accounts" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
               }`}
               onClick={() => switchTab("accounts")}
@@ -601,7 +601,7 @@ const BoardSettingsPage = () => {
 
             <button
               type="button"
-              className={`tab flex-1 gap-2 rounded-lg font-semibold transition-all ${
+              className={`tab flex-1 whitespace-nowrap flex-shrink-0 gap-2 rounded-lg font-semibold transition-all ${
                 activeTab === "database" ? "tab-active bg-primary text-primary-content" : "text-base-content/70"
               }`}
               onClick={() => switchTab("database")}
