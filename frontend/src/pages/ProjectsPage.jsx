@@ -409,55 +409,75 @@ const ProjectsPage = () => {
       <div className="w-full px-4 sm:px-8 py-8">
         
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="btn btn-ghost btn-sm gap-1 text-base-content/70 hover:text-base-content">
-              <ArrowLeftIcon className="h-4 w-4" />
-              Volver
+        <div className="mb-8">
+          {/* Mobile Top Bar */}
+          <div className="flex items-center justify-between lg:hidden mb-6">
+            <Link to="/" className="btn btn-ghost btn-sm gap-1 text-base-content/70 hover:text-base-content -ml-2">
+              <ArrowLeftIcon className="h-5 w-5" />
+              <span className="text-base font-medium">Volver</span>
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-3 text-base-content">
-                <FolderKeyIcon className="text-primary size-8" />
-                Proyectos
-              </h1>
-              <p className="text-base-content/60 text-sm mt-1">
-                Administra los proyectos disponibles en el tablero.
-              </p>
+            <div className="bg-base-100 rounded-full shadow-sm border border-base-content/5 flex items-center justify-center p-0.5">
+              <ThemeToggle />
             </div>
           </div>
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="join bg-base-100 rounded-xl border border-base-content/10 shadow-sm mr-2 p-1">
-              <button 
-                className={`join-item btn btn-sm ${viewMode === "grid" ? "btn-primary" : "btn-ghost text-base-content/60"}`}
-                onClick={() => setViewMode("grid")}
-                title="Vista de Tarjetas"
-              >
-                <LayoutGridIcon className="size-4" />
-              </button>
-              <button 
-                className={`join-item btn btn-sm ${viewMode === "list" ? "btn-primary" : "btn-ghost text-base-content/60"}`}
-                onClick={() => setViewMode("list")}
-                title="Vista de Lista"
-              >
-                <ListIcon className="size-4" />
-              </button>
-              <button 
-                className={`join-item btn btn-sm ${viewMode === "kanban" ? "btn-primary" : "btn-ghost text-base-content/60"}`}
-                onClick={() => setViewMode("kanban")}
-                title="Vista Kanban"
-              >
-                <ColumnsIcon className="size-4" />
-              </button>
+
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link to="/" className="hidden lg:flex btn btn-ghost btn-sm gap-1 text-base-content/70 hover:text-base-content">
+                <ArrowLeftIcon className="h-4 w-4" />
+                Volver
+              </Link>
+              
+              <div className="flex flex-col gap-1 lg:block">
+                <h1 className="text-3xl lg:text-3xl font-bold flex items-center gap-3 text-base-content">
+                  <div className="p-2 bg-primary/10 rounded-2xl lg:bg-transparent lg:p-0 text-primary lg:text-inherit">
+                    <FolderKeyIcon className="size-7 lg:size-8" />
+                  </div>
+                  Proyectos
+                </h1>
+                <p className="text-base-content/60 text-base lg:text-sm lg:mt-1 mt-1 max-w-sm">
+                  Administra los proyectos disponibles en el tablero.
+                </p>
+              </div>
             </div>
 
-            <ThemeToggle />
-            {canManageProjects && (
-              <button onClick={openNewModal} className="btn btn-primary shadow-lg shadow-primary/20">
-                <PlusIcon className="size-5" />
-                <span className="hidden sm:inline">Nuevo Proyecto</span>
-                <span className="sm:hidden">Nuevo</span>
-              </button>
-            )}
+            <div className="flex items-center justify-between lg:justify-end gap-3 mt-4 lg:mt-0 w-full lg:w-auto">
+              <div className="flex bg-base-100 rounded-2xl border border-base-content/10 shadow-sm p-1">
+                <button 
+                  className={`btn btn-sm border-none rounded-xl px-3 ${viewMode === "grid" ? "bg-primary text-primary-content hover:bg-primary shadow-sm" : "bg-transparent text-base-content/60 hover:bg-base-200"}`}
+                  onClick={() => setViewMode("grid")}
+                  title="Vista de Tarjetas"
+                >
+                  <LayoutGridIcon className="size-4" />
+                </button>
+                <button 
+                  className={`btn btn-sm border-none rounded-xl px-3 ${viewMode === "list" ? "bg-primary text-primary-content hover:bg-primary shadow-sm" : "bg-transparent text-base-content/60 hover:bg-base-200"}`}
+                  onClick={() => setViewMode("list")}
+                  title="Vista de Lista"
+                >
+                  <ListIcon className="size-4" />
+                </button>
+                <button 
+                  className={`btn btn-sm border-none rounded-xl px-3 ${viewMode === "kanban" ? "bg-primary text-primary-content hover:bg-primary shadow-sm" : "bg-transparent text-base-content/60 hover:bg-base-200"}`}
+                  onClick={() => setViewMode("kanban")}
+                  title="Vista Kanban"
+                >
+                  <ColumnsIcon className="size-4" />
+                </button>
+              </div>
+
+              <div className="hidden lg:block">
+                <ThemeToggle />
+              </div>
+
+              {canManageProjects && (
+                <button onClick={openNewModal} className="btn btn-primary shadow-lg shadow-primary/20 rounded-2xl px-6 h-12 lg:h-10">
+                  <PlusIcon className="size-5 -mr-1" />
+                  <span className="hidden sm:inline">Nuevo Proyecto</span>
+                  <span className="sm:hidden font-semibold">+ Nuevo</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
