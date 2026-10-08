@@ -99,8 +99,19 @@ const NoteDetailPage = () => {
   const [editingChecklistTitle, setEditingChecklistTitle] = useState("");
   const [expandChecklist, setExpandChecklist] = useState(false);
 
-  // Labels popover state
-  const [showLabelMenu, setShowLabelMenu] = useState(false);
+  // Active popover state
+  const [activePopover, setActivePopover] = useState(null); // 'status', 'priority', 'project', 'labels', 'dates', 'members', 'size'
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // If clicking inside a popover container, don't close
+      if (!e.target.closest('.popover-container')) {
+        setActivePopover(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const { statuses } = useStatuses();
   const { labels: boardLabels } = useLabels();
@@ -440,14 +451,14 @@ const NoteDetailPage = () => {
           {/* Main Group: Status, Priority, ID, and other tools (wraps internally) */}
           <div className="flex flex-1 items-center gap-2 flex-wrap text-base-content/60">
             {/* Status Dropdown Pill */}
-            <div className="dropdown">
-              <label
-                tabIndex={0}
+            <div className={`dropdown popover-container ${activePopover === 'status' ? 'dropdown-open' : ''}`}>
+              <div
+                onClick={() => setActivePopover(activePopover === 'status' ? null : 'status')}
                 className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
               >
                 <span>{currentStatus}</span>
                 <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
-              </label>
+              </div>
               <ul
                 tabIndex={0}
                 className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
@@ -459,6 +470,7 @@ const NoteDetailPage = () => {
                       onClick={() => {
                         setNote({ ...note, status: st.name });
                         handleSaveNote({ status: st.name });
+                        setActivePopover(null);
                       }}
                       className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
                         currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
@@ -478,9 +490,9 @@ const NoteDetailPage = () => {
             </div>
 
             {/* Priority Dropdown Pill */}
-            <div className="dropdown">
-              <label
-                tabIndex={0}
+            <div className={`dropdown popover-container ${activePopover === 'priority' ? 'dropdown-open' : ''}`}>
+              <div
+                onClick={() => setActivePopover(activePopover === 'priority' ? null : 'priority')}
                 className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
               >
                 {(() => {
@@ -493,7 +505,7 @@ const NoteDetailPage = () => {
                   );
                 })()}
                 <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
-              </label>
+              </div>
               <ul
                 tabIndex={0}
                 className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
@@ -505,6 +517,7 @@ const NoteDetailPage = () => {
                       onClick={() => {
                         setNote({ ...note, priority: p.name });
                         handleSaveNote({ priority: p.name });
+                        setActivePopover(null);
                       }}
                       className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
                         note.priority === p.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
@@ -521,9 +534,9 @@ const NoteDetailPage = () => {
             </div>
 
             {/* Project Dropdown Pill */}
-            <div className="dropdown">
-              <label
-                tabIndex={0}
+            <div className={`dropdown popover-container ${activePopover === 'project' ? 'dropdown-open' : ''}`}>
+              <div
+                onClick={() => setActivePopover(activePopover === 'project' ? null : 'project')}
                 className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
               >
                 {(() => {
@@ -536,7 +549,7 @@ const NoteDetailPage = () => {
                   );
                 })()}
                 <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
-              </label>
+              </div>
               <ul
                 tabIndex={0}
                 className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
@@ -547,6 +560,7 @@ const NoteDetailPage = () => {
                     onClick={() => {
                       setNote({ ...note, project: "" });
                       handleSaveNote({ project: "" });
+                      setActivePopover(null);
                     }}
                     className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${
                       !note.project ? "bg-primary/20 text-primary font-bold" : "text-base-content"
@@ -563,6 +577,7 @@ const NoteDetailPage = () => {
                       onClick={() => {
                         setNote({ ...note, project: p._id });
                         handleSaveNote({ project: p._id });
+                        setActivePopover(null);
                       }}
                       className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
                         note.project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"
@@ -714,8 +729,8 @@ const NoteDetailPage = () => {
               <div className="flex items-center gap-1.5 flex-wrap text-sm pt-0">
                 <button
                   type="button"
-                  onClick={() => setShowLabelMenu(!showLabelMenu)}
-                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
+                  onClick={() => setActivePopover(activePopover === 'labels' ? null : 'labels')}
+                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg popover-container"
                 >
                   <PlusIcon className="size-4" />
                   <span>Etiqueta</span>
@@ -724,6 +739,9 @@ const NoteDetailPage = () => {
                 <DatesPopover 
                   startDate={note.startDate} 
                   dueDate={note.dueDate}
+                  isOpen={activePopover === 'dates'}
+                  onToggle={() => setActivePopover(activePopover === 'dates' ? null : 'dates')}
+                  onClose={() => setActivePopover(null)}
                   onSave={(dates) => {
                     setNote({ ...note, ...dates });
                     handleSaveNote(dates);
@@ -743,14 +761,14 @@ const NoteDetailPage = () => {
                 </button>
 
                 {/* Assign member dropdown button */}
-                <div className="dropdown dropdown-bottom">
-                  <label
-                    tabIndex={0}
+                <div className={`dropdown dropdown-bottom popover-container ${activePopover === 'members' ? 'dropdown-open' : ''}`}>
+                  <div
+                    onClick={() => setActivePopover(activePopover === 'members' ? null : 'members')}
                     className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg cursor-pointer"
                   >
                     <UsersIcon className="size-4" />
                     <span>Members</span>
-                  </label>
+                  </div>
                   <ul
                     tabIndex={0}
                     className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 border border-base-content/10 z-50 mt-1"
@@ -763,6 +781,7 @@ const NoteDetailPage = () => {
                           onClick={() => {
                             setNote({ ...note, user: u.name });
                             handleSaveNote({ user: u.name });
+                            setActivePopover(null);
                           }}
                           className={`text-sm py-2 rounded-lg flex items-center justify-between ${
                             note.user === u.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
@@ -817,23 +836,23 @@ const NoteDetailPage = () => {
                 ))}
 
                 {/* Add Label Button & Popover */}
-                <div className="relative">
+                <div className="relative popover-container">
                   <button
                     type="button"
-                    onClick={() => setShowLabelMenu(!showLabelMenu)}
+                    onClick={() => setActivePopover(activePopover === 'labels' ? null : 'labels')}
                     className="p-2 bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content rounded-lg transition-colors flex items-center justify-center"
                     title="Agregar etiqueta"
                   >
                     <PlusIcon className="size-4" />
                   </button>
 
-                  {showLabelMenu && (
+                  {activePopover === 'labels' && (
                     <div className="absolute left-0 mt-2 w-64 bg-base-100 border border-base-content/10 rounded-xl shadow-2xl p-4 z-50 space-y-3 text-sm">
                       <div className="flex items-center justify-between pb-2 border-b border-base-content/10">
                         <span className="font-bold text-base-content">Etiquetas</span>
                         <button
                           type="button"
-                          onClick={() => setShowLabelMenu(false)}
+                          onClick={() => setActivePopover(null)}
                           className="text-base-content/60 hover:text-base-content"
                         >
                           <XIcon className="size-4" />
@@ -902,9 +921,9 @@ const NoteDetailPage = () => {
             <div className="flex items-center gap-4 py-2 text-sm bg-base-200/50 p-3 rounded-xl border border-base-content/10">
               <div className="flex-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Tiempo Estimado:</span>
-                <div className="dropdown">
-                  <label
-                    tabIndex={0}
+                <div className={`dropdown popover-container ${activePopover === 'size' ? 'dropdown-open' : ''}`}>
+                  <div
+                    onClick={() => setActivePopover(activePopover === 'size' ? null : 'size')}
                     className="btn btn-sm bg-base-100 hover:bg-base-200 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-3 flex-nowrap whitespace-nowrap"
                   >
                     {(() => {
@@ -918,7 +937,7 @@ const NoteDetailPage = () => {
                       );
                     })()}
                     <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0 ml-1" />
-                  </label>
+                  </div>
                   <ul
                     tabIndex={0}
                     className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 border border-base-content/10 z-50 mt-1"
@@ -929,7 +948,7 @@ const NoteDetailPage = () => {
                         onClick={() => {
                           setNote({ ...note, size: null });
                           handleSaveNote({ size: "" });
-                          document.activeElement?.blur();
+                          setActivePopover(null);
                         }}
                         className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${
                           !note.size ? "bg-primary/20 text-primary font-bold" : "text-base-content"
@@ -948,7 +967,7 @@ const NoteDetailPage = () => {
                             onClick={() => {
                               setNote({ ...note, size: s });
                               handleSaveNote({ size: s._id });
-                              document.activeElement?.blur();
+                              setActivePopover(null);
                             }}
                             className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
                               isSelected ? "bg-primary/20 text-primary font-bold" : "text-base-content"
