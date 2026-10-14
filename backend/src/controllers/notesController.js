@@ -101,7 +101,8 @@ export async function createNote(req, res) {
     let completedAt = null;
     if (status) {
       const statusConfig = await StatusConfig.findOne({ name: status });
-      if (statusConfig && statusConfig.category === "done") {
+      const isDone = (statusConfig && statusConfig.category === "done") || /^(completad|terminad|finalizad|listo|hecho|done|cerrad)/i.test(status.trim());
+      if (isDone) {
         completedAt = new Date();
       }
     }
@@ -230,7 +231,8 @@ export async function updateNote(req, res) {
     // Auto log status changes if status was modified and changed
     if (status !== undefined && status !== currentNote.status) {
       const statusConfig = await StatusConfig.findOne({ name: status });
-      if (statusConfig && statusConfig.category === "done") {
+      const isDone = (statusConfig && statusConfig.category === "done") || /^(completad|terminad|finalizad|listo|hecho|done|cerrad)/i.test(status.trim());
+      if (isDone) {
         completedAt = new Date();
       } else if (currentNote.completedAt) {
         completedAt = null; // Revert completion if moving out of 'done'

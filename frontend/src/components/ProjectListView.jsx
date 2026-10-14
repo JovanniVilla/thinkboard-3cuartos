@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router";
 import { PenIcon, Trash2Icon, LinkIcon, FolderIcon, ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
+import { isTaskCompleted } from "../lib/utils";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -34,11 +35,11 @@ const ProjectListView = ({ projects, projectStatuses, doneStatuses, canManagePro
         
         if (sortConfig.key === 'progress') {
            const aTotal = a.taskCount || 0;
-           const aCompleted = a.noteStatuses ? a.noteStatuses.filter(s => doneStatuses.includes(s)).length : 0;
+           const aCompleted = a.noteStatuses ? a.noteStatuses.filter(s => isTaskCompleted(s, doneStatuses)).length : 0;
            aVal = aTotal > 0 ? (aCompleted / aTotal) : 0;
            
            const bTotal = b.taskCount || 0;
-           const bCompleted = b.noteStatuses ? b.noteStatuses.filter(s => doneStatuses.includes(s)).length : 0;
+           const bCompleted = b.noteStatuses ? b.noteStatuses.filter(s => isTaskCompleted(s, doneStatuses)).length : 0;
            bVal = bTotal > 0 ? (bCompleted / bTotal) : 0;
         }
 
@@ -100,7 +101,7 @@ const ProjectListView = ({ projects, projectStatuses, doneStatuses, canManagePro
             {sortedProjects.map((project) => {
               const statusColor = getStatusColor(project.status);
               const totalTasks = project.taskCount || 0;
-              const completedTasks = project.noteStatuses ? project.noteStatuses.filter(s => doneStatuses.includes(s)).length : 0;
+              const completedTasks = project.noteStatuses ? project.noteStatuses.filter(s => isTaskCompleted(s, doneStatuses)).length : 0;
               const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
               return (

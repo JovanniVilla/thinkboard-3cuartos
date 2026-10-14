@@ -33,6 +33,8 @@ import { useAuth } from "../lib/AuthContext";
 import { useProjectTypes } from "../lib/useProjectTypes";
 import { useProjectStatuses } from "../lib/useProjectStatuses";
 import { useAccounts } from "../lib/useAccounts";
+import { useStatuses } from "../lib/useStatuses";
+import { isTaskCompleted } from "../lib/utils";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import MarkdownEditor from "../components/MarkdownEditor";
 import ThemeToggle from "../components/ThemeToggle";
@@ -87,7 +89,25 @@ const ProjectDetailPage = () => {
   const { projectTypes } = useProjectTypes();
   const { projectStatuses } = useProjectStatuses();
   const { accounts } = useAccounts();
+  const { statuses } = useStatuses();
   const accountsList = accounts.filter((a) => a.isApproved).map((a) => a.name);
+
+  const doneStatuses = useMemo(() => {
+    const fromCategory = (statuses || []).filter((s) => s.category === "done").map((s) => s.name);
+    if (fromCategory.length > 0) return fromCategory;
+
+    const commonDoneRegex = /^(completad|terminad|finalizad|listo|hecho|done|closed|cerrad)/i;
+    const fallback = (statuses || []).filter((s) => commonDoneRegex.test(s.name?.trim() || "")).map((s) => s.name);
+    if (fallback.length > 0) return fallback;
+
+    return ["Completado", "Completada", "Terminado", "Terminada", "Finalizado", "Finalizada", "Listo", "Hecho", "Done"];
+  }, [statuses]);
+
+  const completedTasksCount = useMemo(() => {
+    return tasks.filter((t) => isTaskCompleted(t.status, doneStatuses)).length;
+  }, [tasks, doneStatuses]);
+
+  const tasksProgress = tasks.length > 0 ? Math.round((completedTasksCount / tasks.length) * 100) : 0;
 
   const titleTextareaRef = useRef(null);
 
@@ -993,42 +1013,56 @@ const ProjectDetailPage = () => {
                   Nueva
                 </Link>
               </div>
+
+              {tasks.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-xs font-semibold mb-1 text-base-content/60">
+                    <span>Progreso ({completedTasksCount}/{tasks.length})</span>
+                    <span>{tasksProgress}%</span>
+                  </div>
+                  <progress className="progress progress-primary w-full h-2" value={tasksProgress} max="100"></progress>
+                </div>
+              )}
+
               {tasks.length === 0 ? (
                 <p className="text-sm text-base-content/50 italic py-4 text-center">
                   No hay tareas vinculadas a este proyecto todavía.
                 </p>
               ) : (
                 <div className="flex flex-col gap-2">
-                  {tasks.map((task) => (
-                    <Link
-                      key={task._id}
-                      to={`/note/${task._id}`}
-                      className="flex items-center gap-3 p-3 rounded-xl border border-base-content/10 hover:border-primary/50 hover:bg-base-200/50 transition-colors group"
-                    >
-                      <div
-                        className={`w-2 h-2 rounded-full flex-shrink-0 ${task.status === "Completado" ? "bg-success" : "bg-primary"}`}
-                      />
-                      {(task.projectKeyId || task.keyId) && (
-                        <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0">
-                          {task.projectKeyId || task.keyId}
-                        </span>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-sm font-semibold truncate ${task.status === "Completado" ? "line-through opacity-60" : ""}`}
-                        >
-                          {task.title}
-                        </p>
-                      </div>
-                      {task.user && task.user !== "Sin asignar" && (
-                        <div className="avatar placeholder">
-                          <div className="bg-neutral text-neutral-content rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold">
-                            <span>{getInitials(task.user)}</span>
-                          </div>
+                  {tasks.map((task) => {
+                    const isDone = isTaskCompleted(task.status, doneStatuses);
+                    return (
+                      <Link
+                        key={task._id}
+                        to={`/note/${task._id}`}
+                        className="flex items-center gap-3 p-3 rounded-xl border border-base-content/10 hover:border-primary/50 hover:bg-base-200/50 transition-colors group"
+                      >
+                        <div
+                          className={`w-2 h-2 rounded-full flex-shrink-0 ${isDone ? "bg-success" : "bg-primary"}`}
+                        />
+                        {(task.projectKeyId || task.keyId) && (
+                          <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0">
+                            {task.projectKeyId || task.keyId}
+                          </span>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`text-sm font-semibold truncate ${isDone ? "line-through opacity-60" : ""}`}
+                          >
+                            {task.title}
+                          </p>
                         </div>
-                      )}
-                    </Link>
-                  ))}
+                        {task.user && task.user !== "Sin asignar" && (
+                          <div className="avatar placeholder">
+                            <div className="bg-neutral text-neutral-content rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold">
+                              <span>{getInitials(task.user)}</span>
+                            </div>
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </div>

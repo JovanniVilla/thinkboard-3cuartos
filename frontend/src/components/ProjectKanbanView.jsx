@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import { UserIcon, LayersIcon } from "lucide-react";
+import { isTaskCompleted } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 
@@ -124,7 +125,7 @@ const ProjectKanbanView = ({ projects, setProjects, projectStatuses, doneStatuse
             
             {col.items.map(project => {
               const totalTasks = project.taskCount || 0;
-              const completedTasks = project.noteStatuses ? project.noteStatuses.filter(s => doneStatuses.includes(s)).length : 0;
+              const completedTasks = project.noteStatuses ? project.noteStatuses.filter(s => isTaskCompleted(s, doneStatuses)).length : 0;
               const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
               return (

@@ -359,7 +359,14 @@ const ProjectsPage = () => {
 
   // Derive "done" task statuses to calculate progress
   const doneStatuses = useMemo(() => {
-    return statuses.filter(s => s.category === "done").map(s => s.name);
+    const fromCategory = (statuses || []).filter((s) => s.category === "done").map((s) => s.name);
+    if (fromCategory.length > 0) return fromCategory;
+
+    const commonDoneRegex = /^(completad|terminad|finalizad|listo|hecho|done|closed|cerrad)/i;
+    const fallback = (statuses || []).filter((s) => commonDoneRegex.test(s.name?.trim() || "")).map((s) => s.name);
+    if (fallback.length > 0) return fallback;
+
+    return ["Completado", "Completada", "Terminado", "Terminada", "Finalizado", "Finalizada", "Listo", "Hecho", "Done"];
   }, [statuses]);
 
   const handleDelete = async (id) => {

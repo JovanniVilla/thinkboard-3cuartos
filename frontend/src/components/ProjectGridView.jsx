@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router";
 import { PenIcon, Trash2Icon, UserIcon, CalendarIcon, LayersIcon } from "lucide-react";
+import { isTaskCompleted } from "../lib/utils";
 
 const ProjectGridView = ({ projects, projectStatuses, doneStatuses, canManageProjects, openEditModal, handleDelete }) => {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ const ProjectGridView = ({ projects, projectStatuses, doneStatuses, canManagePro
       {projects.map((project) => {
         const statusColor = getStatusColor(project.status);
         const totalTasks = project.taskCount || 0;
-        const completedTasks = project.noteStatuses ? project.noteStatuses.filter(s => doneStatuses.includes(s)).length : 0;
+        const completedTasks = project.noteStatuses ? project.noteStatuses.filter(s => isTaskCompleted(s, doneStatuses)).length : 0;
         const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
         const initials = project.assignedTo ? project.assignedTo.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() : "";
 

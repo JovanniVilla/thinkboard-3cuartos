@@ -812,6 +812,17 @@ const BoardSettingsPage = () => {
                               >
                                 {status.name}
                               </span>
+                              <span
+                                className={`badge badge-xs text-[10px] font-semibold border flex-shrink-0 ${
+                                  status.category === "done"
+                                    ? "bg-success/20 text-success border-success/30 font-bold"
+                                    : status.category === "in_progress"
+                                    ? "bg-warning/20 text-warning border-warning/30 font-medium"
+                                    : "bg-base-200 text-base-content/60 border-base-content/10 font-normal"
+                                }`}
+                              >
+                                {status.category === "done" ? "Completado" : status.category === "in_progress" ? "En Proceso" : "Por hacer"}
+                              </span>
                               <span className="flex-1" />
                               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <button className="btn btn-ghost btn-xs gap-1" onClick={() => setEditingId(status._id)}>
@@ -842,7 +853,15 @@ const BoardSettingsPage = () => {
                         placeholder="Ej: Revisión, Bloqueado, Urgente…"
                         className="input input-bordered"
                         value={newName}
-                        onChange={(e) => setNewName(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setNewName(val);
+                          if (/^(completad|terminad|finalizad|listo|hecho|done|cerrad)/i.test(val.trim())) {
+                            setNewCategory("done");
+                          } else if (/^(en progreso|en proceso|progreso|proceso|haciendo|in progress|working)/i.test(val.trim())) {
+                            setNewCategory("in_progress");
+                          }
+                        }}
                         onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
                       />
                     </div>
