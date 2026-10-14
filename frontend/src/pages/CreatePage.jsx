@@ -167,7 +167,7 @@ const CreatePage = () => {
                 <span>{currentStatus}</span>
                 <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
               </label>
-              <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1">
+              <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1">
                 {statuses.map((st) => (
                   <li key={st._id}>
                     <button type="button" onClick={() => setStatus(st.name)} className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
@@ -188,7 +188,7 @@ const CreatePage = () => {
                 <span>{priority}</span>
                 <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
               </label>
-              <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1">
+              <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1">
                 {priorities.map((p) => (
                   <li key={p._id}>
                     <button type="button" onClick={() => setPriority(p.name)} className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${priority === p.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
@@ -209,19 +209,19 @@ const CreatePage = () => {
                 <span>{currentProject?.name || "Sin proyecto"}</span>
                 <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
               </label>
-              <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1">
+              <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-60 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1">
                 <li>
                   <button type="button" onClick={() => setProject("")} className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${!project ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
-                    <FolderKeyIcon className="size-4 text-base-content/60" />
+                    <FolderKeyIcon className="size-4 text-base-content/60 flex-shrink-0" />
                     Sin proyecto
                   </button>
                 </li>
                 {projects.map((p) => (
                   <li key={p._id}>
                     <button type="button" onClick={() => setProject(p._id)} className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
-                      <span className="flex items-center gap-2">
-                        <FolderKeyIcon className="size-4" style={{ color: p.color }} />
-                        {p.name}
+                      <span className="flex items-center gap-2 text-left">
+                        <FolderKeyIcon className="size-4 flex-shrink-0" style={{ color: p.color }} />
+                        <span>{p.name}</span>
                       </span>
                     </button>
                   </li>

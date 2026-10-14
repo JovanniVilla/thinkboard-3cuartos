@@ -363,7 +363,7 @@ const NoteListView = ({
                           <span className="text-xs text-base-content/40 hover:text-base-content/80 flex items-center gap-1 w-full"><PlusIcon className="size-3" /> Añadir</span>
                         )}
                       </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-52 border border-base-content/10">
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-52 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
                         {boardLabels.length === 0 && (
                           <li className="text-xs text-base-content/50 p-2 text-center">No hay etiquetas creadas</li>
                         )}
@@ -408,7 +408,7 @@ const NoteListView = ({
                       >
                         {note.project ? projects.find(p => p._id === note.project)?.name || "Sin asignar" : "Sin asignar"}
                       </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 border border-base-content/10">
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-48 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
                         <li>
                           <a
                             onClick={() => {
@@ -455,7 +455,7 @@ const NoteListView = ({
                           return currentSize ? `${currentSize.value}h (${currentSize.name})` : "Sin talla";
                         })()}
                       </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 border border-base-content/10">
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
                         <li>
                           <a
                             onClick={() => {
@@ -501,7 +501,7 @@ const NoteListView = ({
                       >
                         {note.status || "Pendiente"}
                       </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 border border-base-content/10">
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
                         {statuses.map((st) => (
                           <li key={st._id}>
                             <a
@@ -534,7 +534,7 @@ const NoteListView = ({
                         <ZapIcon className="size-3" />
                         {note.priority || "Media"}
                       </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-36 border border-base-content/10">
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-36 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
                         {priorities.map((p) => (
                           <li key={p._id}>
                             <a
@@ -595,7 +595,7 @@ const NoteListView = ({
                           {note.user || "Sin asignar"}
                         </span>
                       </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-48 border border-base-content/10">
+                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-48 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
                         {users.map((u) => (
                           <li key={u._id}>
                             <a

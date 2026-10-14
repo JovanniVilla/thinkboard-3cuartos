@@ -461,7 +461,7 @@ const NoteDetailPage = () => {
               </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
+                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
               >
                 {statuses.map((st) => (
                   <li key={st._id}>
@@ -508,7 +508,7 @@ const NoteDetailPage = () => {
               </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
+                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
               >
                 {(priorities || []).map((p) => (
                   <li key={p._id}>
@@ -552,7 +552,7 @@ const NoteDetailPage = () => {
               </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
+                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-60 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
               >
                 <li>
                   <button
@@ -566,7 +566,7 @@ const NoteDetailPage = () => {
                       !note.project ? "bg-primary/20 text-primary font-bold" : "text-base-content"
                     }`}
                   >
-                    <FolderKeyIcon className="size-4 text-base-content/60" />
+                    <FolderKeyIcon className="size-4 text-base-content/60 flex-shrink-0" />
                     Sin proyecto
                   </button>
                 </li>
@@ -583,9 +583,9 @@ const NoteDetailPage = () => {
                         note.project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"
                       }`}
                     >
-                      <span className="flex items-center gap-2">
-                        <FolderKeyIcon className="size-4" style={{ color: p.color }} />
-                        {p.name}
+                      <span className="flex items-center gap-2 text-left">
+                        <FolderKeyIcon className="size-4 flex-shrink-0" style={{ color: p.color }} />
+                        <span>{p.name}</span>
                       </span>
                     </button>
                   </li>
@@ -771,7 +771,7 @@ const NoteDetailPage = () => {
                   </div>
                   <ul
                     tabIndex={0}
-                    className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 border border-base-content/10 z-50 mt-1"
+                    className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
                   >
                     <li className="menu-title text-xs text-base-content/50">Asignar Miembro</li>
                     {accounts.map((u) => (
@@ -940,7 +940,7 @@ const NoteDetailPage = () => {
                   </div>
                   <ul
                     tabIndex={0}
-                    className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 border border-base-content/10 z-50 mt-1"
+                    className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
                   >
                     <li>
                       <button
