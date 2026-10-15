@@ -24,6 +24,7 @@ import {
   FolderIcon,
   ArchiveIcon,
   MapPinIcon,
+  VideoIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useStatuses } from "../lib/useStatuses";
@@ -40,6 +41,7 @@ import { useTaskSizes } from "../lib/useTaskSizes";
 import DatesPopover from "../components/DatesPopover";
 import VisualAnnotationsSection from "../components/annotations/VisualAnnotationsSection";
 import AnnotationCanvas from "../components/annotations/AnnotationCanvas";
+import VideoNotesSection from "../components/videonotes/VideoNotesSection";
 import { FolderKeyIcon, ClockIcon } from "lucide-react";
 
 const getInitials = (name = "") => {
@@ -105,6 +107,10 @@ const NoteDetailPage = () => {
   // Visual annotations & attached files count
   const [visualFilesCount, setVisualFilesCount] = useState(0);
   const [canvasTarget, setCanvasTarget] = useState(null); // { file, subtaskId, pageNumber }
+
+  // Video Notes state
+  const [videoNotesCount, setVideoNotesCount] = useState(0);
+  const [isVideoRecorderOpen, setIsVideoRecorderOpen] = useState(false);
 
   // Active popover state
   const [activePopover, setActivePopover] = useState(null); // 'status', 'priority', 'project', 'labels', 'dates', 'members', 'size'
@@ -857,6 +863,16 @@ const NoteDetailPage = () => {
                   <PaperclipIcon className="size-4" />
                   <span>Adjuntos {visualFilesCount > 0 ? `(${visualFilesCount})` : ""}</span>
                 </button>
+
+                <button
+                  type="button"
+                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
+                  onClick={() => setIsVideoRecorderOpen(true)}
+                  title="Grabar pantalla y audio para crear una Video Nota"
+                >
+                  <VideoIcon className="size-4 text-error" />
+                  <span>Video Nota {videoNotesCount > 0 ? `(${videoNotesCount})` : ""}</span>
+                </button>
               </div>
             </div>
 
@@ -1276,6 +1292,15 @@ const NoteDetailPage = () => {
               accounts={accounts}
               onSubtasksCountChange={(_, totalFiles) => setVisualFilesCount(totalFiles)}
               onNoteRefresh={fetchNote}
+            />
+
+            {/* Video Notes (Screen & Audio Recording) Section */}
+            <VideoNotesSection
+              taskId={note._id}
+              onVideoNotesCountChange={(total) => setVideoNotesCount(total)}
+              onNoteRefresh={fetchNote}
+              isRecorderOpen={isVideoRecorderOpen}
+              setIsRecorderOpen={setIsVideoRecorderOpen}
             />
 
             {/* Bottom Actions: Save & Delete */}
