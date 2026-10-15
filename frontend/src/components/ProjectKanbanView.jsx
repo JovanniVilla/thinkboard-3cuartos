@@ -42,7 +42,7 @@ const ProjectKanbanView = ({ projects, setProjects, projectStatuses, doneStatuse
     }
   };
 
-  const handleDragLeave = (e, statusName) => {
+  const handleDragLeave = (e) => {
     e.preventDefault();
     dragCounter.current--;
     if (dragCounter.current === 0) {

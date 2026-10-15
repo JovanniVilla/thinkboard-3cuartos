@@ -164,6 +164,7 @@ const CreatePage = () => {
             {/* Status Dropdown */}
             <div className="dropdown">
               <label tabIndex={0} className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: statusColor }} />
                 <span>{currentStatus}</span>
                 <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
               </label>

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { 
   ArrowLeftIcon, PlusIcon, FolderKeyIcon, XIcon,
   LayoutGridIcon, ListIcon, ColumnsIcon
@@ -343,11 +343,10 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
 };
 
 const ProjectsPage = () => {
-  const navigate = useNavigate();
   const { projects, setProjects, loading } = useProjects();
   const { statuses } = useStatuses();
   const { projectStatuses } = useProjectStatuses();
-  const { user: currentUser, isAdmin, isTeam } = useAuth();
+  const { isAdmin, isTeam } = useAuth();
   
   const [editingProject, setEditingProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
