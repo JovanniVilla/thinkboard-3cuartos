@@ -53,7 +53,7 @@ const CreatePage = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const projectId = searchParams.get("projectId");
-    
+
     if (projectId && projects.length > 0 && !project) {
       setProject(projectId);
       const proj = projects.find(p => p._id === projectId);
@@ -84,7 +84,7 @@ const CreatePage = () => {
   };
 
   const handleToggleChecklistItem = (id) => {
-    setChecklist(checklist.map(item => 
+    setChecklist(checklist.map(item =>
       item.id === id ? { ...item, completed: !item.completed } : item
     ));
   };
@@ -98,15 +98,15 @@ const CreatePage = () => {
       setEditingChecklistId(null);
       return;
     }
-    setChecklist(checklist.map(item => 
+    setChecklist(checklist.map(item =>
       item.id === itemId ? { ...item, title: editingChecklistTitle.trim() } : item
     ));
     setEditingChecklistId(null);
     setEditingChecklistTitle("");
   };
 
-  const progressPercent = checklist.length === 0 
-    ? 0 
+  const progressPercent = checklist.length === 0
+    ? 0
     : Math.round((checklist.filter(i => i.completed).length / checklist.length) * 100);
 
   const handleClose = () => {
@@ -270,7 +270,7 @@ const CreatePage = () => {
           {/* Left Column */}
           <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-base-100">
             {/* Top Fixed Title Header */}
-            <div className="p-4 sm:p-5 md:p-6 pb-4 border-b border-base-content/10 flex-shrink-0 bg-base-100">
+            <div className="p-4 sm:p-5 md:p-4 pb-4 border-b border-base-content/10 flex-shrink-0 bg-base-100">
               <div className="flex items-start gap-3">
                 <div className="mt-1 flex-shrink-0">
                   <CheckCircle2Icon className="size-6 text-base-content/30" />
@@ -288,44 +288,39 @@ const CreatePage = () => {
             </div>
 
             {/* Middle Scrollable Content (Description + Checklist) */}
-            <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-5 md:p-6 space-y-8 bg-base-100">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-5 md:p-6 space-y-6 bg-base-100">
               {/* Description */}
-              <div className="flex gap-3 group relative">
-                <div className="mt-1 flex-shrink-0 text-base-content/50">
-                  <Edit3Icon className="size-5" />
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Edit3Icon className="size-4 text-base-content/50" />
+                  <h3 className="font-bold text-sm text-base-content">Descripción</h3>
                 </div>
-                <div className="flex-1 min-w-0 flex flex-col">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-base-content">Descripción</h3>
-                  </div>
-                  <div className="border border-base-content/10 rounded-xl overflow-hidden focus-within:border-primary/50 transition-colors max-h-[300px] overflow-y-auto">
-                    <MarkdownEditor
-                      value={content}
-                      onChange={setContent}
-                    />
-                  </div>
+                <div className="w-full border border-base-content/10 rounded-xl overflow-hidden focus-within:border-primary/50 transition-colors max-h-[300px] overflow-y-auto">
+                  <MarkdownEditor
+                    value={content}
+                    onChange={setContent}
+                  />
                 </div>
               </div>
 
               {/* Checklist Section */}
-              <div className="flex gap-3 group relative">
-                <div className="mt-1 flex-shrink-0 text-base-content/50">
-                  <CheckSquareIcon className="size-5" />
-                </div>
-                <div className="flex-1 min-w-0 flex flex-col">
-                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                    <h3 className="font-bold text-base-content">Checklist</h3>
-                    {checklist.length > 4 && (
-                      <button
-                        type="button"
-                        onClick={() => setExpandChecklist(!expandChecklist)}
-                        className="btn btn-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg px-2.5 font-medium"
-                      >
-                        {expandChecklist ? "Contraer lista" : `Ver todas (${checklist.length})`}
-                      </button>
-                    )}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <CheckSquareIcon className="size-4 text-base-content/50" />
+                    <h3 className="font-bold text-sm text-base-content">Checklist</h3>
                   </div>
-                  
+                  {checklist.length > 4 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandChecklist(!expandChecklist)}
+                      className="btn btn-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg px-2.5 font-medium"
+                    >
+                      {expandChecklist ? "Contraer lista" : `Ver todas (${checklist.length})`}
+                    </button>
+                  )}
+                </div>
+
                   {checklist.length > 0 && (
                     <div className="flex items-center gap-3 mb-4">
                       <span className="text-xs font-mono font-bold text-base-content/60 w-8">{progressPercent}%</span>
@@ -419,7 +414,7 @@ const CreatePage = () => {
                         </div>
                       ))}
                     </div>
-                    
+
                     <form onSubmit={handleAddChecklistItem} className="flex items-center gap-2 mt-2">
                       <input
                         type="text"
@@ -440,7 +435,6 @@ const CreatePage = () => {
                   </div>
                 </div>
               </div>
-            </div>
 
             {/* Bottom Fixed Action Buttons */}
             <div className="p-3 sm:px-6 sm:py-3.5 border-t border-base-content/10 bg-base-100 flex justify-end gap-3 flex-shrink-0">
@@ -460,64 +454,64 @@ const CreatePage = () => {
 
           {/* Right Column (Activity/Comments) */}
           <div className="w-full md:w-80 lg:w-[380px] bg-base-200/50 flex-shrink-0 border-t md:border-t-0 md:border-l border-base-content/10 flex flex-col relative overflow-y-auto min-h-0">
-             
-             {/* Members section in the right column */}
-             <div className="p-4 border-b border-base-content/10 bg-base-200/80">
-               <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
-                 <UserIcon className="size-4" /> Asignar a
-               </h3>
-               <div className="dropdown w-full">
-                  <div tabIndex={0} role="button" className="btn btn-sm btn-ghost gap-2 w-full justify-start border border-base-content/10 hover:border-base-content/30 rounded-xl bg-base-100">
-                    {user !== "Sin asignar" ? (
-                      <div className="avatar placeholder">
-                        <div className="bg-primary text-primary-content rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
-                          <span>{getInitials(user)}</span>
-                        </div>
+
+            {/* Members section in the right column */}
+            <div className="p-4 border-b border-base-content/10 bg-base-200/80">
+              <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
+                <UserIcon className="size-4" /> Asignar a
+              </h3>
+              <div className="dropdown w-full">
+                <div tabIndex={0} role="button" className="btn btn-sm btn-ghost gap-2 w-full justify-start border border-base-content/10 hover:border-base-content/30 rounded-xl bg-base-100">
+                  {user !== "Sin asignar" ? (
+                    <div className="avatar placeholder">
+                      <div className="bg-primary text-primary-content rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
+                        <span>{getInitials(user)}</span>
                       </div>
-                    ) : (
-                      <div className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-base-content/40">
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-base-content/40">
+                      <UserIcon className="size-3" />
+                    </div>
+                  )}
+                  <span className="truncate">{user}</span>
+                  <ChevronDownIcon className="size-4 ml-auto opacity-50" />
+                </div>
+                <ul tabIndex={0} className="dropdown-content z-[60] menu p-2 shadow-xl bg-base-100 rounded-box w-full border border-base-content/10 mt-1 max-h-60 overflow-y-auto">
+                  <li>
+                    <button onClick={() => { setUser("Sin asignar"); document.activeElement.blur(); }} className={`text-sm py-2 rounded-lg font-medium ${user === "Sin asignar" ? "bg-primary/20 text-primary" : ""}`}>
+                      <div className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 mr-2">
                         <UserIcon className="size-3" />
                       </div>
-                    )}
-                    <span className="truncate">{user}</span>
-                    <ChevronDownIcon className="size-4 ml-auto opacity-50" />
-                  </div>
-                  <ul tabIndex={0} className="dropdown-content z-[60] menu p-2 shadow-xl bg-base-100 rounded-box w-full border border-base-content/10 mt-1 max-h-60 overflow-y-auto">
-                    <li>
-                      <button onClick={() => { setUser("Sin asignar"); document.activeElement.blur(); }} className={`text-sm py-2 rounded-lg font-medium ${user === "Sin asignar" ? "bg-primary/20 text-primary" : ""}`}>
-                        <div className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 mr-2">
-                          <UserIcon className="size-3" />
+                      Sin asignar
+                    </button>
+                  </li>
+                  {accounts.map((acc) => (
+                    <li key={acc._id}>
+                      <button onClick={() => { setUser(acc.name); document.activeElement.blur(); }} className={`text-sm py-2 rounded-lg font-medium ${user === acc.name ? "bg-primary/20 text-primary" : ""}`}>
+                        <div className="avatar placeholder mr-2">
+                          <div className="bg-primary text-primary-content rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
+                            <span>{getInitials(acc.name)}</span>
+                          </div>
                         </div>
-                        Sin asignar
+                        {acc.name}
                       </button>
                     </li>
-                    {accounts.map((acc) => (
-                      <li key={acc._id}>
-                        <button onClick={() => { setUser(acc.name); document.activeElement.blur(); }} className={`text-sm py-2 rounded-lg font-medium ${user === acc.name ? "bg-primary/20 text-primary" : ""}`}>
-                          <div className="avatar placeholder mr-2">
-                            <div className="bg-primary text-primary-content rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
-                              <span>{getInitials(acc.name)}</span>
-                            </div>
-                          </div>
-                          {acc.name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-             </div>
+                  ))}
+                </ul>
+              </div>
+            </div>
 
-             <div className="p-4 border-b border-base-content/10 flex items-center justify-between bg-base-200/80">
-               <h3 className="font-bold text-sm flex items-center gap-2">
-                 <MessageSquareIcon className="size-4" /> Comentarios y Actividad
-               </h3>
-             </div>
-             
-             <div className="flex-1 overflow-y-auto p-4 flex flex-col items-center justify-center text-center opacity-50 space-y-3">
-               <MessageSquareIcon className="size-10 mb-2 opacity-50" />
-               <p className="text-sm font-medium">Guarda la tarea primero</p>
-               <p className="text-xs max-w-[200px]">Podrás añadir comentarios y ver el historial de actividad una vez creada la tarea.</p>
-             </div>
+            <div className="hidden md:flex p-4 border-b border-base-content/10 items-center justify-between bg-base-200/80">
+              <h3 className="font-bold text-sm flex items-center gap-2">
+                <MessageSquareIcon className="size-4" /> Comentarios y Actividad
+              </h3>
+            </div>
+
+            <div className="hidden md:flex flex-1 overflow-y-auto p-4 flex-col items-center justify-center text-center opacity-50 space-y-3">
+              <MessageSquareIcon className="size-10 mb-2 opacity-50" />
+              <p className="text-sm font-medium">Guarda la tarea primero</p>
+              <p className="text-xs max-w-[200px]">Podrás añadir comentarios y ver el historial de actividad una vez creada la tarea.</p>
+            </div>
           </div>
         </div>
       </div>
