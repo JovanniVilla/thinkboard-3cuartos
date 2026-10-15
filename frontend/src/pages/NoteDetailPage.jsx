@@ -67,7 +67,7 @@ const NoteDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
-  
+
   const titleTextareaRef = useRef(null);
 
   useEffect(() => {
@@ -417,8 +417,8 @@ const NoteDetailPage = () => {
   const displayedMainComments = showAllComments
     ? sortedMainComments
     : sortedMainComments.length > 3
-    ? sortedMainComments.slice(-3)
-    : sortedMainComments;
+      ? sortedMainComments.slice(-3)
+      : sortedMainComments;
 
   // Filter actions and allowed main comments
   const displayedMainItems = activities.filter((act) => {
@@ -435,7 +435,7 @@ const NoteDetailPage = () => {
   );
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6 bg-black/40 backdrop-blur-sm text-base-content"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -444,10 +444,10 @@ const NoteDetailPage = () => {
       }}
     >
       {/* Card Detail Modal Window Container */}
-      <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-4 mb-12 flex-shrink-0" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-2 mb-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
         {/* Header Bar */}
         <div className="flex items-start justify-between px-3 py-2 border-b border-base-content/10 bg-base-100 gap-2">
-          
+
           {/* Main Group: Status, Priority, ID, and other tools (wraps internally) */}
           <div className="flex flex-1 items-center gap-2 flex-wrap text-base-content/60">
             {/* Status Dropdown Pill */}
@@ -472,9 +472,8 @@ const NoteDetailPage = () => {
                         handleSaveNote({ status: st.name });
                         setActivePopover(null);
                       }}
-                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
-                        currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                      }`}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                        }`}
                     >
                       <span className="flex items-center gap-2">
                         <span
@@ -519,9 +518,8 @@ const NoteDetailPage = () => {
                         handleSaveNote({ priority: p.name });
                         setActivePopover(null);
                       }}
-                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
-                        note.priority === p.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                      }`}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${note.priority === p.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                        }`}
                     >
                       <span className="flex items-center gap-2">
                         <ZapIcon className="size-4" style={{ color: p.color }} />
@@ -562,9 +560,8 @@ const NoteDetailPage = () => {
                       handleSaveNote({ project: "" });
                       setActivePopover(null);
                     }}
-                    className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${
-                      !note.project ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                    }`}
+                    className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${!note.project ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                      }`}
                   >
                     <FolderKeyIcon className="size-4 text-base-content/60 flex-shrink-0" />
                     Sin proyecto
@@ -579,9 +576,8 @@ const NoteDetailPage = () => {
                         handleSaveNote({ project: p._id });
                         setActivePopover(null);
                       }}
-                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
-                        note.project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                      }`}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${note.project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                        }`}
                     >
                       <span className="flex items-center gap-2 text-left">
                         <FolderKeyIcon className="size-4 flex-shrink-0" style={{ color: p.color }} />
@@ -662,7 +658,7 @@ const NoteDetailPage = () => {
             </div>
 
             {boardConfig?.driveFolderLink && (
-              <a 
+              <a
                 href={boardConfig.driveFolderLink}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -673,9 +669,9 @@ const NoteDetailPage = () => {
                 <span className="hidden sm:inline">Carpeta del Proyecto</span>
               </a>
             )}
-            
+
             <ThemeToggle />
-            
+
             <button
               type="button"
               className="p-1.5 hover:bg-base-200 rounded-lg transition-colors"
@@ -709,7 +705,7 @@ const NoteDetailPage = () => {
           {/* Left Column (Main Card Content) */}
           <div className="lg:col-span-8 p-3 sm:p-5 space-y-4 border-b lg:border-b-0 lg:border-r border-base-content/10">
             {/* Title Section */}
-            <div className="space-y-2.5">
+            <div className="space-y-1.5">
               <div className="flex items-start gap-2.5">
                 <CheckCircle2Icon className="size-6 text-base-content/50 mt-1 flex-shrink-0" />
                 <textarea
@@ -736,8 +732,8 @@ const NoteDetailPage = () => {
                   <span>Etiqueta</span>
                 </button>
 
-                <DatesPopover 
-                  startDate={note.startDate} 
+                <DatesPopover
+                  startDate={note.startDate}
                   dueDate={note.dueDate}
                   isOpen={activePopover === 'dates'}
                   onToggle={() => setActivePopover(activePopover === 'dates' ? null : 'dates')}
@@ -783,9 +779,8 @@ const NoteDetailPage = () => {
                             handleSaveNote({ user: u.name });
                             setActivePopover(null);
                           }}
-                          className={`text-sm py-2 rounded-lg flex items-center justify-between ${
-                            note.user === u.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                          }`}
+                          className={`text-sm py-2 rounded-lg flex items-center justify-between ${note.user === u.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                            }`}
                         >
                           <span className="flex items-center gap-2">
                             <span
@@ -904,10 +899,9 @@ const NoteDetailPage = () => {
                 {note.dueDate && (
                   <div>
                     <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Vencimiento:</span>
-                    <span className={`badge badge-lg border gap-1.5 font-medium ${
-                      note.completedAt ? "bg-success/20 text-success border-success/30" : 
+                    <span className={`badge badge-lg border gap-1.5 font-medium ${note.completedAt ? "bg-success/20 text-success border-success/30" :
                       new Date(note.dueDate) < new Date() ? "bg-error/20 text-error border-error/30" : "bg-base-200 border-base-content/10"
-                    }`}>
+                      }`}>
                       <CalendarIcon className="size-3.5 opacity-70" />
                       {new Date(note.dueDate).toLocaleString("es-ES", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                       {note.completedAt && <CheckIcon className="size-3.5" />}
@@ -950,9 +944,8 @@ const NoteDetailPage = () => {
                           handleSaveNote({ size: "" });
                           setActivePopover(null);
                         }}
-                        className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${
-                          !note.size ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                        }`}
+                        className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${!note.size ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                          }`}
                       >
                         <ClockIcon className="size-4 text-base-content/60" />
                         Sin talla
@@ -969,9 +962,8 @@ const NoteDetailPage = () => {
                               handleSaveNote({ size: s._id });
                               setActivePopover(null);
                             }}
-                            className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
-                              isSelected ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                            }`}
+                            className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${isSelected ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                              }`}
                           >
                             <span className="flex items-center gap-2">
                               <ClockIcon className="size-4" style={{ color: s.color }} />
@@ -1094,86 +1086,85 @@ const NoteDetailPage = () => {
               <div className="space-y-3">
                 <div className={`space-y-2 ${expandChecklist ? "" : "max-h-[240px] overflow-y-auto pr-1"}`}>
                   {displayedChecklist.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group"
-                  >
-                    {editingChecklistId === item.id ? (
-                      <div className="flex items-center gap-2 flex-1 w-full">
-                        <input
-                          type="text"
-                          className="flex-1 bg-base-100 border border-base-content/20 text-sm text-base-content rounded px-2.5 py-1 focus:border-primary focus:outline-none"
-                          value={editingChecklistTitle}
-                          onChange={(e) => setEditingChecklistTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleUpdateChecklistItem(item.id);
-                            } else if (e.key === "Escape") {
-                              setEditingChecklistId(null);
-                            }
-                          }}
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateChecklistItem(item.id)}
-                          className="text-success hover:text-success/80 transition-colors p-1"
-                          title="Guardar cambios"
-                        >
-                          <CheckIcon className="size-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingChecklistId(null)}
-                          className="text-base-content/40 hover:text-base-content transition-colors p-1"
-                          title="Cancelar"
-                        >
-                          <XIcon className="size-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group"
+                    >
+                      {editingChecklistId === item.id ? (
+                        <div className="flex items-center gap-2 flex-1 w-full">
                           <input
-                            type="checkbox"
-                            checked={item.completed}
-                            onChange={() => handleToggleChecklistItem(item.id)}
-                            className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
+                            type="text"
+                            className="flex-1 bg-base-100 border border-base-content/20 text-sm text-base-content rounded px-2.5 py-1 focus:border-primary focus:outline-none"
+                            value={editingChecklistTitle}
+                            onChange={(e) => setEditingChecklistTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleUpdateChecklistItem(item.id);
+                              } else if (e.key === "Escape") {
+                                setEditingChecklistId(null);
+                              }
+                            }}
+                            autoFocus
                           />
-                          <span
-                            className={`text-sm ${
-                              item.completed ? "line-through text-base-content/40" : "text-base-content"
-                            }`}
-                          >
-                            {item.title}
-                          </span>
-                        </label>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             type="button"
-                            onClick={() => {
-                              setEditingChecklistId(item.id);
-                              setEditingChecklistTitle(item.title);
-                            }}
-                            className="text-base-content/40 hover:text-primary transition-colors p-1"
-                            title="Editar elemento"
+                            onClick={() => handleUpdateChecklistItem(item.id)}
+                            className="text-success hover:text-success/80 transition-colors p-1"
+                            title="Guardar cambios"
                           >
-                            <PencilIcon className="size-4" />
+                            <CheckIcon className="size-4" />
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleDeleteChecklistItem(item.id)}
-                            className="text-base-content/40 hover:text-error transition-colors p-1"
-                            title="Eliminar elemento"
+                            onClick={() => setEditingChecklistId(null)}
+                            className="text-base-content/40 hover:text-base-content transition-colors p-1"
+                            title="Cancelar"
                           >
-                            <Trash2Icon className="size-4" />
+                            <XIcon className="size-4" />
                           </button>
                         </div>
-                      </>
-                    )}
-                  </div>
-                ))}
+                      ) : (
+                        <>
+                          <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={item.completed}
+                              onChange={() => handleToggleChecklistItem(item.id)}
+                              className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
+                            />
+                            <span
+                              className={`text-sm ${item.completed ? "line-through text-base-content/40" : "text-base-content"
+                                }`}
+                            >
+                              {item.title}
+                            </span>
+                          </label>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingChecklistId(item.id);
+                                setEditingChecklistTitle(item.title);
+                              }}
+                              className="text-base-content/40 hover:text-primary transition-colors p-1"
+                              title="Editar elemento"
+                            >
+                              <PencilIcon className="size-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteChecklistItem(item.id)}
+                              className="text-base-content/40 hover:text-error transition-colors p-1"
+                              title="Eliminar elemento"
+                            >
+                              <Trash2Icon className="size-4" />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
 
                 {displayedChecklist.length > 4 && (
