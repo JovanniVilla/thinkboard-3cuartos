@@ -13,6 +13,9 @@ import boardConfigRoutes from "./routes/boardConfigRoutes.js";
 import labelRoutes from "./routes/labelRoutes.js";
 import databaseRoutes from "./routes/databaseRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
+import projectTypeRoutes from "./routes/projectTypeRoutes.js";
+import projectStatusRoutes from "./routes/projectStatusRoutes.js";
+import taskSizeRoutes from "./routes/taskSizeRoutes.js";
 import { connectDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
 
@@ -51,6 +54,9 @@ app.use("/api/board-config", boardConfigRoutes);
 app.use("/api/labels", labelRoutes);
 app.use("/api/database", databaseRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/project-types", projectTypeRoutes);
+app.use("/api/project-statuses", projectStatusRoutes);
+app.use("/api/task-sizes", taskSizeRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));

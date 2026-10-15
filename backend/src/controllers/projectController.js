@@ -1,8 +1,63 @@
 import Project from "../models/Project.js";
+import Note from "../models/Note.js";
+
+export async function getProjectById(req, res) {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ message: "Proyecto no encontrado" });
+    
+    const tasks = await Note.find({ project: project._id, archived: { $ne: true } }).populate("size").sort({ createdAt: -1 });
+    
+    res.status(200).json({ ...project.toObject(), tasks });
+  } catch (error) {
+    console.error("Error in getProjectById controller", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
 
 export async function getAllProjects(req, res) {
   try {
-    const projects = await Project.find().sort({ createdAt: -1 });
+    const matchStage = {};
+    if (req.user && req.user.role === "client") {
+      if (req.user.assignedProjects && req.user.assignedProjects.length > 0) {
+        matchStage._id = { $in: req.user.assignedProjects };
+      } else {
+        matchStage._id = { $in: [] };
+      }
+    }
+
+    const projects = await Project.aggregate([
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: "notes",
+          let: { projectId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$project", "$$projectId"] },
+                archived: { $ne: true },
+              },
+            },
+          ],
+          as: "projectNotes",
+        },
+      },
+      {
+        $addFields: {
+          taskCount: { $size: "$projectNotes" },
+          noteStatuses: "$projectNotes.status",
+        },
+      },
+      {
+        $project: {
+          projectNotes: 0,
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+    ]);
     res.status(200).json(projects);
   } catch (error) {
     console.error("Error in getAllProjects controller", error);
@@ -12,7 +67,7 @@ export async function getAllProjects(req, res) {
 
 export async function createProject(req, res) {
   try {
-    const { name, color, description } = req.body;
+    const { name, color, description, scope, acceptanceCriteria, projectType, startDate, endDate, objective, status, isActive, projectKey, briefUrl, assignedTo, defaultAssignee, folderUrl, contact } = req.body;
 
     if (!name?.trim()) {
       return res.status(400).json({ message: "El nombre del proyecto es obligatorio" });
@@ -22,6 +77,21 @@ export async function createProject(req, res) {
       name: name.trim(),
       color: color || "#3B82F6",
       description: description || "",
+      scope: scope || "",
+      acceptanceCriteria: acceptanceCriteria || [],
+      projectType: projectType || "General",
+      startDate: startDate || null,
+      endDate: endDate || null,
+      objective: objective || "",
+      status: status || "En planeación",
+      isActive: isActive !== undefined ? isActive : true,
+      projectKey: projectKey || "",
+      briefUrl: briefUrl || "",
+      assignedTo: assignedTo || "Sin asignar",
+      defaultAssignee: defaultAssignee || "Sin asignar",
+      folderUrl: folderUrl || "",
+      contact: contact || {},
+      activities: [],
     });
 
     const savedProject = await newProject.save();
@@ -34,16 +104,69 @@ export async function createProject(req, res) {
 
 export async function updateProject(req, res) {
   try {
-    const { name, color, description } = req.body;
+    const { name, color, description, scope, acceptanceCriteria, projectType, startDate, endDate, objective, status, isActive, projectKey, briefUrl, assignedTo, defaultAssignee, folderUrl, activities, contact } = req.body;
     const project = await Project.findById(req.params.id);
 
     if (!project) {
       return res.status(404).json({ message: "Proyecto no encontrado" });
     }
 
-    if (name) project.name = name.trim();
-    if (color) project.color = color;
+    if (name !== undefined) project.name = name.trim();
+    if (color !== undefined) project.color = color;
     if (description !== undefined) project.description = description;
+    if (scope !== undefined) project.scope = scope;
+    if (acceptanceCriteria !== undefined && Array.isArray(acceptanceCriteria)) project.acceptanceCriteria = acceptanceCriteria;
+    if (projectType !== undefined) project.projectType = projectType;
+    if (startDate !== undefined) project.startDate = startDate;
+    if (endDate !== undefined) project.endDate = endDate;
+    if (objective !== undefined) project.objective = objective;
+    if (status !== undefined) project.status = status;
+    if (isActive !== undefined) project.isActive = isActive;
+    if (projectKey !== undefined) {
+      const oldKey = (project.projectKey || "").trim().toUpperCase();
+      const newKey = projectKey.trim().toUpperCase();
+      project.projectKey = newKey;
+
+      if (newKey !== oldKey) {
+        const prefix = newKey ? (newKey.endsWith("-") ? newKey : `${newKey}-`) : "";
+        const projectNotes = await Note.find({ project: project._id }).sort({ createdAt: 1 });
+        let pCounter = project.taskCounter || 1;
+        let isModified = false;
+
+        for (const note of projectNotes) {
+          if (newKey) {
+            if (note.projectKeyId && note.projectKeyId.includes("-")) {
+              const parts = note.projectKeyId.split("-");
+              const num = parts[parts.length - 1];
+              note.projectKeyId = `${prefix}${num}`;
+            } else {
+              note.projectKeyId = `${prefix}${pCounter}`;
+              pCounter++;
+              isModified = true;
+            }
+            note.keyId = note.projectKeyId;
+          } else {
+            note.projectKeyId = null;
+            note.keyId = note.globalKeyId;
+          }
+          await note.save();
+        }
+
+        if (isModified) {
+          project.taskCounter = pCounter;
+        }
+      }
+    }
+    if (briefUrl !== undefined) project.briefUrl = briefUrl;
+    if (assignedTo !== undefined) project.assignedTo = assignedTo;
+    if (defaultAssignee !== undefined) project.defaultAssignee = defaultAssignee;
+    if (folderUrl !== undefined) project.folderUrl = folderUrl;
+    if (activities !== undefined && Array.isArray(activities)) project.activities = activities;
+    if (contact !== undefined) project.contact = { ...project.contact, ...contact };
+
+    // Sanitize subdocument arrays — fix corrupt data already in DB (e.g., stored as "")
+    if (!Array.isArray(project.acceptanceCriteria)) project.acceptanceCriteria = [];
+    if (!Array.isArray(project.activities)) project.activities = [];
 
     const updatedProject = await project.save();
     res.status(200).json(updatedProject);

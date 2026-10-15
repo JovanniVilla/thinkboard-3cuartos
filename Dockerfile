@@ -1,28 +1,39 @@
+# ==========================================
+# Etapa 1: Compilación del Frontend (Vite)
+# ==========================================
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+# Copiar manifiestos del frontend para maximizar caché de capas
+COPY frontend/package*.json ./
+RUN npm ci --legacy-peer-deps --no-audit --no-fund
+
+# Copiar código y compilar bundle estático
+COPY frontend/ ./
+RUN npm run build
+
+# ==========================================
+# Etapa 2: Entorno de Producción (Backend)
+# ==========================================
 FROM node:20-alpine
 
-# Set working directory
 WORKDIR /app
-
-# Copy package.json files
-COPY package*.json ./
-COPY backend/package*.json ./backend/
-COPY frontend/package*.json ./frontend/
-
-# Install dependencies separately to leverage Docker cache
-RUN npm install --prefix backend --legacy-peer-deps
-RUN npm install --prefix frontend --legacy-peer-deps
-
-# Copy all source code
-COPY . .
-
-# Build the frontend (React/Vite app)
-RUN npm run build --prefix frontend
-
-# Set the node environment to production
 ENV NODE_ENV=production
 
-# The port is defaulted to 5001 from backend server.js, exposing it
+# Copiar manifiestos de paquetes
+COPY package*.json ./
+COPY backend/package*.json ./backend/
+
+# Instalación limpia y rápida sin dependencias de desarrollo ni auditorías de red
+RUN npm ci --prefix backend --omit=dev --legacy-peer-deps --no-audit --no-fund
+
+# Copiar código fuente del backend
+COPY backend/ ./backend/
+
+# Copiar exclusivamente los archivos estáticos compilados del frontend
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
+
 EXPOSE 5001
 
-# Command to start the backend, which also serves the frontend dist
 CMD ["npm", "start"]

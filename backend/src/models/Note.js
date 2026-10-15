@@ -5,10 +5,23 @@ import mongoose from "mongoose";
 
 const noteSchema = new mongoose.Schema(
   {
+    globalKeyId: {
+      type: String,
+      trim: true,
+      default: null,
+      index: true,
+    },
+    projectKeyId: {
+      type: String,
+      trim: true,
+      default: null,
+      index: true,
+    },
     keyId: {
       type: String,
       trim: true,
       default: null,
+      index: true,
     },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -74,6 +87,15 @@ const noteSchema = new mongoose.Schema(
     startDate: { type: Date, default: null },
     dueDate: { type: Date, default: null },
     completedAt: { type: Date, default: null },
+    size: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TaskSizeConfig",
+      default: null,
+    },
+    timeSpent: {
+      type: Number,
+      default: 0, // En horas
+    },
     archived: { type: Boolean, default: false },
   },
   { timestamps: true } // createdAt, updatedAt

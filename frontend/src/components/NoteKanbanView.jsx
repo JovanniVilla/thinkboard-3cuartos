@@ -16,7 +16,7 @@ const getInitials = (name = "") => {
     .toUpperCase();
 };
 
-const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], users = [] }) => {
+const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], users = [], highlightedNoteId }) => {
   const [draggingNoteId, setDraggingNoteId] = useState(null);
   const [dragOverStatus, setDragOverStatus] = useState(null);
   const { user } = useAuth();
@@ -105,8 +105,8 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
   };
 
   return (
-    <div className="overflow-x-auto pb-6">
-      <div className="flex items-start gap-6 min-w-max">
+    <div className="overflow-x-auto pb-6 h-full flex flex-col">
+      <div className="flex items-start gap-6 min-w-max flex-1 min-h-0">
         {statuses.map((status) => {
           const columnNotes = notes.filter(
             (n) => n.status === status.name || (!n.status && status.name === "Pendiente")
@@ -117,7 +117,7 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
           return (
             <div
               key={status._id}
-              className={`w-80 flex-shrink-0 bg-base-100 rounded-xl border border-base-content/10 shadow-sm flex flex-col max-h-[calc(100vh-250px)] transition-colors ${
+              className={`w-80 flex-shrink-0 bg-base-100 rounded-xl border border-base-content/10 shadow-sm flex flex-col max-h-full transition-colors ${
                 isOver ? "ring-2 ring-primary bg-base-200/50" : ""
               }`}
               onDragOver={(e) => handleDragOver(e, status.name)}
@@ -174,7 +174,11 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                         draggable
                         onDragStart={(e) => handleDragStart(e, note)}
                         onDragEnd={handleDragEnd}
-                        className={`card bg-base-200/70 hover:bg-base-200 border border-base-content/10 transition-all duration-150 cursor-grab active:cursor-grabbing shadow-sm hover:shadow ${
+                        className={`card bg-base-200/70 hover:bg-base-200 border transition-all duration-300 cursor-grab active:cursor-grabbing shadow-sm hover:shadow ${
+                          highlightedNoteId === note._id
+                            ? "border-primary ring-2 ring-primary bg-primary/10 shadow-lg animate-pulse"
+                            : "border-base-content/10"
+                        } ${
                           draggingNoteId === note._id ? "opacity-40 scale-95" : ""
                         }`}
                       >
@@ -183,9 +187,16 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                             <div className="min-w-0 flex-1">
                               {(note.keyId || note.priority) && (
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                                  {note.keyId && (
-                                    <span className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30">
-                                      {note.keyId}
+                                  {(note.projectKeyId || note.keyId) && (
+                                    <span
+                                      className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30"
+                                      title={
+                                        note.projectKeyId && note.globalKeyId
+                                          ? `ID Proyecto: ${note.projectKeyId} | Global: ${note.globalKeyId}`
+                                          : `ID: ${note.keyId || note.globalKeyId}`
+                                      }
+                                    >
+                                      {note.projectKeyId || note.keyId}
                                     </span>
                                   )}
                                   {note.priority && (

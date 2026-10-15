@@ -21,9 +21,11 @@ const formatDisplayDate = (date) => {
 const DatesPopover = ({
   startDate: initialStartDate,
   dueDate: initialDueDate,
+  isOpen,
+  onToggle,
+  onClose,
   onSave,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
   const [hasStartDate, setHasStartDate] = useState(!!initialStartDate);
   const [hasDueDate, setHasDueDate] = useState(!!initialDueDate);
   // Which picker is active: "start" | "due" | null
@@ -60,20 +62,20 @@ const DatesPopover = ({
       startDate: hasStartDate ? startDate.toISOString() : null,
       dueDate: hasDueDate ? dueDate.toISOString() : null,
     });
-    setIsOpen(false);
+    if (onClose) onClose();
   };
 
   const handleRemove = () => {
     onSave({ startDate: null, dueDate: null });
-    setIsOpen(false);
+    if (onClose) onClose();
   };
 
   return (
-    <div className="relative">
+    <div className="relative popover-container">
       <button
         type="button"
         className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={onToggle}
       >
         <CalendarIcon className="size-4" />
         <span>Fechas</span>
@@ -81,12 +83,6 @@ const DatesPopover = ({
 
       {isOpen && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setIsOpen(false)}
-          ></div>
-
           {/* Popover Card */}
           <div className="absolute left-0 top-full mt-2 bg-base-100 border border-base-content/10 rounded-xl shadow-2xl z-50 flex flex-col"
                style={{ width: activePicker ? "auto" : "20rem" }}
@@ -98,7 +94,7 @@ const DatesPopover = ({
               </span>
               <button
                 type="button"
-                onClick={() => setIsOpen(false)}
+                onClick={onClose}
                 className="text-base-content/60 hover:text-base-content absolute right-3"
               >
                 <XIcon className="size-4" />

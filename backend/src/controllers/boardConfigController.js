@@ -1,5 +1,6 @@
 import BoardConfig from "../models/BoardConfig.js";
 import Note from "../models/Note.js";
+import Project from "../models/Project.js";
 
 export async function getBoardConfig(req, res) {
   try {
@@ -47,24 +48,37 @@ export async function updateBoardConfig(req, res) {
       newPrefix = newProjectKey.endsWith("-") ? newProjectKey : `${newProjectKey}-`;
     }
 
-    // Si hay una nueva clave, procesamos todas las tareas
+    // Si hay una nueva clave global de tablero, actualizamos el globalKeyId de las notas
     if (newProjectKey) {
       const allNotes = await Note.find().sort({ createdAt: 1 });
       let currentCounter = boardConfig.taskCounter || 1;
       let isModifiedCounter = false;
 
       for (const note of allNotes) {
-        if (note.keyId && note.keyId.includes("-")) {
-          // Ya tiene un ID, reemplazamos el prefijo manteniendo el número
+        if (note.globalKeyId && note.globalKeyId.includes("-")) {
+          // Ya tiene un ID global, reemplazamos el prefijo manteniendo el número
+          const parts = note.globalKeyId.split("-");
+          const num = parts[parts.length - 1];
+          note.globalKeyId = `${newPrefix}${num}`;
+        } else if (note.keyId && !note.project && note.keyId.includes("-")) {
+          // Caso legacy: tenía keyId general
           const parts = note.keyId.split("-");
           const num = parts[parts.length - 1];
-          note.keyId = `${newPrefix}${num}`;
+          note.globalKeyId = `${newPrefix}${num}`;
         } else {
-          // No tiene ID, le asignamos uno nuevo consecutivo
-          note.keyId = `${newPrefix}${currentCounter}`;
+          // No tiene ID global, le asignamos uno nuevo consecutivo
+          note.globalKeyId = `${newPrefix}${currentCounter}`;
           currentCounter++;
           isModifiedCounter = true;
         }
+
+        // Si la nota no tiene projectKeyId, su keyId visible es el global
+        if (!note.projectKeyId) {
+          note.keyId = note.globalKeyId;
+        } else {
+          note.keyId = note.projectKeyId;
+        }
+
         await note.save();
       }
 
@@ -92,23 +106,57 @@ export async function assignExistingKeys(req, res) {
     const prefix = rawKey.endsWith("-") ? rawKey : `${rawKey}-`;
     let currentCounter = boardConfig.taskCounter || 1;
 
-    const notesWithoutKey = await Note.find({
-      $or: [{ keyId: { $exists: false } }, { keyId: null }, { keyId: "" }],
-    }).sort({ createdAt: 1 });
+    const allNotes = await Note.find().sort({ createdAt: 1 });
+    let updatedCount = 0;
 
-    for (const note of notesWithoutKey) {
-      note.keyId = `${prefix}${currentCounter}`;
-      currentCounter++;
-      await note.save();
+    for (const note of allNotes) {
+      let changed = false;
+
+      // 1. Asignar globalKeyId si falta
+      if (!note.globalKeyId) {
+        if (note.keyId && !note.project && note.keyId.includes("-")) {
+          note.globalKeyId = note.keyId;
+        } else {
+          note.globalKeyId = `${prefix}${currentCounter}`;
+          currentCounter++;
+        }
+        changed = true;
+      }
+
+      // 2. Asignar projectKeyId si tiene proyecto con clave y no lo tiene
+      if (note.project && !note.projectKeyId) {
+        const proj = await Project.findById(note.project);
+        if (proj && proj.projectKey && proj.projectKey.trim()) {
+          const projRaw = proj.projectKey.trim().toUpperCase();
+          const projPrefix = projRaw.endsWith("-") ? projRaw : `${projRaw}-`;
+          const pCounter = proj.taskCounter || 1;
+          note.projectKeyId = `${projPrefix}${pCounter}`;
+          proj.taskCounter = pCounter + 1;
+          await proj.save();
+          changed = true;
+        }
+      }
+
+      // 3. Sincronizar keyId
+      const targetKeyId = note.projectKeyId || note.globalKeyId;
+      if (note.keyId !== targetKeyId) {
+        note.keyId = targetKeyId;
+        changed = true;
+      }
+
+      if (changed) {
+        await note.save();
+        updatedCount++;
+      }
     }
 
     boardConfig.taskCounter = currentCounter;
     await boardConfig.save();
 
     res.status(200).json({
-      message: `Identificadores asignados exitosamente a ${notesWithoutKey.length} tareas.`,
+      message: `Identificadores asignados y sincronizados exitosamente a ${updatedCount} tareas.`,
       boardConfig,
-      updatedCount: notesWithoutKey.length,
+      updatedCount,
     });
   } catch (error) {
     console.error("Error in assignExistingKeys controller", error);

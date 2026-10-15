@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useOutletContext } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import {
@@ -35,8 +35,9 @@ import MarkdownEditor from "../components/MarkdownEditor";
 import { useLabels } from "../lib/useLabels";
 import { useProjects } from "../lib/useProjects";
 import { useBoardConfig } from "../lib/useBoardConfig";
+import { useTaskSizes } from "../lib/useTaskSizes";
 import DatesPopover from "../components/DatesPopover";
-import { FolderKeyIcon } from "lucide-react";
+import { FolderKeyIcon, ClockIcon } from "lucide-react";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -66,7 +67,7 @@ const NoteDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
-  
+
   const titleTextareaRef = useRef(null);
 
   useEffect(() => {
@@ -98,19 +99,32 @@ const NoteDetailPage = () => {
   const [editingChecklistTitle, setEditingChecklistTitle] = useState("");
   const [expandChecklist, setExpandChecklist] = useState(false);
 
-  // Labels popover state
-  const [showLabelMenu, setShowLabelMenu] = useState(false);
+  // Active popover state
+  const [activePopover, setActivePopover] = useState(null); // 'status', 'priority', 'project', 'labels', 'dates', 'members', 'size'
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // If clicking inside a popover container, don't close
+      if (!e.target.closest('.popover-container')) {
+        setActivePopover(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const { statuses } = useStatuses();
   const { labels: boardLabels } = useLabels();
   const { priorities } = usePriorities();
   const { accounts } = useAccounts();
   const { projects } = useProjects();
+  const { taskSizes } = useTaskSizes();
   const accountsList = accounts.map((acc) => acc.name);
   const { user: currentUser } = useAuth();
 
   const navigate = useNavigate();
   const { id } = useParams();
+  const outletContext = useOutletContext();
 
   useEffect(() => {
     const fetchNote = async () => {
@@ -133,6 +147,14 @@ const NoteDetailPage = () => {
 
     try {
       await api.delete(`/notes/${id}`);
+      if (outletContext?.onNoteDeleted) {
+        outletContext.onNoteDeleted(id);
+      }
+      window.dispatchEvent(
+        new CustomEvent("thinkboard:notes-updated", {
+          detail: { action: "delete", id },
+        })
+      );
       toast.success("Tarea archivada");
       navigate("/");
     } catch (error) {
@@ -152,6 +174,14 @@ const NoteDetailPage = () => {
     try {
       const res = await api.put(`/notes/${id}`, mergedNote);
       setNote(res.data);
+      if (outletContext?.onNoteUpdated) {
+        outletContext.onNoteUpdated(res.data);
+      }
+      window.dispatchEvent(
+        new CustomEvent("thinkboard:notes-updated", {
+          detail: { action: "update", note: res.data },
+        })
+      );
       toast.success("Tarea guardada exitosamente");
     } catch (error) {
       console.error("Error saving the note:", error);
@@ -219,10 +249,18 @@ const NoteDetailPage = () => {
     try {
       const res = await api.post(`/notes/${id}/comments`, {
         text: commentText.trim(),
-        user: note.user || "Usuario",
+        user: currentUser?.name || "Usuario",
         mentions: extractMentions(commentText),
       });
       setNote(res.data);
+      if (outletContext?.onNoteUpdated) {
+        outletContext.onNoteUpdated(res.data);
+      }
+      window.dispatchEvent(
+        new CustomEvent("thinkboard:notes-updated", {
+          detail: { action: "update", note: res.data },
+        })
+      );
       setCommentText("");
       toast.success("Comentario publicado");
     } catch (error) {
@@ -242,11 +280,19 @@ const NoteDetailPage = () => {
     try {
       const res = await api.post(`/notes/${id}/comments`, {
         text: replyText.trim(),
-        user: note.user || "Usuario",
+        user: currentUser?.name || "Usuario",
         parentId: parentId,
         mentions: extractMentions(replyText),
       });
       setNote(res.data);
+      if (outletContext?.onNoteUpdated) {
+        outletContext.onNoteUpdated(res.data);
+      }
+      window.dispatchEvent(
+        new CustomEvent("thinkboard:notes-updated", {
+          detail: { action: "update", note: res.data },
+        })
+      );
       setReplyText("");
       setReplyingToId(null);
       toast.success("Respuesta publicada");
@@ -355,9 +401,7 @@ const NoteDetailPage = () => {
   const displayedChecklist = hideChecked ? checklistItems.filter((i) => !i.completed) : checklistItems;
 
   const currentStatus = note.status || "Pendiente";
-  const assignedUserConfig = accounts.find((a) => a.name === note.user);
-  const userColor = assignedUserConfig?.color || "#3B82F6";
-  const userJobTitle = assignedUserConfig?.jobTitle || "";
+
 
   // Comments & activity calculations
   const activities = note.activities || [];
@@ -373,8 +417,8 @@ const NoteDetailPage = () => {
   const displayedMainComments = showAllComments
     ? sortedMainComments
     : sortedMainComments.length > 3
-    ? sortedMainComments.slice(-3)
-    : sortedMainComments;
+      ? sortedMainComments.slice(-3)
+      : sortedMainComments;
 
   // Filter actions and allowed main comments
   const displayedMainItems = activities.filter((act) => {
@@ -391,7 +435,7 @@ const NoteDetailPage = () => {
   );
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6 bg-black/40 backdrop-blur-sm text-base-content"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
@@ -400,24 +444,24 @@ const NoteDetailPage = () => {
       }}
     >
       {/* Card Detail Modal Window Container */}
-      <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-4 mb-12 flex-shrink-0" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-2 mb-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
         {/* Header Bar */}
         <div className="flex items-start justify-between px-3 py-2 border-b border-base-content/10 bg-base-100 gap-2">
-          
+
           {/* Main Group: Status, Priority, ID, and other tools (wraps internally) */}
           <div className="flex flex-1 items-center gap-2 flex-wrap text-base-content/60">
             {/* Status Dropdown Pill */}
-            <div className="dropdown">
-              <label
-                tabIndex={0}
+            <div className={`dropdown popover-container ${activePopover === 'status' ? 'dropdown-open' : ''}`}>
+              <div
+                onClick={() => setActivePopover(activePopover === 'status' ? null : 'status')}
                 className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
               >
                 <span>{currentStatus}</span>
                 <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
-              </label>
+              </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
+                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
               >
                 {statuses.map((st) => (
                   <li key={st._id}>
@@ -426,10 +470,10 @@ const NoteDetailPage = () => {
                       onClick={() => {
                         setNote({ ...note, status: st.name });
                         handleSaveNote({ status: st.name });
+                        setActivePopover(null);
                       }}
-                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
-                        currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                      }`}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                        }`}
                     >
                       <span className="flex items-center gap-2">
                         <span
@@ -445,9 +489,9 @@ const NoteDetailPage = () => {
             </div>
 
             {/* Priority Dropdown Pill */}
-            <div className="dropdown">
-              <label
-                tabIndex={0}
+            <div className={`dropdown popover-container ${activePopover === 'priority' ? 'dropdown-open' : ''}`}>
+              <div
+                onClick={() => setActivePopover(activePopover === 'priority' ? null : 'priority')}
                 className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
               >
                 {(() => {
@@ -460,10 +504,10 @@ const NoteDetailPage = () => {
                   );
                 })()}
                 <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
-              </label>
+              </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
+                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
               >
                 {(priorities || []).map((p) => (
                   <li key={p._id}>
@@ -472,10 +516,10 @@ const NoteDetailPage = () => {
                       onClick={() => {
                         setNote({ ...note, priority: p.name });
                         handleSaveNote({ priority: p.name });
+                        setActivePopover(null);
                       }}
-                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
-                        note.priority === p.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                      }`}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${note.priority === p.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                        }`}
                     >
                       <span className="flex items-center gap-2">
                         <ZapIcon className="size-4" style={{ color: p.color }} />
@@ -488,9 +532,9 @@ const NoteDetailPage = () => {
             </div>
 
             {/* Project Dropdown Pill */}
-            <div className="dropdown">
-              <label
-                tabIndex={0}
+            <div className={`dropdown popover-container ${activePopover === 'project' ? 'dropdown-open' : ''}`}>
+              <div
+                onClick={() => setActivePopover(activePopover === 'project' ? null : 'project')}
                 className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
               >
                 {(() => {
@@ -503,10 +547,10 @@ const NoteDetailPage = () => {
                   );
                 })()}
                 <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
-              </label>
+              </div>
               <ul
                 tabIndex={0}
-                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 border border-base-content/10 z-50 mt-1"
+                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-60 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
               >
                 <li>
                   <button
@@ -514,12 +558,12 @@ const NoteDetailPage = () => {
                     onClick={() => {
                       setNote({ ...note, project: "" });
                       handleSaveNote({ project: "" });
+                      setActivePopover(null);
                     }}
-                    className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${
-                      !note.project ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                    }`}
+                    className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${!note.project ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                      }`}
                   >
-                    <FolderKeyIcon className="size-4 text-base-content/60" />
+                    <FolderKeyIcon className="size-4 text-base-content/60 flex-shrink-0" />
                     Sin proyecto
                   </button>
                 </li>
@@ -530,14 +574,14 @@ const NoteDetailPage = () => {
                       onClick={() => {
                         setNote({ ...note, project: p._id });
                         handleSaveNote({ project: p._id });
+                        setActivePopover(null);
                       }}
-                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
-                        note.project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                      }`}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${note.project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                        }`}
                     >
-                      <span className="flex items-center gap-2">
-                        <FolderKeyIcon className="size-4" style={{ color: p.color }} />
-                        {p.name}
+                      <span className="flex items-center gap-2 text-left">
+                        <FolderKeyIcon className="size-4 flex-shrink-0" style={{ color: p.color }} />
+                        <span>{p.name}</span>
                       </span>
                     </button>
                   </li>
@@ -545,11 +589,37 @@ const NoteDetailPage = () => {
               </ul>
             </div>
 
-            {note.keyId && (
-              <span className="badge bg-primary/20 text-primary border border-primary/30 font-mono font-bold text-xs px-2 py-1 whitespace-nowrap">
-                {note.keyId}
-              </span>
-            )}
+
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {note.projectKeyId ? (
+                <>
+                  <span
+                    className="badge bg-primary/20 text-primary border border-primary/30 font-mono font-bold text-xs px-2.5 py-1 whitespace-nowrap shadow-xs"
+                    title="ID de Tarea en el Proyecto"
+                  >
+                    {note.projectKeyId}
+                  </span>
+                  {note.globalKeyId && (
+                    <span
+                      className="badge bg-base-200/80 text-base-content/70 border border-base-content/15 font-mono text-[11px] px-2 py-0.5 whitespace-nowrap"
+                      title="ID Global de Tarea en el Tablero"
+                    >
+                      Global: {note.globalKeyId}
+                    </span>
+                  )}
+                </>
+              ) : (
+                (note.globalKeyId || note.keyId) && (
+                  <span
+                    className="badge bg-primary/20 text-primary border border-primary/30 font-mono font-bold text-xs px-2.5 py-1 whitespace-nowrap shadow-xs"
+                    title="ID Global de Tarea"
+                  >
+                    {note.globalKeyId || note.keyId}
+                  </span>
+                )
+              )}
+            </div>
 
             {/* Other header tools */}
             <div className="flex items-center gap-0.5 mr-1 sm:mr-2 bg-base-200/50 p-0.5 rounded-lg border border-base-content/10">
@@ -588,7 +658,7 @@ const NoteDetailPage = () => {
             </div>
 
             {boardConfig?.driveFolderLink && (
-              <a 
+              <a
                 href={boardConfig.driveFolderLink}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -599,9 +669,9 @@ const NoteDetailPage = () => {
                 <span className="hidden sm:inline">Carpeta del Proyecto</span>
               </a>
             )}
-            
+
             <ThemeToggle />
-            
+
             <button
               type="button"
               className="p-1.5 hover:bg-base-200 rounded-lg transition-colors"
@@ -635,7 +705,7 @@ const NoteDetailPage = () => {
           {/* Left Column (Main Card Content) */}
           <div className="lg:col-span-8 p-3 sm:p-5 space-y-4 border-b lg:border-b-0 lg:border-r border-base-content/10">
             {/* Title Section */}
-            <div className="space-y-2.5">
+            <div className="space-y-1.5">
               <div className="flex items-start gap-2.5">
                 <CheckCircle2Icon className="size-6 text-base-content/50 mt-1 flex-shrink-0" />
                 <textarea
@@ -655,16 +725,19 @@ const NoteDetailPage = () => {
               <div className="flex items-center gap-1.5 flex-wrap text-sm pt-0">
                 <button
                   type="button"
-                  onClick={() => setShowLabelMenu(!showLabelMenu)}
-                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
+                  onClick={() => setActivePopover(activePopover === 'labels' ? null : 'labels')}
+                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg popover-container"
                 >
                   <PlusIcon className="size-4" />
                   <span>Etiqueta</span>
                 </button>
 
-                <DatesPopover 
-                  startDate={note.startDate} 
+                <DatesPopover
+                  startDate={note.startDate}
                   dueDate={note.dueDate}
+                  isOpen={activePopover === 'dates'}
+                  onToggle={() => setActivePopover(activePopover === 'dates' ? null : 'dates')}
+                  onClose={() => setActivePopover(null)}
                   onSave={(dates) => {
                     setNote({ ...note, ...dates });
                     handleSaveNote(dates);
@@ -684,17 +757,17 @@ const NoteDetailPage = () => {
                 </button>
 
                 {/* Assign member dropdown button */}
-                <div className="dropdown dropdown-bottom">
-                  <label
-                    tabIndex={0}
+                <div className={`dropdown dropdown-bottom popover-container ${activePopover === 'members' ? 'dropdown-open' : ''}`}>
+                  <div
+                    onClick={() => setActivePopover(activePopover === 'members' ? null : 'members')}
                     className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg cursor-pointer"
                   >
                     <UsersIcon className="size-4" />
                     <span>Members</span>
-                  </label>
+                  </div>
                   <ul
                     tabIndex={0}
-                    className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 border border-base-content/10 z-50 mt-1"
+                    className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
                   >
                     <li className="menu-title text-xs text-base-content/50">Asignar Miembro</li>
                     {accounts.map((u) => (
@@ -704,10 +777,10 @@ const NoteDetailPage = () => {
                           onClick={() => {
                             setNote({ ...note, user: u.name });
                             handleSaveNote({ user: u.name });
+                            setActivePopover(null);
                           }}
-                          className={`text-sm py-2 rounded-lg flex items-center justify-between ${
-                            note.user === u.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                          }`}
+                          className={`text-sm py-2 rounded-lg flex items-center justify-between ${note.user === u.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                            }`}
                         >
                           <span className="flex items-center gap-2">
                             <span
@@ -758,23 +831,23 @@ const NoteDetailPage = () => {
                 ))}
 
                 {/* Add Label Button & Popover */}
-                <div className="relative">
+                <div className="relative popover-container">
                   <button
                     type="button"
-                    onClick={() => setShowLabelMenu(!showLabelMenu)}
+                    onClick={() => setActivePopover(activePopover === 'labels' ? null : 'labels')}
                     className="p-2 bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content rounded-lg transition-colors flex items-center justify-center"
                     title="Agregar etiqueta"
                   >
                     <PlusIcon className="size-4" />
                   </button>
 
-                  {showLabelMenu && (
+                  {activePopover === 'labels' && (
                     <div className="absolute left-0 mt-2 w-64 bg-base-100 border border-base-content/10 rounded-xl shadow-2xl p-4 z-50 space-y-3 text-sm">
                       <div className="flex items-center justify-between pb-2 border-b border-base-content/10">
                         <span className="font-bold text-base-content">Etiquetas</span>
                         <button
                           type="button"
-                          onClick={() => setShowLabelMenu(false)}
+                          onClick={() => setActivePopover(null)}
                           className="text-base-content/60 hover:text-base-content"
                         >
                           <XIcon className="size-4" />
@@ -826,10 +899,9 @@ const NoteDetailPage = () => {
                 {note.dueDate && (
                   <div>
                     <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Vencimiento:</span>
-                    <span className={`badge badge-lg border gap-1.5 font-medium ${
-                      note.completedAt ? "bg-success/20 text-success border-success/30" : 
+                    <span className={`badge badge-lg border gap-1.5 font-medium ${note.completedAt ? "bg-success/20 text-success border-success/30" :
                       new Date(note.dueDate) < new Date() ? "bg-error/20 text-error border-error/30" : "bg-base-200 border-base-content/10"
-                    }`}>
+                      }`}>
                       <CalendarIcon className="size-3.5 opacity-70" />
                       {new Date(note.dueDate).toLocaleString("es-ES", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                       {note.completedAt && <CheckIcon className="size-3.5" />}
@@ -838,6 +910,88 @@ const NoteDetailPage = () => {
                 )}
               </div>
             )}
+
+            {/* Time Tracking Section */}
+            <div className="flex items-center gap-4 py-2 text-sm bg-base-200/50 p-3 rounded-xl border border-base-content/10">
+              <div className="flex-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Tiempo Estimado:</span>
+                <div className={`dropdown popover-container ${activePopover === 'size' ? 'dropdown-open' : ''}`}>
+                  <div
+                    onClick={() => setActivePopover(activePopover === 'size' ? null : 'size')}
+                    className="btn btn-sm bg-base-100 hover:bg-base-200 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-3 flex-nowrap whitespace-nowrap"
+                  >
+                    {(() => {
+                      const currentSizeId = typeof note.size === "object" ? note.size?._id : note.size;
+                      const currentSize = (taskSizes || []).find(s => s._id === currentSizeId);
+                      return (
+                        <>
+                          <ClockIcon className="size-4 flex-shrink-0" style={{ color: currentSize?.color || "#6B7280" }} />
+                          <span>{currentSize ? `${currentSize.value}h (${currentSize.name})` : "Asignar talla"}</span>
+                        </>
+                      );
+                    })()}
+                    <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0 ml-1" />
+                  </div>
+                  <ul
+                    tabIndex={0}
+                    className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
+                  >
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNote({ ...note, size: null });
+                          handleSaveNote({ size: "" });
+                          setActivePopover(null);
+                        }}
+                        className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${!note.size ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                          }`}
+                      >
+                        <ClockIcon className="size-4 text-base-content/60" />
+                        Sin talla
+                      </button>
+                    </li>
+                    {(taskSizes || []).map((s) => {
+                      const isSelected = (typeof note.size === "object" ? note.size?._id : note.size) === s._id;
+                      return (
+                        <li key={s._id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNote({ ...note, size: s });
+                              handleSaveNote({ size: s._id });
+                              setActivePopover(null);
+                            }}
+                            className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${isSelected ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                              }`}
+                          >
+                            <span className="flex items-center gap-2">
+                              <ClockIcon className="size-4" style={{ color: s.color }} />
+                              {s.name} ({s.value}h)
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+              <div className="flex-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Tiempo Invertido (h):</span>
+                <div className="flex items-center gap-2">
+                  <ClockIcon className="size-4 text-primary opacity-80" />
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    className="input input-sm input-bordered w-24 bg-base-100"
+                    value={note.timeSpent || 0}
+                    onChange={(e) => setNote({ ...note, timeSpent: e.target.value })}
+                    onBlur={(e) => handleSaveNote({ timeSpent: Number(e.target.value) })}
+                  />
+                </div>
+              </div>
+            </div>
 
             {/* Description Section */}
             <div className="space-y-2 pt-0.5">
@@ -855,7 +1009,7 @@ const NoteDetailPage = () => {
                 </button>
               </div>
 
-              <div className="bg-base-200/50 rounded-xl p-4 border border-base-content/10">
+              <div className="bg-base-200/50 rounded-xl p-4 border border-base-content/10 max-h-[400px] overflow-y-auto">
                 {isEditingDescription ? (
                   <div className="space-y-3">
                     <MarkdownEditor
@@ -932,86 +1086,85 @@ const NoteDetailPage = () => {
               <div className="space-y-3">
                 <div className={`space-y-2 ${expandChecklist ? "" : "max-h-[240px] overflow-y-auto pr-1"}`}>
                   {displayedChecklist.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group"
-                  >
-                    {editingChecklistId === item.id ? (
-                      <div className="flex items-center gap-2 flex-1 w-full">
-                        <input
-                          type="text"
-                          className="flex-1 bg-base-100 border border-base-content/20 text-sm text-base-content rounded px-2.5 py-1 focus:border-primary focus:outline-none"
-                          value={editingChecklistTitle}
-                          onChange={(e) => setEditingChecklistTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              handleUpdateChecklistItem(item.id);
-                            } else if (e.key === "Escape") {
-                              setEditingChecklistId(null);
-                            }
-                          }}
-                          autoFocus
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateChecklistItem(item.id)}
-                          className="text-success hover:text-success/80 transition-colors p-1"
-                          title="Guardar cambios"
-                        >
-                          <CheckIcon className="size-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setEditingChecklistId(null)}
-                          className="text-base-content/40 hover:text-base-content transition-colors p-1"
-                          title="Cancelar"
-                        >
-                          <XIcon className="size-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group"
+                    >
+                      {editingChecklistId === item.id ? (
+                        <div className="flex items-center gap-2 flex-1 w-full">
                           <input
-                            type="checkbox"
-                            checked={item.completed}
-                            onChange={() => handleToggleChecklistItem(item.id)}
-                            className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
+                            type="text"
+                            className="flex-1 bg-base-100 border border-base-content/20 text-sm text-base-content rounded px-2.5 py-1 focus:border-primary focus:outline-none"
+                            value={editingChecklistTitle}
+                            onChange={(e) => setEditingChecklistTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleUpdateChecklistItem(item.id);
+                              } else if (e.key === "Escape") {
+                                setEditingChecklistId(null);
+                              }
+                            }}
+                            autoFocus
                           />
-                          <span
-                            className={`text-sm ${
-                              item.completed ? "line-through text-base-content/40" : "text-base-content"
-                            }`}
-                          >
-                            {item.title}
-                          </span>
-                        </label>
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             type="button"
-                            onClick={() => {
-                              setEditingChecklistId(item.id);
-                              setEditingChecklistTitle(item.title);
-                            }}
-                            className="text-base-content/40 hover:text-primary transition-colors p-1"
-                            title="Editar elemento"
+                            onClick={() => handleUpdateChecklistItem(item.id)}
+                            className="text-success hover:text-success/80 transition-colors p-1"
+                            title="Guardar cambios"
                           >
-                            <PencilIcon className="size-4" />
+                            <CheckIcon className="size-4" />
                           </button>
                           <button
                             type="button"
-                            onClick={() => handleDeleteChecklistItem(item.id)}
-                            className="text-base-content/40 hover:text-error transition-colors p-1"
-                            title="Eliminar elemento"
+                            onClick={() => setEditingChecklistId(null)}
+                            className="text-base-content/40 hover:text-base-content transition-colors p-1"
+                            title="Cancelar"
                           >
-                            <Trash2Icon className="size-4" />
+                            <XIcon className="size-4" />
                           </button>
                         </div>
-                      </>
-                    )}
-                  </div>
-                ))}
+                      ) : (
+                        <>
+                          <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={item.completed}
+                              onChange={() => handleToggleChecklistItem(item.id)}
+                              className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
+                            />
+                            <span
+                              className={`text-sm ${item.completed ? "line-through text-base-content/40" : "text-base-content"
+                                }`}
+                            >
+                              {item.title}
+                            </span>
+                          </label>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingChecklistId(item.id);
+                                setEditingChecklistTitle(item.title);
+                              }}
+                              className="text-base-content/40 hover:text-primary transition-colors p-1"
+                              title="Editar elemento"
+                            >
+                              <PencilIcon className="size-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteChecklistItem(item.id)}
+                              className="text-base-content/40 hover:text-error transition-colors p-1"
+                              title="Eliminar elemento"
+                            >
+                              <Trash2Icon className="size-4" />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
 
                 {displayedChecklist.length > 4 && (
@@ -1091,9 +1244,9 @@ const NoteDetailPage = () => {
               <div className="flex items-start gap-2">
                 <span
                   className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shadow-sm flex-shrink-0 mt-1"
-                  style={{ backgroundColor: userColor }}
+                  style={{ backgroundColor: accounts.find(a => a.name === currentUser?.name)?.color || "#3B82F6" }}
                 >
-                  {getInitials(note.user)}
+                  {getInitials(currentUser?.name)}
                 </span>
                 <div className="flex-1 space-y-2">
                   <MarkdownEditor

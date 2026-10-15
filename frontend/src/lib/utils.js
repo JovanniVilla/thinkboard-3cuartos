@@ -34,3 +34,20 @@ export function stripMarkdown(text = "") {
     .replace(/^\d+\.\s+/gm, "• ")
     .trim();
 }
+
+/**
+ * Determines whether a task status represents a completed/done state.
+ * Supports:
+ * - Matching against user-defined "done" statuses from StatusConfig
+ * - Case-insensitive and trimmed comparison
+ * - Automatic heuristic fallback for common completion names in Spanish and English
+ */
+export function isTaskCompleted(status, doneStatuses = []) {
+  if (!status) return false;
+  const s = String(status).trim().toLowerCase();
+  if (Array.isArray(doneStatuses) && doneStatuses.some((ds) => String(ds).trim().toLowerCase() === s)) {
+    return true;
+  }
+  return /^(completad|terminad|finalizad|listo|hecho|done|closed|cerrad)/i.test(s);
+}
+

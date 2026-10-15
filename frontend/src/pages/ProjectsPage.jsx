@@ -1,11 +1,22 @@
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router";
-import { ArrowLeftIcon, PlusIcon, Trash2Icon, CheckIcon, XIcon, FolderKeyIcon, PenIcon } from "lucide-react";
+import { 
+  ArrowLeftIcon, PlusIcon, FolderKeyIcon, XIcon,
+  LayoutGridIcon, ListIcon, ColumnsIcon
+} from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
 import { useProjects } from "../lib/useProjects";
+import { useProjectTypes } from "../lib/useProjectTypes";
+import { useProjectStatuses } from "../lib/useProjectStatuses";
+import { useAccounts } from "../lib/useAccounts";
+import { useStatuses } from "../lib/useStatuses";
 import ThemeToggle from "../components/ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
+
+import ProjectGridView from "../components/ProjectGridView";
+import ProjectListView from "../components/ProjectListView";
+import ProjectKanbanView from "../components/ProjectKanbanView";
 
 const PRESET_COLORS = [
   "#6B7280", "#EF4444", "#F97316", "#EAB308",
@@ -14,9 +25,31 @@ const PRESET_COLORS = [
 ];
 
 const EditProjectModal = ({ project, onSave, onClose }) => {
-  const [name, setName] = useState(project ? project.name : "");
-  const [color, setColor] = useState(project ? project.color : "#3B82F6");
-  const [description, setDescription] = useState(project ? project.description : "");
+  const { projectTypes } = useProjectTypes();
+  const { projectStatuses } = useProjectStatuses();
+  const { accounts } = useAccounts();
+
+  const [name, setName] = useState(project?.name || "");
+  const [projectKey, setProjectKey] = useState(project?.projectKey || "");
+  const [color, setColor] = useState(project?.color || "#3B82F6");
+  const [description, setDescription] = useState(project?.description || "");
+  
+  const [projectType, setProjectType] = useState(project?.projectType || "General");
+  const [status, setStatus] = useState(project?.status || "En planeación");
+  const [isActive, setIsActive] = useState(project?.isActive ?? true);
+  const [objective, setObjective] = useState(project?.objective || "");
+  const [briefUrl, setBriefUrl] = useState(project?.briefUrl || "");
+  const [folderUrl, setFolderUrl] = useState(project?.folderUrl || "");
+  const [assignedTo, setAssignedTo] = useState(project?.assignedTo || "Sin asignar");
+  const [defaultAssignee, setDefaultAssignee] = useState(project?.defaultAssignee || "Sin asignar");
+  const [startDate, setStartDate] = useState(project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : "");
+  const [endDate, setEndDate] = useState(project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : "");
+
+  const [contactName, setContactName] = useState(project?.contact?.name || "");
+  const [contactPosition, setContactPosition] = useState(project?.contact?.position || "");
+  const [contactPhone, setContactPhone] = useState(project?.contact?.phone || "");
+  const [contactEmail, setContactEmail] = useState(project?.contact?.email || "");
+
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -26,12 +59,25 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
     }
     setSaving(true);
     try {
+      const payload = {
+        name: name.trim(), projectKey: projectKey.trim(), color, description, projectType, status, isActive, objective,
+        briefUrl, folderUrl, assignedTo, defaultAssignee,
+        startDate: startDate ? new Date(startDate).toISOString() : null,
+        endDate: endDate ? new Date(endDate).toISOString() : null,
+        contact: {
+          name: contactName,
+          position: contactPosition,
+          phone: contactPhone,
+          email: contactEmail
+        }
+      };
+
       if (project) {
-        const res = await api.put(`/projects/${project._id}`, { name: name.trim(), color, description });
+        const res = await api.put(`/projects/${project._id}`, payload);
         onSave(res.data, false);
         toast.success("Proyecto actualizado");
       } else {
-        const res = await api.post("/projects", { name: name.trim(), color, description });
+        const res = await api.post("/projects", payload);
         onSave(res.data, true);
         toast.success("Proyecto creado");
       }
@@ -43,8 +89,8 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-base-100 w-full max-w-lg rounded-2xl shadow-2xl p-6 relative border border-base-content/10">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 sm:p-8">
+      <div className="bg-base-100 w-full max-w-2xl max-h-full overflow-y-auto rounded-2xl shadow-2xl p-4 sm:p-6 relative border border-base-content/10">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 btn btn-sm btn-circle btn-ghost"
@@ -57,20 +103,32 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
           {project ? "Editar Proyecto" : "Nuevo Proyecto"}
         </h3>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="form-control">
-            <label className="label font-bold text-sm">Nombre del proyecto</label>
+            <label className="label font-bold text-sm">Nombre del Proyecto <span className="text-error">*</span></label>
             <input
               type="text"
               className="input input-bordered w-full"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ej. Rediseño Web, Campaña Marketing..."
+              placeholder="Ej. Rediseño de sitio web"
               autoFocus
             />
           </div>
 
           <div className="form-control">
+            <label className="label font-bold text-sm">Clave / Identificador (Opcional)</label>
+            <input
+              type="text"
+              className="input input-bordered w-full uppercase"
+              value={projectKey}
+              onChange={(e) => setProjectKey(e.target.value.toUpperCase())}
+              placeholder="Ej. TB (Generará TB-1, TB-2...)"
+              maxLength={10}
+            />
+          </div>
+
+          <div className="form-control md:col-span-2">
             <label className="label font-bold text-sm">Color distintivo</label>
             <div className="flex items-center gap-2 flex-wrap bg-base-200/50 p-3 rounded-xl border border-base-content/10">
               {PRESET_COLORS.map((c) => (
@@ -90,9 +148,180 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
           </div>
 
           <div className="form-control">
+            <label className="label font-bold text-sm">Tipo de Proyecto</label>
+            <select className="select select-bordered w-full" value={projectType} onChange={(e) => setProjectType(e.target.value)}>
+              <option value="General">General</option>
+              {projectTypes.map((pt) => (
+                <option key={pt._id} value={pt.name}>{pt.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Estado</label>
+            <select className="select select-bordered w-full" value={status} onChange={(e) => setStatus(e.target.value)}>
+              <option value="En planeación">En planeación</option>
+              {projectStatuses.map((ps) => (
+                <option key={ps._id} value={ps.name}>{ps.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-control flex flex-row items-center gap-4 mt-8">
+            <label className="label font-bold text-sm cursor-pointer gap-2">
+              <span className="label-text font-bold text-sm">Proyecto Activo</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-success"
+                checked={isActive}
+                onChange={(e) => setIsActive(e.target.checked)}
+              />
+            </label>
+          </div>
+          
+          <div className="form-control">
+            <label className="label font-bold text-sm">Responsable del Proyecto</label>
+            <select className="select select-bordered w-full" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)}>
+              <option value="Sin asignar">Sin asignar</option>
+              {accounts.filter(a => a.isApproved).map(a => (
+                <option key={a._id} value={a.name}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Asignado por defecto (Tareas)</label>
+            <select className="select select-bordered w-full" value={defaultAssignee} onChange={(e) => setDefaultAssignee(e.target.value)}>
+              <option value="Sin asignar">Sin asignar</option>
+              {accounts.filter(a => a.isApproved).map(a => (
+                <option key={a._id} value={a.name}>{a.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Fecha de Inicio</label>
+            <input
+              type="date"
+              className="input input-bordered w-full"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Fecha de Cierre</label>
+            <input
+              type="date"
+              className="input input-bordered w-full"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+            />
+          </div>
+
+          <div className="form-control md:col-span-2">
+            <label className="label font-bold text-sm">Objetivo Principal (Opcional)</label>
+            <details className="mb-3 group bg-base-200/50 rounded-xl border border-base-content/5 text-xs text-base-content/70 cursor-pointer overflow-hidden">
+              <summary className="p-3 font-bold text-base-content/90 hover:bg-base-300/50 transition-colors flex items-center justify-between outline-none list-none [&::-webkit-details-marker]:hidden">
+                <span>Redacta objetivos SMARTER: <span className="text-primary font-medium ml-1">Ver</span></span>
+                <svg className="size-3 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </summary>
+              <div className="px-3 pb-3 pt-0 border-t border-base-content/5">
+                <ul className="list-none space-y-0.5 mt-2">
+                  <li><strong className="text-base-content">S (Specific):</strong> Claro, sin dudas y fácil de entender.</li>
+                  <li><strong className="text-base-content">M (Measurable):</strong> Con números/indicadores para medir el avance.</li>
+                  <li><strong className="text-base-content">A (Achievable):</strong> Realista según los recursos.</li>
+                  <li><strong className="text-base-content">R (Relevant):</strong> Que aporte valor real.</li>
+                  <li><strong className="text-base-content">T (Time-bound):</strong> Con fecha límite clara.</li>
+                  <li><strong className="text-base-content">E (Evaluated):</strong> Revisado de forma constante.</li>
+                  <li><strong className="text-base-content">R (Reevaluated):</strong> Ajustable si cambian las condiciones.</li>
+                </ul>
+              </div>
+            </details>
+            <textarea
+              className="textarea textarea-bordered w-full h-24 text-sm"
+              value={objective}
+              onChange={(e) => setObjective(e.target.value)}
+              placeholder="Ej. Aumentar las ventas en un 15% para diciembre de este año..."
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Enlace al Brief</label>
+            <input
+              type="url"
+              className="input input-bordered w-full"
+              value={briefUrl}
+              onChange={(e) => setBriefUrl(e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Carpeta del Proyecto</label>
+            <input
+              type="url"
+              className="input input-bordered w-full"
+              value={folderUrl}
+              onChange={(e) => setFolderUrl(e.target.value)}
+              placeholder="https://drive.google.com/..."
+            />
+          </div>
+
+          <div className="md:col-span-2 pt-4 mt-2 border-t border-base-content/10">
+            <h4 className="font-bold text-base-content/80 text-sm">Contacto del Proyecto</h4>
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Nombre del Contacto</label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              placeholder="Ej. Juan Pérez"
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Puesto</label>
+            <input
+              type="text"
+              className="input input-bordered w-full"
+              value={contactPosition}
+              onChange={(e) => setContactPosition(e.target.value)}
+              placeholder="Ej. Gerente de Marketing"
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Teléfono</label>
+            <input
+              type="tel"
+              className="input input-bordered w-full"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              placeholder="Ej. +52 55..."
+            />
+          </div>
+
+          <div className="form-control">
+            <label className="label font-bold text-sm">Correo Electrónico</label>
+            <input
+              type="email"
+              className="input input-bordered w-full"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder="Ej. juan@empresa.com"
+            />
+          </div>
+
+          <div className="form-control md:col-span-2">
             <label className="label font-bold text-sm">Descripción (Opcional)</label>
             <textarea
-              className="textarea textarea-bordered h-24"
+              className="textarea textarea-bordered h-20"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Breve descripción del proyecto..."
@@ -115,9 +344,29 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
 
 const ProjectsPage = () => {
   const { projects, setProjects, loading } = useProjects();
-  const { user: currentUser, isAdmin, isTeam } = useAuth();
+  const { statuses } = useStatuses();
+  const { projectStatuses } = useProjectStatuses();
+  const { isAdmin, isTeam } = useAuth();
+  
   const [editingProject, setEditingProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem("project_view_mode") || "grid");
+
+  useEffect(() => {
+    localStorage.setItem("project_view_mode", viewMode);
+  }, [viewMode]);
+
+  // Derive "done" task statuses to calculate progress
+  const doneStatuses = useMemo(() => {
+    const fromCategory = (statuses || []).filter((s) => s.category === "done").map((s) => s.name);
+    if (fromCategory.length > 0) return fromCategory;
+
+    const commonDoneRegex = /^(completad|terminad|finalizad|listo|hecho|done|closed|cerrad)/i;
+    const fallback = (statuses || []).filter((s) => commonDoneRegex.test(s.name?.trim() || "")).map((s) => s.name);
+    if (fallback.length > 0) return fallback;
+
+    return ["Completado", "Completada", "Terminado", "Terminada", "Finalizado", "Finalizada", "Listo", "Hecho", "Done"];
+  }, [statuses]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar este proyecto? Las tareas vinculadas se quedarán sin proyecto.")) return;
@@ -151,35 +400,90 @@ const ProjectsPage = () => {
   
   const canManageProjects = isAdmin || isTeam;
 
+  const viewProps = {
+    projects,
+    setProjects,
+    projectStatuses,
+    doneStatuses,
+    canManageProjects,
+    openEditModal,
+    handleDelete
+  };
+
   return (
     <div className="min-h-screen bg-base-200 pb-12">
       <div className="w-full px-4 sm:px-8 py-8">
         
         {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="btn btn-ghost btn-sm gap-1 text-base-content/70 hover:text-base-content">
-              <ArrowLeftIcon className="h-4 w-4" />
-              Volver
+        <div className="mb-8">
+          {/* Mobile Top Bar */}
+          <div className="flex items-center justify-between lg:hidden mb-6">
+            <Link to="/" className="btn btn-ghost btn-sm gap-1 text-base-content/70 hover:text-base-content -ml-2">
+              <ArrowLeftIcon className="h-5 w-5" />
+              <span className="text-base font-medium">Volver</span>
             </Link>
-            <div>
-              <h1 className="text-3xl font-bold flex items-center gap-3 text-base-content">
-                <FolderKeyIcon className="text-primary size-8" />
-                Proyectos
-              </h1>
-              <p className="text-base-content/60 text-sm mt-1">
-                Administra los proyectos disponibles en el tablero.
-              </p>
+            <div className="bg-base-100 rounded-full shadow-sm border border-base-content/5 flex items-center justify-center p-0.5">
+              <ThemeToggle />
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle />
-            {canManageProjects && (
-              <button onClick={openNewModal} className="btn btn-primary shadow-lg shadow-primary/20">
-                <PlusIcon className="size-5" />
-                Nuevo Proyecto
-              </button>
-            )}
+
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Link to="/" className="hidden lg:flex btn btn-ghost btn-sm gap-1 text-base-content/70 hover:text-base-content">
+                <ArrowLeftIcon className="h-4 w-4" />
+                Volver
+              </Link>
+              
+              <div className="flex flex-col gap-1 lg:block">
+                <h1 className="text-3xl lg:text-3xl font-bold flex items-center gap-3 text-base-content">
+                  <div className="p-2 bg-primary/10 rounded-2xl lg:bg-transparent lg:p-0 text-primary lg:text-inherit">
+                    <FolderKeyIcon className="size-7 lg:size-8" />
+                  </div>
+                  Proyectos
+                </h1>
+                <p className="text-base-content/60 text-base lg:text-sm lg:mt-1 mt-1 max-w-sm">
+                  Administra los proyectos disponibles en el tablero.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between lg:justify-end gap-3 mt-4 lg:mt-0 w-full lg:w-auto">
+              <div className="flex bg-base-100 rounded-2xl border border-base-content/10 shadow-sm p-1">
+                <button 
+                  className={`btn btn-sm border-none rounded-xl px-3 ${viewMode === "grid" ? "bg-primary text-primary-content hover:bg-primary shadow-sm" : "bg-transparent text-base-content/60 hover:bg-base-200"}`}
+                  onClick={() => setViewMode("grid")}
+                  title="Vista de Tarjetas"
+                >
+                  <LayoutGridIcon className="size-4" />
+                </button>
+                <button 
+                  className={`btn btn-sm border-none rounded-xl px-3 ${viewMode === "list" ? "bg-primary text-primary-content hover:bg-primary shadow-sm" : "bg-transparent text-base-content/60 hover:bg-base-200"}`}
+                  onClick={() => setViewMode("list")}
+                  title="Vista de Lista"
+                >
+                  <ListIcon className="size-4" />
+                </button>
+                <button 
+                  className={`btn btn-sm border-none rounded-xl px-3 ${viewMode === "kanban" ? "bg-primary text-primary-content hover:bg-primary shadow-sm" : "bg-transparent text-base-content/60 hover:bg-base-200"}`}
+                  onClick={() => setViewMode("kanban")}
+                  title="Vista Kanban"
+                >
+                  <ColumnsIcon className="size-4" />
+                </button>
+              </div>
+
+              <div className="hidden lg:block">
+                <ThemeToggle />
+              </div>
+
+              {canManageProjects && (
+                <button onClick={openNewModal} className="btn btn-primary shadow-lg shadow-primary/20 rounded-2xl px-6 h-12 lg:h-10">
+                  <PlusIcon className="size-5 -mr-1" />
+                  <span className="hidden sm:inline">Nuevo Proyecto</span>
+                  <span className="sm:hidden font-semibold">+ Nuevo</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -204,45 +508,10 @@ const ProjectsPage = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {projects.map((project) => (
-              <div 
-                key={project._id} 
-                className="card bg-base-100 shadow-sm border border-base-content/10 hover:shadow-lg hover:border-primary/30 transition-all duration-300 group overflow-hidden"
-              >
-                <div 
-                  className="h-2 w-full"
-                  style={{ backgroundColor: project.color || "#3B82F6" }}
-                />
-                <div className="card-body p-5">
-                  <h2 className="card-title text-xl mb-1 truncate text-base-content" title={project.name}>
-                    {project.name}
-                  </h2>
-                  <p className="text-sm text-base-content/60 line-clamp-2 min-h-[2.5rem]">
-                    {project.description || "Sin descripción"}
-                  </p>
-                  
-                  {canManageProjects && (
-                    <div className="card-actions justify-end mt-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => openEditModal(project)} 
-                        className="btn btn-sm btn-ghost btn-square text-base-content/60 hover:text-primary"
-                        title="Editar"
-                      >
-                        <PenIcon className="size-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(project._id)} 
-                        className="btn btn-sm btn-ghost btn-square text-base-content/60 hover:text-error"
-                        title="Eliminar"
-                      >
-                        <Trash2Icon className="size-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+          <div className="mt-4">
+            {viewMode === "grid" && <ProjectGridView {...viewProps} />}
+            {viewMode === "list" && <ProjectListView {...viewProps} />}
+            {viewMode === "kanban" && <ProjectKanbanView {...viewProps} />}
           </div>
         )}
       </div>
