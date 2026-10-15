@@ -13,7 +13,8 @@ import {
   UserIcon,
   CheckSquareIcon,
   PlusIcon,
-  Trash2Icon
+  Trash2Icon,
+  PencilIcon
 } from "lucide-react";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
@@ -44,6 +45,9 @@ const CreatePage = () => {
   const [loading, setLoading] = useState(false);
   const [checklist, setChecklist] = useState([]);
   const [newChecklistItem, setNewChecklistItem] = useState("");
+  const [expandChecklist, setExpandChecklist] = useState(false);
+  const [editingChecklistId, setEditingChecklistId] = useState(null);
+  const [editingChecklistTitle, setEditingChecklistTitle] = useState("");
 
   // Initialize from query parameters
   useEffect(() => {
@@ -57,7 +61,7 @@ const CreatePage = () => {
         setUser(proj.defaultAssignee);
       }
     }
-  }, [location.search, projects]);
+  }, [location.search, projects, project]);
 
   const titleTextareaRef = useRef(null);
 
@@ -87,6 +91,18 @@ const CreatePage = () => {
 
   const handleDeleteChecklistItem = (id) => {
     setChecklist(checklist.filter(item => item.id !== id));
+  };
+
+  const handleUpdateChecklistItem = (itemId) => {
+    if (!editingChecklistTitle.trim()) {
+      setEditingChecklistId(null);
+      return;
+    }
+    setChecklist(checklist.map(item => 
+      item.id === itemId ? { ...item, title: editingChecklistTitle.trim() } : item
+    ));
+    setEditingChecklistId(null);
+    setEditingChecklistTitle("");
   };
 
   const progressPercent = checklist.length === 0 
@@ -153,13 +169,17 @@ const CreatePage = () => {
   const currentProject = projects.find(p => p._id === project);
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto" onClick={handleClose}>
+    <div
+      className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
+      onClick={handleClose}
+    >
       {/* Card Detail Modal Window Container */}
-      <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-4 mb-12 flex-shrink-0 flex flex-col" onClick={e => e.stopPropagation()}>
-        
+      <div
+        className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden my-auto md:my-0 max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] flex flex-col flex-shrink-0"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header Bar */}
-        <div className="flex items-start justify-between px-3 py-2 border-b border-base-content/10 bg-base-100 gap-2">
-          
+        <div className="flex items-start justify-between px-3 py-2 border-b border-base-content/10 bg-base-100 gap-2 flex-shrink-0">
           <div className="flex flex-1 items-center gap-2 flex-wrap text-base-content/60">
             {/* Status Dropdown */}
             <div className="dropdown">
@@ -235,133 +255,208 @@ const CreatePage = () => {
             </span>
           </div>
 
-          <button type="button" onClick={handleClose} className="btn btn-sm btn-ghost btn-square text-base-content/50 hover:text-base-content flex-shrink-0">
-             <XIcon className="size-5" />
+          <button
+            type="button"
+            onClick={handleClose}
+            className="btn btn-sm btn-ghost btn-square text-base-content/50 hover:text-base-content flex-shrink-0"
+            title="Cerrar vista"
+          >
+            <XIcon className="size-5" />
           </button>
         </div>
 
         {/* Main Content Area */}
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-[400px]">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
           {/* Left Column */}
-          <div className="flex-1 p-4 sm:p-5 md:p-6 overflow-y-auto bg-base-100 flex flex-col">
+          <div className="flex-1 p-4 sm:p-5 md:p-6 overflow-y-auto min-h-0 bg-base-100 flex flex-col">
+            {/* Sticky Title Bar - Always visible and editable while scrolling */}
+            <div className="sticky top-0 z-20 bg-base-100/95 backdrop-blur-xs pt-1 pb-3 mb-4 border-b border-base-content/10 -mt-4 sm:-mt-5 md:-mt-6 -mx-4 sm:-mx-5 md:-mx-6 px-4 sm:px-5 md:px-6 transition-colors shadow-xs">
+              <div className="flex items-start gap-3">
+                <div className="mt-1 flex-shrink-0">
+                  <CheckCircle2Icon className="size-6 text-base-content/30" />
+                </div>
+                <textarea
+                  ref={titleTextareaRef}
+                  className="w-full resize-none overflow-hidden bg-transparent text-xl md:text-2xl font-bold text-base-content leading-tight focus:outline-none focus:ring-0 placeholder:text-base-content/30"
+                  placeholder="Título de la tarea"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  autoFocus
+                  rows={1}
+                />
+              </div>
+            </div>
              
-             {/* Title */}
-             <div className="flex items-start gap-3 mb-6">
-               <div className="mt-1 flex-shrink-0">
-                 <CheckCircle2Icon className="size-6 text-base-content/30" />
-               </div>
-               <textarea
-                 ref={titleTextareaRef}
-                 className="w-full resize-none overflow-hidden bg-transparent text-xl md:text-2xl font-bold text-base-content leading-tight focus:outline-none focus:ring-0 placeholder:text-base-content/30"
-                 placeholder="Título de la tarea"
-                 value={title}
-                 onChange={(e) => setTitle(e.target.value)}
-                 autoFocus
-                 rows={1}
-               />
-             </div>
-             
-             {/* Description */}
-             <div className="mt-2 flex gap-3 group relative flex-1">
-               <div className="mt-1 flex-shrink-0 text-base-content/50">
-                 <Edit3Icon className="size-5" />
-               </div>
-               <div className="flex-1 min-w-0 flex flex-col">
-                 <div className="flex items-center justify-between mb-2">
-                   <h3 className="font-bold text-base-content">Descripción</h3>
-                 </div>
-                 <div className="flex-1 border border-base-content/10 rounded-xl overflow-hidden focus-within:border-primary/50 transition-colors max-h-[300px] overflow-y-auto">
-                   <MarkdownEditor
-                     value={content}
-                     onChange={setContent}
-                   />
-                 </div>
-               </div>
-             </div>
+            {/* Description */}
+            <div className="mt-2 flex gap-3 group relative flex-1">
+              <div className="mt-1 flex-shrink-0 text-base-content/50">
+                <Edit3Icon className="size-5" />
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-bold text-base-content">Descripción</h3>
+                </div>
+                <div className="flex-1 border border-base-content/10 rounded-xl overflow-hidden focus-within:border-primary/50 transition-colors max-h-[300px] overflow-y-auto">
+                  <MarkdownEditor
+                    value={content}
+                    onChange={setContent}
+                  />
+                </div>
+              </div>
+            </div>
 
-             {/* Checklist Section */}
-             <div className="mt-8 flex gap-3 group relative">
-               <div className="mt-1 flex-shrink-0 text-base-content/50">
-                 <CheckSquareIcon className="size-5" />
-               </div>
-               <div className="flex-1 min-w-0 flex flex-col">
-                 <div className="flex items-center justify-between mb-2">
-                   <h3 className="font-bold text-base-content">Checklist</h3>
-                 </div>
-                 
-                 {checklist.length > 0 && (
-                   <div className="flex items-center gap-3 mb-4">
-                     <span className="text-xs font-mono font-bold text-base-content/60 w-8">{progressPercent}%</span>
-                     <div className="w-full bg-base-300 rounded-full h-2.5 overflow-hidden">
-                       <div
-                         className="bg-primary h-2.5 transition-all duration-300 rounded-full"
-                         style={{ width: `${progressPercent}%` }}
-                       />
-                     </div>
-                   </div>
-                 )}
+            {/* Checklist Section */}
+            <div className="mt-8 flex gap-3 group relative">
+              <div className="mt-1 flex-shrink-0 text-base-content/50">
+                <CheckSquareIcon className="size-5" />
+              </div>
+              <div className="flex-1 min-w-0 flex flex-col">
+                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                  <h3 className="font-bold text-base-content">Checklist</h3>
+                  {checklist.length > 4 && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandChecklist(!expandChecklist)}
+                      className="btn btn-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg px-2.5 font-medium"
+                    >
+                      {expandChecklist ? "Contraer lista" : `Ver todas (${checklist.length})`}
+                    </button>
+                  )}
+                </div>
+                
+                {checklist.length > 0 && (
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-xs font-mono font-bold text-base-content/60 w-8">{progressPercent}%</span>
+                    <div className="w-full bg-base-300 rounded-full h-2.5 overflow-hidden">
+                      <div
+                        className="bg-primary h-2.5 transition-all duration-300 rounded-full"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
 
-                 <div className="space-y-2">
-                   {checklist.map((item) => (
-                     <div key={item.id} className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group/item">
-                       <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
-                         <input
-                           type="checkbox"
-                           checked={item.completed}
-                           onChange={() => handleToggleChecklistItem(item.id)}
-                           className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
-                         />
-                         <span className={`text-sm ${item.completed ? "line-through text-base-content/40" : "text-base-content"}`}>
-                           {item.title}
-                         </span>
-                       </label>
-                       <button
-                         type="button"
-                         onClick={() => handleDeleteChecklistItem(item.id)}
-                         className="text-error/40 hover:text-error transition-colors p-1 opacity-0 group-hover/item:opacity-100"
-                         title="Eliminar"
-                       >
-                         <Trash2Icon className="size-4" />
-                       </button>
-                     </div>
-                   ))}
-                   
-                   <form onSubmit={handleAddChecklistItem} className="flex items-center gap-2 mt-2">
-                     <input
-                       type="text"
-                       className="input input-sm flex-1 bg-base-100 border border-base-content/20 text-sm focus:border-primary"
-                       placeholder="Añadir un elemento..."
-                       value={newChecklistItem}
-                       onChange={(e) => setNewChecklistItem(e.target.value)}
-                     />
-                     <button
-                       type="submit"
-                       disabled={!newChecklistItem.trim()}
-                       className="btn btn-sm btn-primary btn-square rounded-lg"
-                     >
-                       <PlusIcon className="size-4" />
-                     </button>
-                   </form>
-                 </div>
-               </div>
-             </div>
+                <div className="space-y-2">
+                  <div className={`space-y-2 ${expandChecklist ? "" : "max-h-[240px] overflow-y-auto pr-1"}`}>
+                    {checklist.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group/item">
+                        {editingChecklistId === item.id ? (
+                          <div className="flex items-center gap-2 flex-1 w-full">
+                            <input
+                              type="text"
+                              className="flex-1 bg-base-100 border border-base-content/20 text-sm text-base-content rounded px-2.5 py-1 focus:border-primary focus:outline-none"
+                              value={editingChecklistTitle}
+                              onChange={(e) => setEditingChecklistTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleUpdateChecklistItem(item.id);
+                                } else if (e.key === "Escape") {
+                                  setEditingChecklistId(null);
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateChecklistItem(item.id)}
+                              className="btn btn-xs btn-primary px-2"
+                            >
+                              Guardar
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingChecklistId(null)}
+                              className="btn btn-xs btn-ghost px-2"
+                            >
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={item.completed}
+                                onChange={() => handleToggleChecklistItem(item.id)}
+                                className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
+                              />
+                              <span
+                                className={`text-sm ${item.completed ? "line-through text-base-content/40" : "text-base-content"}`}
+                                onDoubleClick={() => {
+                                  setEditingChecklistId(item.id);
+                                  setEditingChecklistTitle(item.title);
+                                }}
+                              >
+                                {item.title}
+                              </span>
+                            </label>
+                            <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingChecklistId(item.id);
+                                  setEditingChecklistTitle(item.title);
+                                }}
+                                className="text-base-content/40 hover:text-base-content p-1 transition-colors"
+                                title="Editar"
+                              >
+                                <PencilIcon className="size-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteChecklistItem(item.id)}
+                                className="text-error/40 hover:text-error transition-colors p-1"
+                                title="Eliminar"
+                              >
+                                <Trash2Icon className="size-4" />
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <form onSubmit={handleAddChecklistItem} className="flex items-center gap-2 mt-2">
+                    <input
+                      type="text"
+                      className="input input-sm flex-1 bg-base-100 border border-base-content/20 text-sm focus:border-primary"
+                      placeholder="Añadir un elemento..."
+                      value={newChecklistItem}
+                      onChange={(e) => setNewChecklistItem(e.target.value)}
+                    />
+                    <button
+                      type="submit"
+                      disabled={!newChecklistItem.trim()}
+                      className="btn btn-sm btn-primary btn-square rounded-lg"
+                      title="Añadir elemento"
+                    >
+                      <PlusIcon className="size-4" />
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
 
-             <div className="mt-8 pt-4 border-t border-base-content/10 flex justify-end gap-3">
-               <button className="btn btn-ghost" onClick={handleClose}>
-                 Cancelar
-               </button>
-               <button
-                 className="btn btn-primary px-8"
-                 disabled={loading || !title.trim() || !content.trim()}
-                 onClick={handleSubmit}
-               >
-                 {loading ? "Creando..." : "Crear Tarea"}
-               </button>
-             </div>
+            {/* Sticky Action Buttons */}
+            <div className="sticky bottom-0 z-20 bg-base-100/95 backdrop-blur-xs py-3 border-t border-base-content/10 -mx-4 sm:-mx-5 md:-mx-6 px-4 sm:px-5 md:px-6 -mb-4 sm:-mb-5 md:-mb-6 mt-8 flex justify-end gap-3 shadow-xs">
+              <button type="button" className="btn btn-ghost" onClick={handleClose}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary px-8"
+                disabled={loading || !title.trim() || !content.trim()}
+                onClick={handleSubmit}
+              >
+                {loading ? "Creando..." : "Crear Tarea"}
+              </button>
+            </div>
           </div>
 
           {/* Right Column (Activity/Comments) */}
-          <div className="w-full md:w-80 lg:w-[380px] bg-base-200/50 flex-shrink-0 border-l border-base-content/10 flex flex-col relative h-[500px] md:h-auto overflow-hidden">
+          <div className="w-full md:w-80 lg:w-[380px] bg-base-200/50 flex-shrink-0 border-t md:border-t-0 md:border-l border-base-content/10 flex flex-col relative overflow-y-auto min-h-0">
              
              {/* Members section in the right column */}
              <div className="p-4 border-b border-base-content/10 bg-base-200/80">
