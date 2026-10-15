@@ -31,6 +31,9 @@ const __dirname = path.resolve();
 
 // Static directory for uploaded visual assets (images and PDFs)
 app.use("/uploads", express.static(UPLOADS_DIR));
+app.use("/uploads", (req, res) => {
+  res.status(404).json({ message: "Archivo adjunto no encontrado en el almacenamiento" });
+});
 
 // middleware
 if (process.env.NODE_ENV !== "production") {

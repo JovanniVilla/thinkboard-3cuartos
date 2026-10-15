@@ -1,15 +1,31 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 
-// Determine uploads directory path
-// In Docker, process.cwd() is /app, so uploads directory is /app/uploads
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// In Easypanel/Docker, the persistent volume is mounted at /app/uploads.
+// Because "npm start --prefix backend" changes cwd to /app/backend,
+// path.resolve(process.cwd(), "uploads") previously resolved to /app/backend/uploads (outside the volume).
+// Now we guarantee it uses the mounted volume:
+// 1. process.env.UPLOADS_DIR if provided
+// 2. "/app/uploads" if running in Docker/Easypanel (/app exists)
+// 3. Local development fallback to <project_root>/uploads
 export const UPLOADS_DIR =
-  process.env.UPLOADS_DIR || path.resolve(process.cwd(), "uploads");
+  process.env.UPLOADS_DIR ||
+  (fs.existsSync("/app")
+    ? "/app/uploads"
+    : path.resolve(__dirname, "../../../uploads"));
 
 // Ensure upload directory exists
 if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  try {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  } catch (err) {
+    console.error("No se pudo crear UPLOADS_DIR:", err);
+  }
 }
 
 // Allowed MIME types: images (.jpg, .jpeg, .png, .webp) and PDF documents

@@ -35,7 +35,7 @@ COPY backend/ ./backend/
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # Crear directorio para almacenamiento persistente de archivos subidos
-RUN mkdir -p /app/uploads
+RUN mkdir -p /app/uploads && chmod 777 /app/uploads
 
 EXPOSE 5001
 
