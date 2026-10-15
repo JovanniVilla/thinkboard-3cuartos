@@ -34,6 +34,9 @@ COPY backend/ ./backend/
 # Copiar exclusivamente los archivos estáticos compilados del frontend
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
+# Crear directorio para almacenamiento persistente de archivos subidos
+RUN mkdir -p /app/uploads && chmod 777 /app/uploads
+
 EXPOSE 5001
 
 CMD ["npm", "start"]

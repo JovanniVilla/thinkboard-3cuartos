@@ -64,6 +64,20 @@ const noteSchema = new mongoose.Schema(
         id: { type: String },
         title: { type: String, required: true },
         completed: { type: Boolean, default: false },
+        subtaskId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Subtask",
+          default: null,
+        },
+        fileId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "File",
+          default: null,
+        },
+        pageNumber: {
+          type: Number,
+          default: 1,
+        },
       },
     ],
     activities: [

@@ -2,6 +2,7 @@ import Note from "../models/Note.js";
 import BoardConfig from "../models/BoardConfig.js";
 import StatusConfig from "../models/StatusConfig.js";
 import Project from "../models/Project.js";
+import Subtask from "../models/Subtask.js";
 
 export async function getAllNotes(req, res) {
   try {
@@ -274,6 +275,16 @@ export async function updateNote(req, res) {
         new: true,
       }
     ).populate("size");
+
+    // Sync checklist changes with associated Subtasks (pins)
+    if (checklist !== undefined && Array.isArray(checklist)) {
+      for (const item of checklist) {
+        if (item.subtaskId) {
+          const subtaskStatus = item.completed ? "completed" : "pending";
+          await Subtask.findByIdAndUpdate(item.subtaskId, { status: subtaskStatus });
+        }
+      }
+    }
 
     res.status(200).json(updatedNote);
   } catch (error) {
