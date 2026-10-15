@@ -5,6 +5,7 @@ import {
   PlayIcon,
   UserIcon,
   MapPinIcon,
+  MessageSquareIcon,
 } from "lucide-react";
 
 export default function PinLayer({
@@ -114,6 +115,17 @@ export default function PinLayer({
                     : "border-t-amber-600"
                 }`}
               />
+
+              {/* Comments badge if pin has doubts/comments */}
+              {task.comments && task.comments.length > 0 && (
+                <div
+                  className="absolute -top-1.5 -right-2 bg-indigo-600 text-white text-[9px] font-bold rounded-full min-w-[15px] h-[15px] px-0.5 flex items-center justify-center shadow-md border border-white"
+                  title={`${task.comments.length} dudas/comentarios`}
+                >
+                  <MessageSquareIcon className="size-2 mr-0.5 fill-current" />
+                  <span>{task.comments.length}</span>
+                </div>
+              )}
             </div>
 
             {/* Hover Tooltip Preview */}
@@ -142,12 +154,23 @@ export default function PinLayer({
                   </p>
                 )}
 
-                {task.assignedTo && (
-                  <div className="flex items-center gap-1.5 text-[10px] text-base-content/60 pt-0.5">
-                    <UserIcon className="size-3" />
-                    <span>{task.assignedTo.name || "Asignado"}</span>
-                  </div>
-                )}
+                <div className="flex items-center justify-between gap-2 pt-0.5 text-[10px] text-base-content/60">
+                  {task.assignedTo ? (
+                    <div className="flex items-center gap-1">
+                      <UserIcon className="size-3" />
+                      <span>{task.assignedTo.name || "Asignado"}</span>
+                    </div>
+                  ) : (
+                    <span>Sin asignar</span>
+                  )}
+
+                  {task.comments && task.comments.length > 0 && (
+                    <span className="flex items-center gap-1 text-primary font-medium">
+                      <MessageSquareIcon className="size-2.5" />
+                      {task.comments.length}
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="w-2 h-2 bg-base-300 rotate-45 -mt-1 border-r border-b border-base-content/15" />
             </div>

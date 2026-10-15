@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Link, useNavigate, useParams, useOutletContext } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -23,6 +23,7 @@ import {
   CheckIcon,
   FolderIcon,
   ArchiveIcon,
+  MapPinIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useStatuses } from "../lib/useStatuses";
@@ -38,6 +39,7 @@ import { useBoardConfig } from "../lib/useBoardConfig";
 import { useTaskSizes } from "../lib/useTaskSizes";
 import DatesPopover from "../components/DatesPopover";
 import VisualAnnotationsSection from "../components/annotations/VisualAnnotationsSection";
+import AnnotationCanvas from "../components/annotations/AnnotationCanvas";
 import { FolderKeyIcon, ClockIcon } from "lucide-react";
 
 const getInitials = (name = "") => {
@@ -102,6 +104,7 @@ const NoteDetailPage = () => {
 
   // Visual annotations & attached files count
   const [visualFilesCount, setVisualFilesCount] = useState(0);
+  const [canvasTarget, setCanvasTarget] = useState(null); // { file, subtaskId, pageNumber }
 
   // Active popover state
   const [activePopover, setActivePopover] = useState(null); // 'status', 'priority', 'project', 'labels', 'dates', 'members', 'size'
@@ -130,21 +133,21 @@ const NoteDetailPage = () => {
   const { id } = useParams();
   const outletContext = useOutletContext();
 
-  useEffect(() => {
-    const fetchNote = async () => {
-      try {
-        const res = await api.get(`/notes/${id}`);
-        setNote(res.data);
-      } catch (error) {
-        console.error("Error in fetching note", error);
-        toast.error("Error al cargar la tarea");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNote();
+  const fetchNote = useCallback(async () => {
+    try {
+      const res = await api.get(`/notes/${id}`);
+      setNote(res.data);
+    } catch (error) {
+      console.error("Error in fetching note", error);
+      toast.error("Error al cargar la tarea");
+    } finally {
+      setLoading(false);
+    }
   }, [id]);
+
+  useEffect(() => {
+    fetchNote();
+  }, [fetchNote]);
 
   const handleDeleteNote = async () => {
     if (!window.confirm("¿Estás seguro de que deseas archivar esta tarea?")) return;
@@ -349,17 +352,28 @@ const NoteDetailPage = () => {
     handleSaveNote({ checklist: nextChecklist });
   };
 
-  const handleDeleteChecklistItem = (itemId) => {
+  const handleDeleteChecklistItem = async (itemId) => {
+    const targetItem = (note.checklist || []).find((i) => i.id === itemId);
     const nextChecklist = (note.checklist || []).filter((item) => item.id !== itemId);
     setNote({ ...note, checklist: nextChecklist });
     handleSaveNote({ checklist: nextChecklist });
+
+    // Sincronizar eliminación del pin en la base de datos si procede
+    if (targetItem?.subtaskId) {
+      try {
+        await api.delete(`/subtasks/${targetItem.subtaskId}`);
+      } catch (err) {
+        console.warn("Could not delete associated subtask:", err);
+      }
+    }
   };
 
-  const handleUpdateChecklistItem = (itemId) => {
+  const handleUpdateChecklistItem = async (itemId) => {
     if (!editingChecklistTitle.trim()) {
       setEditingChecklistId(null);
       return;
     }
+    const targetItem = (note.checklist || []).find((i) => i.id === itemId);
     const nextChecklist = (note.checklist || []).map((item) =>
       item.id === itemId ? { ...item, title: editingChecklistTitle.trim() } : item
     );
@@ -367,6 +381,36 @@ const NoteDetailPage = () => {
     handleSaveNote({ checklist: nextChecklist });
     setEditingChecklistId(null);
     setEditingChecklistTitle("");
+
+    // Sincronizar título en la subtarea visual asociada
+    if (targetItem?.subtaskId) {
+      try {
+        await api.patch(`/subtasks/${targetItem.subtaskId}`, {
+          title: editingChecklistTitle.trim(),
+        });
+      } catch (err) {
+        console.warn("Could not update associated subtask:", err);
+      }
+    }
+  };
+
+  const handleOpenPinFromChecklist = async (item) => {
+    if (!item.fileId) {
+      const el = document.getElementById("visual-annotations-section");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    try {
+      const res = await api.get(`/files/${item.fileId}`);
+      setCanvasTarget({
+        file: res.data,
+        subtaskId: item.subtaskId,
+        pageNumber: item.pageNumber || 1,
+      });
+    } catch (err) {
+      console.error("Error loading file for pin:", err);
+      toast.error("No se pudo cargar el archivo del marcador.");
+    }
   };
 
   const handleDeleteAllChecklist = () => {
@@ -1134,7 +1178,7 @@ const NoteDetailPage = () => {
                         </div>
                       ) : (
                         <>
-                          <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                          <label className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
                             <input
                               type="checkbox"
                               checked={item.completed}
@@ -1147,6 +1191,23 @@ const NoteDetailPage = () => {
                             >
                               {item.title}
                             </span>
+
+                            {/* Badge con enlace directo al pin en el visor de anotaciones */}
+                            {item.subtaskId && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleOpenPinFromChecklist(item);
+                                }}
+                                className="badge badge-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 gap-1 py-1 px-1.5 ml-1 transition-all cursor-pointer font-medium"
+                                title="Abrir archivo y enfocar marcador"
+                              >
+                                <MapPinIcon className="size-2.5" />
+                                <span>Pin {item.pageNumber > 1 ? `(Pág. ${item.pageNumber})` : ""}</span>
+                              </button>
+                            )}
                           </label>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
@@ -1214,6 +1275,7 @@ const NoteDetailPage = () => {
               taskId={note._id}
               accounts={accounts}
               onSubtasksCountChange={(_, totalFiles) => setVisualFilesCount(totalFiles)}
+              onNoteRefresh={fetchNote}
             />
 
             {/* Bottom Actions: Save & Delete */}
@@ -1561,6 +1623,21 @@ const NoteDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Direct pin focus canvas modal from checklist */}
+      {canvasTarget && (
+        <AnnotationCanvas
+          file={canvasTarget.file}
+          parentTaskId={note._id}
+          accounts={accounts}
+          initialSubtaskId={canvasTarget.subtaskId}
+          initialPage={canvasTarget.pageNumber}
+          onClose={() => {
+            setCanvasTarget(null);
+            fetchNote();
+          }}
+        />
+      )}
     </div>
   );
 };

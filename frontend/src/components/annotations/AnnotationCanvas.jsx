@@ -17,6 +17,7 @@ import {
   UserIcon,
   FileTextIcon,
   ImageIcon,
+  MessageSquareIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -24,14 +25,16 @@ export default function AnnotationCanvas({
   file,
   parentTaskId,
   accounts = [],
+  initialSubtaskId = null,
+  initialPage = 1,
   onClose,
 }) {
   const [subtasks, setSubtasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage || 1);
   const [numPages, setNumPages] = useState(1);
   const [isPinMode, setIsPinMode] = useState(false);
-  const [activeSubtaskId, setActiveSubtaskId] = useState(null);
+  const [activeSubtaskId, setActiveSubtaskId] = useState(initialSubtaskId);
   const [pendingPin, setPendingPin] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [subtaskToEdit, setSubtaskToEdit] = useState(null);
@@ -448,6 +451,16 @@ export default function AnnotationCanvas({
                               </span>
                               {task.title}
                             </span>
+
+                            {task.comments && task.comments.length > 0 && (
+                              <span
+                                className="badge badge-xs bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 gap-0.5 font-bold px-1.5 flex-shrink-0"
+                                title={`${task.comments.length} dudas/comentarios`}
+                              >
+                                <MessageSquareIcon className="size-2.5" />
+                                <span>{task.comments.length}</span>
+                              </span>
+                            )}
                           </div>
 
                           {task.description && (

@@ -17,6 +17,7 @@ export default function VisualAnnotationsSection({
   taskId,
   accounts = [],
   onSubtasksCountChange,
+  onNoteRefresh,
 }) {
   const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -222,6 +223,7 @@ export default function VisualAnnotationsSection({
           onClose={() => {
             setActiveFileForCanvas(null);
             fetchFiles(); // Refresh counts upon closing canvas
+            if (onNoteRefresh) onNoteRefresh();
           }}
         />
       )}

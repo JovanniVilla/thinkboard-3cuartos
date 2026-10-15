@@ -4,6 +4,7 @@ import File from "../models/File.js";
 
 /**
  * Create a new subtask with optional visual marker coordinates.
+ * Automatically synchronizes with the parent Note's checklist.
  * POST /api/subtasks
  */
 export const createSubtask = async (req, res) => {
@@ -63,10 +64,29 @@ export const createSubtask = async (req, res) => {
     });
 
     await subtask.save();
+
+    // Automatically sync pin as an item in parent Note's checklist
+    const checklistItemId = subtask._id.toString();
+    const checklistItem = {
+      id: checklistItemId,
+      title: subtask.title,
+      completed: subtask.status === "completed",
+      subtaskId: subtask._id,
+      fileId: subtask.marker?.fileId || null,
+      pageNumber: subtask.marker?.pageNumber || 1,
+    };
+
+    subtask.checklistId = checklistItemId;
+    await subtask.save();
+
+    await Note.findByIdAndUpdate(note._id, {
+      $push: { checklist: checklistItem },
+    });
+
     await subtask.populate("assignedTo", "name email color");
 
     res.status(201).json({
-      message: "Subtarea creada exitosamente",
+      message: "Subtarea creada y agregada al checklist exitosamente",
       subtask,
     });
   } catch (error) {
@@ -94,6 +114,7 @@ export const getFileSubtasks = async (req, res) => {
 
     const subtasks = await Subtask.find(query)
       .populate("assignedTo", "name email color")
+      .populate("comments.user", "name email color")
       .sort({ createdAt: 1 });
 
     res.status(200).json(subtasks);
@@ -114,6 +135,7 @@ export const getTaskSubtasks = async (req, res) => {
     const subtasks = await Subtask.find({ parentTaskId: taskId })
       .populate("assignedTo", "name email color")
       .populate("marker.fileId", "originalName mimeType fileUrl")
+      .populate("comments.user", "name email color")
       .sort({ createdAt: 1 });
 
     res.status(200).json(subtasks);
@@ -125,6 +147,7 @@ export const getTaskSubtasks = async (req, res) => {
 
 /**
  * Update an existing subtask (status, title, description, assignedTo, marker).
+ * Synchronizes title and completed state to the parent Note's checklist.
  * PATCH /api/subtasks/:subtaskId
  */
 export const updateSubtask = async (req, res) => {
@@ -157,7 +180,27 @@ export const updateSubtask = async (req, res) => {
     }
 
     await subtask.save();
+
+    // Sincronizar título y estado en el checklist de la Note padre
+    await Note.updateOne(
+      {
+        _id: subtask.parentTaskId,
+        $or: [
+          { "checklist.subtaskId": subtask._id },
+          { "checklist.id": subtask._id.toString() },
+          ...(subtask.checklistId ? [{ "checklist.id": subtask.checklistId }] : []),
+        ],
+      },
+      {
+        $set: {
+          "checklist.$.title": subtask.title,
+          "checklist.$.completed": subtask.status === "completed",
+        },
+      }
+    );
+
     await subtask.populate("assignedTo", "name email color");
+    await subtask.populate("comments.user", "name email color");
 
     res.status(200).json({
       message: "Subtarea actualizada exitosamente",
@@ -170,21 +213,151 @@ export const updateSubtask = async (req, res) => {
 };
 
 /**
- * Delete a subtask.
+ * Delete a subtask and remove it from parent Note's checklist.
  * DELETE /api/subtasks/:subtaskId
  */
 export const deleteSubtask = async (req, res) => {
   try {
     const { subtaskId } = req.params;
 
-    const subtask = await Subtask.findByIdAndDelete(subtaskId);
+    const subtask = await Subtask.findById(subtaskId);
     if (!subtask) {
       return res.status(404).json({ message: "Subtarea no encontrada." });
     }
 
-    res.status(200).json({ message: "Subtarea eliminada correctamente." });
+    // Remover el ítem del checklist en la Note padre
+    await Note.updateOne(
+      { _id: subtask.parentTaskId },
+      {
+        $pull: {
+          checklist: {
+            $or: [
+              { subtaskId: subtask._id },
+              { id: subtask._id.toString() },
+              ...(subtask.checklistId ? [{ id: subtask.checklistId }] : []),
+            ],
+          },
+        },
+      }
+    );
+
+    await Subtask.findByIdAndDelete(subtaskId);
+
+    res.status(200).json({
+      message: "Subtarea eliminada y retirada del checklist correctamente.",
+    });
   } catch (error) {
     console.error("Error in deleteSubtask:", error);
     res.status(500).json({ message: "Error al eliminar la subtarea." });
+  }
+};
+
+/**
+ * Add a comment or doubt to a subtask pin.
+ * POST /api/subtasks/:subtaskId/comments
+ */
+export const addSubtaskComment = async (req, res) => {
+  try {
+    const { subtaskId } = req.params;
+    const { text } = req.body;
+
+    if (!text || !text.trim()) {
+      return res
+        .status(400)
+        .json({ message: "El texto del comentario o duda es obligatorio." });
+    }
+
+    const subtask = await Subtask.findById(subtaskId);
+    if (!subtask) {
+      return res.status(404).json({ message: "Subtarea no encontrada." });
+    }
+
+    const userName = req.user?.name || "Usuario";
+    const userColor = req.user?.color || "#3B82F6";
+
+    const newComment = {
+      user: req.user?._id || null,
+      userName,
+      userColor,
+      text: text.trim(),
+      createdAt: new Date(),
+    };
+
+    subtask.comments.push(newComment);
+    await subtask.save();
+
+    // Registrar en activities de la Note padre para visibilidad de equipo
+    const cleanText = text.trim();
+    const preview =
+      cleanText.length > 80 ? `${cleanText.substring(0, 80)}...` : cleanText;
+    const activityText = `💬 ${userName} comentó en el marcador "${subtask.title}": "${preview}"`;
+
+    await Note.findByIdAndUpdate(subtask.parentTaskId, {
+      $push: {
+        activities: {
+          id: Date.now().toString(),
+          type: "comment",
+          text: activityText,
+          user: userName,
+          createdAt: new Date(),
+        },
+      },
+    });
+
+    await subtask.populate("assignedTo", "name email color");
+    await subtask.populate("comments.user", "name email color");
+
+    res.status(201).json({
+      message: "Comentario agregado exitosamente",
+      subtask,
+      comment: subtask.comments[subtask.comments.length - 1],
+    });
+  } catch (error) {
+    console.error("Error in addSubtaskComment:", error);
+    res.status(500).json({ message: "Error al agregar el comentario a la subtarea." });
+  }
+};
+
+/**
+ * Delete a comment from a subtask pin.
+ * DELETE /api/subtasks/:subtaskId/comments/:commentId
+ */
+export const deleteSubtaskComment = async (req, res) => {
+  try {
+    const { subtaskId, commentId } = req.params;
+
+    const subtask = await Subtask.findById(subtaskId);
+    if (!subtask) {
+      return res.status(404).json({ message: "Subtarea no encontrada." });
+    }
+
+    const comment = subtask.comments.id(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comentario no encontrado." });
+    }
+
+    // Solo el autor o un admin puede eliminar el comentario
+    const isAuthor =
+      req.user && comment.user && comment.user.toString() === req.user._id.toString();
+    const isAdmin = req.user?.role === "admin";
+    if (!isAuthor && !isAdmin) {
+      return res
+        .status(403)
+        .json({ message: "No tienes permiso para eliminar este comentario." });
+    }
+
+    subtask.comments.pull(commentId);
+    await subtask.save();
+
+    await subtask.populate("assignedTo", "name email color");
+    await subtask.populate("comments.user", "name email color");
+
+    res.status(200).json({
+      message: "Comentario eliminado exitosamente",
+      subtask,
+    });
+  } catch (error) {
+    console.error("Error in deleteSubtaskComment:", error);
+    res.status(500).json({ message: "Error al eliminar el comentario." });
   }
 };

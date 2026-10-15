@@ -50,6 +50,37 @@ const subtaskSchema = new mongoose.Schema(
         max: 100,
       },
     },
+    checklistId: {
+      type: String,
+      default: null,
+    },
+    comments: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          default: null,
+        },
+        userName: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        userColor: {
+          type: String,
+          default: "#3B82F6",
+        },
+        text: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,
