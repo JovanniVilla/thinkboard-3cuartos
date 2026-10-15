@@ -268,9 +268,9 @@ const CreatePage = () => {
         {/* Main Content Area */}
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
           {/* Left Column */}
-          <div className="flex-1 p-4 sm:p-5 md:p-6 overflow-y-auto min-h-0 bg-base-100 flex flex-col">
-            {/* Sticky Title Bar - Always visible and editable while scrolling */}
-            <div className="sticky top-0 z-20 bg-base-100/95 backdrop-blur-xs pt-1 pb-3 mb-4 border-b border-base-content/10 -mt-4 sm:-mt-5 md:-mt-6 -mx-4 sm:-mx-5 md:-mx-6 px-4 sm:px-5 md:px-6 transition-colors shadow-xs">
+          <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-base-100">
+            {/* Top Fixed Title Header */}
+            <div className="p-4 sm:p-5 md:p-6 pb-4 border-b border-base-content/10 flex-shrink-0 bg-base-100">
               <div className="flex items-start gap-3">
                 <div className="mt-1 flex-shrink-0">
                   <CheckCircle2Icon className="size-6 text-base-content/30" />
@@ -286,161 +286,164 @@ const CreatePage = () => {
                 />
               </div>
             </div>
-             
-            {/* Description */}
-            <div className="mt-2 flex gap-3 group relative flex-1">
-              <div className="mt-1 flex-shrink-0 text-base-content/50">
-                <Edit3Icon className="size-5" />
-              </div>
-              <div className="flex-1 min-w-0 flex flex-col">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-base-content">Descripción</h3>
-                </div>
-                <div className="flex-1 border border-base-content/10 rounded-xl overflow-hidden focus-within:border-primary/50 transition-colors max-h-[300px] overflow-y-auto">
-                  <MarkdownEditor
-                    value={content}
-                    onChange={setContent}
-                  />
-                </div>
-              </div>
-            </div>
 
-            {/* Checklist Section */}
-            <div className="mt-8 flex gap-3 group relative">
-              <div className="mt-1 flex-shrink-0 text-base-content/50">
-                <CheckSquareIcon className="size-5" />
-              </div>
-              <div className="flex-1 min-w-0 flex flex-col">
-                <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                  <h3 className="font-bold text-base-content">Checklist</h3>
-                  {checklist.length > 4 && (
-                    <button
-                      type="button"
-                      onClick={() => setExpandChecklist(!expandChecklist)}
-                      className="btn btn-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg px-2.5 font-medium"
-                    >
-                      {expandChecklist ? "Contraer lista" : `Ver todas (${checklist.length})`}
-                    </button>
-                  )}
+            {/* Middle Scrollable Content (Description + Checklist) */}
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-5 md:p-6 space-y-8 bg-base-100">
+              {/* Description */}
+              <div className="flex gap-3 group relative">
+                <div className="mt-1 flex-shrink-0 text-base-content/50">
+                  <Edit3Icon className="size-5" />
                 </div>
-                
-                {checklist.length > 0 && (
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-xs font-mono font-bold text-base-content/60 w-8">{progressPercent}%</span>
-                    <div className="w-full bg-base-300 rounded-full h-2.5 overflow-hidden">
-                      <div
-                        className="bg-primary h-2.5 transition-all duration-300 rounded-full"
-                        style={{ width: `${progressPercent}%` }}
-                      />
-                    </div>
+                <div className="flex-1 min-w-0 flex flex-col">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-bold text-base-content">Descripción</h3>
                   </div>
-                )}
+                  <div className="border border-base-content/10 rounded-xl overflow-hidden focus-within:border-primary/50 transition-colors max-h-[300px] overflow-y-auto">
+                    <MarkdownEditor
+                      value={content}
+                      onChange={setContent}
+                    />
+                  </div>
+                </div>
+              </div>
 
-                <div className="space-y-2">
-                  <div className={`space-y-2 ${expandChecklist ? "" : "max-h-[240px] overflow-y-auto pr-1"}`}>
-                    {checklist.map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group/item">
-                        {editingChecklistId === item.id ? (
-                          <div className="flex items-center gap-2 flex-1 w-full">
-                            <input
-                              type="text"
-                              className="flex-1 bg-base-100 border border-base-content/20 text-sm text-base-content rounded px-2.5 py-1 focus:border-primary focus:outline-none"
-                              value={editingChecklistTitle}
-                              onChange={(e) => setEditingChecklistTitle(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  handleUpdateChecklistItem(item.id);
-                                } else if (e.key === "Escape") {
-                                  setEditingChecklistId(null);
-                                }
-                              }}
-                              autoFocus
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleUpdateChecklistItem(item.id)}
-                              className="btn btn-xs btn-primary px-2"
-                            >
-                              Guardar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setEditingChecklistId(null)}
-                              className="btn btn-xs btn-ghost px-2"
-                            >
-                              Cancelar
-                            </button>
-                          </div>
-                        ) : (
-                          <>
-                            <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
-                              <input
-                                type="checkbox"
-                                checked={item.completed}
-                                onChange={() => handleToggleChecklistItem(item.id)}
-                                className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
-                              />
-                              <span
-                                className={`text-sm ${item.completed ? "line-through text-base-content/40" : "text-base-content"}`}
-                                onDoubleClick={() => {
-                                  setEditingChecklistId(item.id);
-                                  setEditingChecklistTitle(item.title);
-                                }}
-                              >
-                                {item.title}
-                              </span>
-                            </label>
-                            <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingChecklistId(item.id);
-                                  setEditingChecklistTitle(item.title);
-                                }}
-                                className="text-base-content/40 hover:text-base-content p-1 transition-colors"
-                                title="Editar"
-                              >
-                                <PencilIcon className="size-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteChecklistItem(item.id)}
-                                className="text-error/40 hover:text-error transition-colors p-1"
-                                title="Eliminar"
-                              >
-                                <Trash2Icon className="size-4" />
-                              </button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
+              {/* Checklist Section */}
+              <div className="flex gap-3 group relative">
+                <div className="mt-1 flex-shrink-0 text-base-content/50">
+                  <CheckSquareIcon className="size-5" />
+                </div>
+                <div className="flex-1 min-w-0 flex flex-col">
+                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                    <h3 className="font-bold text-base-content">Checklist</h3>
+                    {checklist.length > 4 && (
+                      <button
+                        type="button"
+                        onClick={() => setExpandChecklist(!expandChecklist)}
+                        className="btn btn-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg px-2.5 font-medium"
+                      >
+                        {expandChecklist ? "Contraer lista" : `Ver todas (${checklist.length})`}
+                      </button>
+                    )}
                   </div>
                   
-                  <form onSubmit={handleAddChecklistItem} className="flex items-center gap-2 mt-2">
-                    <input
-                      type="text"
-                      className="input input-sm flex-1 bg-base-100 border border-base-content/20 text-sm focus:border-primary"
-                      placeholder="Añadir un elemento..."
-                      value={newChecklistItem}
-                      onChange={(e) => setNewChecklistItem(e.target.value)}
-                    />
-                    <button
-                      type="submit"
-                      disabled={!newChecklistItem.trim()}
-                      className="btn btn-sm btn-primary btn-square rounded-lg"
-                      title="Añadir elemento"
-                    >
-                      <PlusIcon className="size-4" />
-                    </button>
-                  </form>
+                  {checklist.length > 0 && (
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-xs font-mono font-bold text-base-content/60 w-8">{progressPercent}%</span>
+                      <div className="w-full bg-base-300 rounded-full h-2.5 overflow-hidden">
+                        <div
+                          className="bg-primary h-2.5 transition-all duration-300 rounded-full"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <div className={`space-y-2 ${expandChecklist ? "" : "max-h-[240px] overflow-y-auto pr-1"}`}>
+                      {checklist.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between p-2.5 rounded-lg bg-base-200 hover:bg-base-300/80 border border-base-content/5 transition-colors group/item">
+                          {editingChecklistId === item.id ? (
+                            <div className="flex items-center gap-2 flex-1 w-full">
+                              <input
+                                type="text"
+                                className="flex-1 bg-base-100 border border-base-content/20 text-sm text-base-content rounded px-2.5 py-1 focus:border-primary focus:outline-none"
+                                value={editingChecklistTitle}
+                                onChange={(e) => setEditingChecklistTitle(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    e.preventDefault();
+                                    handleUpdateChecklistItem(item.id);
+                                  } else if (e.key === "Escape") {
+                                    setEditingChecklistId(null);
+                                  }
+                                }}
+                                autoFocus
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateChecklistItem(item.id)}
+                                className="btn btn-xs btn-primary px-2"
+                              >
+                                Guardar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingChecklistId(null)}
+                                className="btn btn-xs btn-ghost px-2"
+                              >
+                                Cancelar
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                                <input
+                                  type="checkbox"
+                                  checked={item.completed}
+                                  onChange={() => handleToggleChecklistItem(item.id)}
+                                  className="checkbox checkbox-sm checkbox-primary rounded border-base-content/30"
+                                />
+                                <span
+                                  className={`text-sm ${item.completed ? "line-through text-base-content/40" : "text-base-content"}`}
+                                  onDoubleClick={() => {
+                                    setEditingChecklistId(item.id);
+                                    setEditingChecklistTitle(item.title);
+                                  }}
+                                >
+                                  {item.title}
+                                </span>
+                              </label>
+                              <div className="flex items-center gap-1 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingChecklistId(item.id);
+                                    setEditingChecklistTitle(item.title);
+                                  }}
+                                  className="text-base-content/40 hover:text-base-content p-1 transition-colors"
+                                  title="Editar"
+                                >
+                                  <PencilIcon className="size-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteChecklistItem(item.id)}
+                                  className="text-error/40 hover:text-error transition-colors p-1"
+                                  title="Eliminar"
+                                >
+                                  <Trash2Icon className="size-4" />
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <form onSubmit={handleAddChecklistItem} className="flex items-center gap-2 mt-2">
+                      <input
+                        type="text"
+                        className="input input-sm flex-1 bg-base-100 border border-base-content/20 text-sm focus:border-primary"
+                        placeholder="Añadir un elemento..."
+                        value={newChecklistItem}
+                        onChange={(e) => setNewChecklistItem(e.target.value)}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!newChecklistItem.trim()}
+                        className="btn btn-sm btn-primary btn-square rounded-lg"
+                        title="Añadir elemento"
+                      >
+                        <PlusIcon className="size-4" />
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Sticky Action Buttons */}
-            <div className="sticky bottom-0 z-20 bg-base-100/95 backdrop-blur-xs py-3 border-t border-base-content/10 -mx-4 sm:-mx-5 md:-mx-6 px-4 sm:px-5 md:px-6 -mb-4 sm:-mb-5 md:-mb-6 mt-8 flex justify-end gap-3 shadow-xs">
+            {/* Bottom Fixed Action Buttons */}
+            <div className="p-3 sm:px-6 sm:py-3.5 border-t border-base-content/10 bg-base-100 flex justify-end gap-3 flex-shrink-0">
               <button type="button" className="btn btn-ghost" onClick={handleClose}>
                 Cancelar
               </button>
