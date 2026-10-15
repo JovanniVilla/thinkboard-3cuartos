@@ -37,6 +37,7 @@ import { useProjects } from "../lib/useProjects";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import { useTaskSizes } from "../lib/useTaskSizes";
 import DatesPopover from "../components/DatesPopover";
+import VisualAnnotationsSection from "../components/annotations/VisualAnnotationsSection";
 import { FolderKeyIcon, ClockIcon } from "lucide-react";
 
 const getInitials = (name = "") => {
@@ -98,6 +99,9 @@ const NoteDetailPage = () => {
   const [editingChecklistId, setEditingChecklistId] = useState(null);
   const [editingChecklistTitle, setEditingChecklistTitle] = useState("");
   const [expandChecklist, setExpandChecklist] = useState(false);
+
+  // Visual annotations & attached files count
+  const [visualFilesCount, setVisualFilesCount] = useState(0);
 
   // Active popover state
   const [activePopover, setActivePopover] = useState(null); // 'status', 'priority', 'project', 'labels', 'dates', 'members', 'size'
@@ -800,10 +804,14 @@ const NoteDetailPage = () => {
                 <button
                   type="button"
                   className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
-                  onClick={() => toast("Función de adjuntos próximamente", { icon: "📎" })}
+                  onClick={() => {
+                    const el = document.getElementById("visual-annotations-section");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  title="Ver y subir archivos de anotaciones visuales"
                 >
                   <PaperclipIcon className="size-4" />
-                  <span>Attachment</span>
+                  <span>Adjuntos {visualFilesCount > 0 ? `(${visualFilesCount})` : ""}</span>
                 </button>
               </div>
             </div>
@@ -1200,6 +1208,13 @@ const NoteDetailPage = () => {
                 </form>
               </div>
             </div>
+
+            {/* Visual Annotations & Attached Files Section */}
+            <VisualAnnotationsSection
+              taskId={note._id}
+              accounts={accounts}
+              onSubtasksCountChange={(_, totalFiles) => setVisualFilesCount(totalFiles)}
+            />
 
             {/* Bottom Actions: Save & Delete */}
             <div className="flex items-center justify-between pt-6 border-t border-base-content/10">

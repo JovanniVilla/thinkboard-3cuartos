@@ -16,6 +16,9 @@ import projectRoutes from "./routes/projectRoutes.js";
 import projectTypeRoutes from "./routes/projectTypeRoutes.js";
 import projectStatusRoutes from "./routes/projectStatusRoutes.js";
 import taskSizeRoutes from "./routes/taskSizeRoutes.js";
+import fileRoutes from "./routes/fileRoutes.js";
+import subtaskRoutes from "./routes/subtaskRoutes.js";
+import { UPLOADS_DIR } from "./middleware/upload.js";
 import { connectDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
 
@@ -25,6 +28,9 @@ const app = express();
 app.set("trust proxy", true);
 const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
+
+// Static directory for uploaded visual assets (images and PDFs)
+app.use("/uploads", express.static(UPLOADS_DIR));
 
 // middleware
 if (process.env.NODE_ENV !== "production") {
@@ -57,6 +63,10 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/project-types", projectTypeRoutes);
 app.use("/api/project-statuses", projectStatusRoutes);
 app.use("/api/task-sizes", taskSizeRoutes);
+app.use("/api/tasks", fileRoutes); // /api/tasks/:taskId/files
+app.use("/api/notes", fileRoutes); // alias /api/notes/:taskId/files
+app.use("/api/files", fileRoutes); // /api/files/:fileId, /api/files/:fileId/subtasks
+app.use("/api/subtasks", subtaskRoutes); // /api/subtasks
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
