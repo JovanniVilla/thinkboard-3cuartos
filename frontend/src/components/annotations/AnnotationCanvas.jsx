@@ -37,6 +37,7 @@ export default function AnnotationCanvas({
   const [activeSubtaskId, setActiveSubtaskId] = useState(initialSubtaskId);
   const [pendingPin, setPendingPin] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalInitialTab, setModalInitialTab] = useState("details"); // 'details' | 'comments'
   const [subtaskToEdit, setSubtaskToEdit] = useState(null);
   const [containerWidth, setContainerWidth] = useState(800);
   const [showSidebar, setShowSidebar] = useState(true);
@@ -110,6 +111,7 @@ export default function AnnotationCanvas({
 
     setPendingPin(newMarker);
     setSubtaskToEdit(null);
+    setModalInitialTab("details");
     setModalOpen(true);
   };
 
@@ -117,6 +119,16 @@ export default function AnnotationCanvas({
     setActiveSubtaskId(subtask._id);
     setSubtaskToEdit(subtask);
     setPendingPin(null);
+    setModalInitialTab("details");
+    setModalOpen(true);
+  };
+
+  const handleOpenComments = (task, e) => {
+    if (e) e.stopPropagation();
+    setActiveSubtaskId(task._id);
+    setSubtaskToEdit(task);
+    setPendingPin(null);
+    setModalInitialTab("comments");
     setModalOpen(true);
   };
 
@@ -469,17 +481,36 @@ export default function AnnotationCanvas({
                             </p>
                           )}
 
-                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-base-content/5 text-[10px] text-base-content/50">
+                          <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-base-content/5 text-[10px] text-base-content/50 gap-1.5">
                             {task.assignedTo ? (
-                              <span className="flex items-center gap-1 font-medium text-base-content/70">
-                                <UserIcon className="size-3" />
-                                {task.assignedTo.name}
+                              <span className="flex items-center gap-1 font-medium text-base-content/70 truncate max-w-[90px]">
+                                <UserIcon className="size-3 flex-shrink-0" />
+                                <span className="truncate">{task.assignedTo.name}</span>
                               </span>
                             ) : (
                               <span>Sin asignar</span>
                             )}
 
-                            <span className="font-mono text-[9px]">
+                            {/* Botón para ver o agregar dudas/comentarios (en el recuadro rojo) */}
+                            <button
+                              type="button"
+                              onClick={(e) => handleOpenComments(task, e)}
+                              className={`flex items-center gap-1 px-2 py-0.5 rounded-md border text-[10px] font-semibold transition-all shadow-2xs ${
+                                task.comments && task.comments.length > 0
+                                  ? "bg-indigo-50 text-indigo-600 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800 hover:bg-indigo-100"
+                                  : "bg-base-200/80 hover:bg-primary/10 hover:text-primary border-base-content/10 text-base-content/60"
+                              }`}
+                              title="Ver o agregar dudas y comentarios a este marcador"
+                            >
+                              <MessageSquareIcon className="size-2.5 flex-shrink-0" />
+                              <span>
+                                {task.comments && task.comments.length > 0
+                                  ? `${task.comments.length} ${task.comments.length === 1 ? 'duda' : 'dudas'}`
+                                  : "+ Comentar"}
+                              </span>
+                            </button>
+
+                            <span className="font-mono text-[9px] flex-shrink-0">
                               {task.marker?.xPercent?.toFixed(0)}%,{" "}
                               {task.marker?.yPercent?.toFixed(0)}%
                             </span>
@@ -506,6 +537,7 @@ export default function AnnotationCanvas({
         subtask={subtaskToEdit}
         markerData={pendingPin}
         accounts={accounts}
+        initialTab={modalInitialTab}
         onSaved={handleSubtaskSaved}
         onDeleted={handleSubtaskDeleted}
       />

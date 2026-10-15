@@ -29,13 +29,14 @@ export default function SubtaskModal({
   subtask = null, // Existing subtask if editing
   markerData = null, // { fileId, pageNumber, xPercent, yPercent } if creating new
   accounts = [], // List of users to assign
+  initialTab = "details", // 'details' | 'comments'
   onSaved, // Callback (savedSubtask, isNew) => void
   onDeleted, // Callback (subtaskId) => void
 }) {
   const { user: currentUser } = useAuth();
   const isEditing = Boolean(subtask?._id);
 
-  const [activeTab, setActiveTab] = useState("details"); // 'details' | 'comments'
+  const [activeTab, setActiveTab] = useState(initialTab || "details"); // 'details' | 'comments'
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
@@ -59,6 +60,7 @@ export default function SubtaskModal({
       );
       setStatus(subtask.status || "pending");
       setComments(subtask.comments || []);
+      setActiveTab(initialTab || "details");
     } else {
       setTitle("");
       setDescription("");
@@ -67,7 +69,7 @@ export default function SubtaskModal({
       setComments([]);
       setActiveTab("details");
     }
-  }, [subtask, isOpen]);
+  }, [subtask, isOpen, initialTab]);
 
   // Scroll to bottom of comments when new comment is added or tab switched
   useEffect(() => {
