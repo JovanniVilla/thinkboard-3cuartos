@@ -28,6 +28,16 @@ if (!fs.existsSync(UPLOADS_DIR)) {
   }
 }
 
+// Ensure videos sub-directory exists
+export const VIDEOS_UPLOADS_DIR = path.join(UPLOADS_DIR, "videos");
+if (!fs.existsSync(VIDEOS_UPLOADS_DIR)) {
+  try {
+    fs.mkdirSync(VIDEOS_UPLOADS_DIR, { recursive: true });
+  } catch (err) {
+    console.error("No se pudo crear VIDEOS_UPLOADS_DIR:", err);
+  }
+}
+
 // Allowed MIME types: images (.jpg, .jpeg, .png, .webp) and PDF documents
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
@@ -121,4 +131,107 @@ export const uploadSingleFile = (req, res, next) => {
   });
 };
 
+/**
+ * Configure disk storage for video notes (up to 64MB).
+ * Saved to VIDEOS_UPLOADS_DIR ('uploads/videos/').
+ */
+const videoStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(VIDEOS_UPLOADS_DIR)) {
+      fs.mkdirSync(VIDEOS_UPLOADS_DIR, { recursive: true });
+    }
+    cb(null, VIDEOS_UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    const rawExt = path.extname(file.originalname || "");
+    const ext = rawExt ? rawExt.toLowerCase() : (file.mimetype.includes("mp4") ? ".mp4" : ".webm");
+    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `videonote-${uniqueSuffix}${ext}`);
+  },
+});
+
+const videoFileFilter = (req, file, cb) => {
+  const mime = (file.mimetype || "").toLowerCase();
+  const name = (file.originalname || "").toLowerCase();
+
+  const isWebM = mime.startsWith("video/webm") || name.endsWith(".webm");
+  const isMp4 = mime.startsWith("video/mp4") || name.endsWith(".mp4");
+  const isMatroska = mime.startsWith("video/x-matroska") || name.endsWith(".mkv");
+
+  if (isWebM || isMp4 || isMatroska) {
+    cb(null, true);
+  } else {
+    const error = new Error(
+      "Formato no soportado. Solo se permiten videos WebM y MP4."
+    );
+    error.code = "INVALID_FILE_TYPE";
+    cb(error, false);
+  }
+};
+
+const uploadVideo = multer({
+  storage: videoStorage,
+  limits: {
+    fileSize: 64 * 1024 * 1024, // 64 MB strict limit as per SDD
+  },
+  fileFilter: videoFileFilter,
+});
+
+/**
+ * Middleware wrapper for video note upload on field "video" or "file".
+ * Captures MulterError LIMIT_FILE_SIZE and returns HTTP 413.
+ */
+export const uploadSingleVideo = (req, res, next) => {
+  const videoUpload = uploadVideo.fields([
+    { name: "video", maxCount: 1 },
+    { name: "file", maxCount: 1 },
+  ]);
+
+  videoUpload(req, res, (err) => {
+    if (err) {
+      if (err instanceof multer.MulterError) {
+        if (err.code === "LIMIT_FILE_SIZE") {
+          return res.status(413).json({
+            error: "Payload Too Large",
+            message: "El video supera el límite máximo permitido de 64MB.",
+          });
+        }
+        return res.status(400).json({
+          error: "Multer Error",
+          message: err.message,
+        });
+      }
+
+      if (err.code === "INVALID_FILE_TYPE") {
+        return res.status(400).json({
+          error: "Invalid File Type",
+          message: err.message,
+        });
+      }
+
+      return res.status(500).json({
+        error: "Upload Error",
+        message: err.message || "Error al procesar la subida del video.",
+      });
+    }
+
+    // Support both field "video" and "file"
+    if (req.files?.video?.[0]) {
+      req.file = req.files.video[0];
+    } else if (req.files?.file?.[0]) {
+      req.file = req.files.file[0];
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        error: "Bad Request",
+        message: "No se ha proporcionado ningún archivo de video para subir.",
+      });
+    }
+
+    next();
+  });
+};
+
 export default upload;
+

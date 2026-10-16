@@ -18,6 +18,7 @@ import projectStatusRoutes from "./routes/projectStatusRoutes.js";
 import taskSizeRoutes from "./routes/taskSizeRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
 import subtaskRoutes from "./routes/subtaskRoutes.js";
+import videoNoteRoutes from "./routes/videoNoteRoutes.js";
 import { UPLOADS_DIR } from "./middleware/upload.js";
 import { connectDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
@@ -69,6 +70,9 @@ app.use("/api/task-sizes", taskSizeRoutes);
 app.use("/api/tasks", fileRoutes); // /api/tasks/:taskId/files
 app.use("/api/notes", fileRoutes); // alias /api/notes/:taskId/files
 app.use("/api/files", fileRoutes); // /api/files/:fileId, /api/files/:fileId/subtasks
+app.use("/api/tasks", videoNoteRoutes); // /api/tasks/:taskId/video-notes
+app.use("/api/notes", videoNoteRoutes); // alias /api/notes/:taskId/video-notes
+app.use("/api/video-notes", videoNoteRoutes); // /api/video-notes/:id
 app.use("/api/subtasks", subtaskRoutes); // /api/subtasks
 
 if (process.env.NODE_ENV === "production") {

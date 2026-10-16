@@ -46,3 +46,14 @@ export function isImage(mimeType = "", originalName = "") {
     (originalName && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(originalName))
   );
 }
+
+/**
+ * Format duration in seconds to MM:SS string.
+ */
+export function formatDuration(seconds = 0) {
+  const total = Math.max(0, Math.floor(seconds));
+  const mins = Math.floor(total / 60);
+  const secs = total % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+}
+

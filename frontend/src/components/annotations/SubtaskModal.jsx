@@ -9,8 +9,10 @@ import {
   MessageSquareIcon,
   SendIcon,
   InfoIcon,
+  VideoIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import VideoNoteRecorderModal from "../videonotes/VideoNoteRecorderModal";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -46,6 +48,7 @@ export default function SubtaskModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSendingComment, setIsSendingComment] = useState(false);
+  const [isVideoRecorderOpen, setIsVideoRecorderOpen] = useState(false);
 
   const commentsEndRef = useRef(null);
 
@@ -486,6 +489,14 @@ export default function SubtaskModal({
                 className="input input-sm input-bordered flex-1 rounded-xl text-xs focus:input-primary"
               />
               <button
+                type="button"
+                onClick={() => setIsVideoRecorderOpen(true)}
+                className="btn btn-sm btn-ghost text-error hover:bg-error/10 rounded-xl px-2.5"
+                title="Grabar video nota explicativa para esta subtarea"
+              >
+                <VideoIcon className="size-4" />
+              </button>
+              <button
                 type="submit"
                 disabled={isSendingComment || !newCommentText.trim()}
                 className="btn btn-sm btn-primary rounded-xl px-3 gap-1"
@@ -502,6 +513,32 @@ export default function SubtaskModal({
           </div>
         )}
       </div>
+
+      {/* Modal de Grabación de Video Nota vinculado a esta subtarea */}
+      {isVideoRecorderOpen && (
+        <VideoNoteRecorderModal
+          taskId={parentTaskId}
+          subtaskId={subtask?._id}
+          onUploadSuccess={(newVideo) => {
+            const mins = Math.floor((newVideo.durationSeconds || 0) / 60);
+            const secs = Math.floor((newVideo.durationSeconds || 0) % 60);
+            const durationFormatted = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+            setComments((prev) => [
+              ...prev,
+              {
+                _id: Date.now().toString(),
+                user: currentUser?._id,
+                userName: currentUser?.name || "Usuario",
+                userColor: currentUser?.color || "#3B82F6",
+                text: `🎥 Video Nota adjunta: "${newVideo.title}" (${durationFormatted})`,
+                createdAt: new Date().toISOString(),
+              },
+            ]);
+            setIsVideoRecorderOpen(false);
+          }}
+          onClose={() => setIsVideoRecorderOpen(false)}
+        />
+      )}
     </div>
   );
 }
