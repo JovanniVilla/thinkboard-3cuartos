@@ -76,40 +76,38 @@ export default function MediaViewer({
   }
 
   return (
-    <div className="w-full flex justify-center items-center select-none">
+    <div className="select-none flex justify-center items-center">
       {isPdf ? (
-        <div className="w-full flex justify-center">
-          <Document
-            file={resolvedUrl}
-            onLoadSuccess={handleDocSuccess}
-            onLoadError={handleDocError}
+        <Document
+          file={resolvedUrl}
+          onLoadSuccess={handleDocSuccess}
+          onLoadError={handleDocError}
+          loading={
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-base-content/60">
+              <Loader2Icon className="size-8 animate-spin text-primary" />
+              <span className="text-xs font-medium">Cargando PDF...</span>
+            </div>
+          }
+        >
+          <Page
+            pageNumber={currentPage}
+            width={containerWidth ? Math.min(containerWidth, 1200) : undefined}
+            renderTextLayer={false}
+            renderAnnotationLayer={false}
+            onRenderSuccess={handlePageRenderSuccess}
             loading={
-              <div className="flex flex-col items-center justify-center py-20 gap-3 text-base-content/60">
-                <Loader2Icon className="size-8 animate-spin text-primary" />
-                <span className="text-xs font-medium">Cargando PDF...</span>
+              <div className="flex items-center justify-center py-12">
+                <span className="loading loading-spinner loading-md text-primary" />
               </div>
             }
-          >
-            <Page
-              pageNumber={currentPage}
-              width={containerWidth ? Math.min(containerWidth, 1200) : undefined}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              onRenderSuccess={handlePageRenderSuccess}
-              loading={
-                <div className="flex items-center justify-center py-12">
-                  <span className="loading loading-spinner loading-md text-primary" />
-                </div>
-              }
-              className="shadow-xl rounded-lg overflow-hidden border border-base-content/10 bg-white"
-            />
-          </Document>
-        </div>
+            className="shadow-xl rounded-lg overflow-hidden border border-base-content/10 bg-white"
+          />
+        </Document>
       ) : (
         <img
           src={resolvedUrl}
           alt={file.originalName || "Anotación visual"}
-          className="w-full h-auto max-h-[85vh] object-contain rounded-lg shadow-xl border border-base-content/10 pointer-events-none"
+          className="block max-w-full h-auto rounded-lg shadow-xl border border-base-content/10 pointer-events-none select-none"
           onLoad={handleImageLoad}
           onError={() =>
             setLoadError("No se pudo cargar la imagen del servidor.")
