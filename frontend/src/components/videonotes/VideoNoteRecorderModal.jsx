@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import api from "../../lib/axios";
 import { formatDuration, formatFileSize } from "../../lib/fileUtils";
 import {
@@ -43,6 +44,83 @@ export default function VideoNoteRecorderModal({
   const chunksRef = useRef([]);
   const timerIntervalRef = useRef(null);
   const mimeTypeRef = useRef("");
+  const modalRef = useRef(null);
+
+  // Bloqueo estricto del scroll de fondo mientras el modal de grabación esté abierto
+  useEffect(() => {
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyOverscroll = document.body.style.overscrollBehavior;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+    document.documentElement.style.overflow = "hidden";
+
+    const scrollContainers = Array.from(
+      document.querySelectorAll(".overflow-y-auto, .overflow-auto")
+    );
+    const savedStyles = scrollContainers.map((node) => ({
+      node,
+      overflow: node.style.overflow,
+      overflowY: node.style.overflowY,
+    }));
+
+    savedStyles.forEach(({ node }) => {
+      if (node && (!modalRef.current || !modalRef.current.contains(node))) {
+        node.style.overflow = "hidden";
+        node.style.overflowY = "hidden";
+      }
+    });
+
+    const preventScrollPropagation = (e) => {
+      let node = e.target;
+      let canScrollInside = false;
+
+      while (node && node !== modalRef.current) {
+        if (
+          node.scrollHeight > node.clientHeight &&
+          window.getComputedStyle(node).overflowY.match(/(auto|scroll)/)
+        ) {
+          const isDown = e.deltaY > 0;
+          const atBottom =
+            node.scrollTop + node.clientHeight >= node.scrollHeight - 1;
+          const atTop = node.scrollTop <= 0;
+          if ((isDown && !atBottom) || (!isDown && !atTop)) {
+            canScrollInside = true;
+            break;
+          }
+        }
+        node = node.parentElement;
+      }
+
+      if (!canScrollInside) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener("wheel", preventScrollPropagation, {
+      passive: false,
+    });
+    window.addEventListener("touchmove", preventScrollPropagation, {
+      passive: false,
+    });
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.overscrollBehavior = originalBodyOverscroll;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+
+      savedStyles.forEach(({ node, overflow, overflowY }) => {
+        if (node) {
+          node.style.overflow = overflow;
+          node.style.overflowY = overflowY;
+        }
+      });
+
+      window.removeEventListener("wheel", preventScrollPropagation);
+      window.removeEventListener("touchmove", preventScrollPropagation);
+    };
+  }, []);
 
   // Detener todos los tracks de los flujos de medios
   const stopAllMediaTracks = useCallback(() => {
@@ -382,9 +460,18 @@ export default function VideoNoteRecorderModal({
     Math.round((timeElapsed / MAX_DURATION_SECONDS) * 100)
   );
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-xl bg-base-100 rounded-2xl shadow-2xl border border-base-content/10 overflow-hidden flex flex-col max-h-[90vh]">
+  const modalContent = (
+    <div
+      ref={modalRef}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200 select-none overscroll-contain"
+      onClick={handleCloseAndReturn}
+      onWheel={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+    >
+      <div
+        className="w-full max-w-xl bg-base-100 rounded-2xl shadow-2xl border border-base-content/10 overflow-hidden flex flex-col max-h-[90vh] overscroll-contain select-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-base-content/10 bg-base-200/50">
           <div className="flex items-center gap-2.5">
@@ -710,4 +797,9 @@ export default function VideoNoteRecorderModal({
       </div>
     </div>
   );
+
+  if (typeof document === "undefined") {
+    return modalContent;
+  }
+  return createPortal(modalContent, document.body);
 }

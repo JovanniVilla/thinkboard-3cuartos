@@ -4,6 +4,7 @@ import StatusConfig from "../models/StatusConfig.js";
 import Project from "../models/Project.js";
 import Subtask from "../models/Subtask.js";
 import VideoNote from "../models/VideoNote.js";
+import { syncTaskFilesStatus } from "../utils/fileSync.js";
 
 export async function getAllNotes(req, res) {
   try {
@@ -151,7 +152,7 @@ export async function createNote(req, res) {
 
 export async function updateNote(req, res) {
   try {
-    const { title, content, status, priority, user, project, labels, checklist, activities, taskDriveLink, startDate, dueDate, size, timeSpent } = req.body;
+    const { title, content, status, priority, user, project, labels, checklist, activities, taskDriveLink, startDate, dueDate, size, timeSpent, archived } = req.body;
 
     const currentNote = await Note.findById(req.params.id);
     if (!currentNote) return res.status(404).json({ message: "Note not found" });
@@ -270,12 +271,18 @@ export async function updateNote(req, res) {
         ...(size !== undefined && { size: size === "" ? null : size }),
         ...(timeSpent !== undefined && { timeSpent }),
         completedAt,
+        ...(archived !== undefined && { archived }),
         activities: updatedActivities,
       },
       {
         new: true,
       }
     ).populate("size");
+
+    // Sync files lifecycle if archived state was updated
+    if (archived !== undefined && archived !== currentNote.archived) {
+      await syncTaskFilesStatus(req.params.id, archived ? "archived" : "active");
+    }
 
     // Sync checklist changes with associated Subtasks (pins) and VideoNotes
     if (checklist !== undefined && Array.isArray(checklist)) {
@@ -353,10 +360,18 @@ export async function deleteNote(req, res) {
     const isOwner = currentNote.createdBy && req.user && currentNote.createdBy.toString() === req.user._id.toString();
     const isAdmin = req.user?.role === "admin";
     if (!isOwner && !isAdmin) {
-      return res.status(403).json({ message: "No tienes permiso para archivar esta nota" });
+      return res.status(403).json({ message: "No tienes permiso para archivar o eliminar esta nota" });
+    }
+
+    const isPermanent = req.query.permanent === "true" || req.query.force === "true";
+    if (isPermanent) {
+      await syncTaskFilesStatus(currentNote._id, "deleted");
+      await Note.findByIdAndDelete(req.params.id);
+      return res.status(200).json({ message: "Nota eliminada permanentemente" });
     }
 
     await Note.findByIdAndUpdate(req.params.id, { archived: true });
+    await syncTaskFilesStatus(currentNote._id, "archived");
     res.status(200).json({ message: "Note archived successfully!" });
   } catch (error) {
     console.error("Error in deleteNote controller", error);

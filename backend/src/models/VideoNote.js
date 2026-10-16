@@ -50,6 +50,17 @@ const videoNoteSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
+    parentStatus: {
+      type: String,
+      enum: ["active", "archived", "deleted"],
+      default: "active",
+      index: true,
+    },
+    markedForDeletionAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

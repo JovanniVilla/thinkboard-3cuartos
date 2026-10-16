@@ -113,6 +113,14 @@ const NoteDetailPage = () => {
   const [isVideoRecorderOpen, setIsVideoRecorderOpen] = useState(false);
   const [activeVideoForPlayer, setActiveVideoForPlayer] = useState(null);
 
+  const handleSubtasksCountChange = useCallback((_, totalFiles) => {
+    setVisualFilesCount((prev) => (prev !== totalFiles ? totalFiles : prev));
+  }, []);
+
+  const handleVideoNotesCountChange = useCallback((total) => {
+    setVideoNotesCount((prev) => (prev !== total ? total : prev));
+  }, []);
+
   // Active popover state
   const [activePopover, setActivePopover] = useState(null); // 'status', 'priority', 'project', 'labels', 'dates', 'members', 'size'
 
@@ -502,7 +510,11 @@ const NoteDetailPage = () => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6 bg-black/40 backdrop-blur-sm text-base-content"
+      className={`fixed inset-0 z-50 flex items-start justify-center ${
+        activeVideoForPlayer || isVideoRecorderOpen || canvasTarget
+          ? "overflow-hidden"
+          : "overflow-y-auto"
+      } p-4 sm:p-6 bg-black/40 backdrop-blur-sm text-base-content`}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           navigate("/");
@@ -1319,14 +1331,14 @@ const NoteDetailPage = () => {
             <VisualAnnotationsSection
               taskId={note._id}
               accounts={accounts}
-              onSubtasksCountChange={(_, totalFiles) => setVisualFilesCount(totalFiles)}
+              onSubtasksCountChange={handleSubtasksCountChange}
               onNoteRefresh={fetchNote}
             />
 
             {/* Video Notes (Screen & Audio Recording) Section */}
             <VideoNotesSection
               taskId={note._id}
-              onVideoNotesCountChange={(total) => setVideoNotesCount(total)}
+              onVideoNotesCountChange={handleVideoNotesCountChange}
               onNoteRefresh={fetchNote}
               isRecorderOpen={isVideoRecorderOpen}
               setIsRecorderOpen={setIsVideoRecorderOpen}

@@ -1,7 +1,9 @@
 import fs from "fs";
+import path from "path";
 import VideoNote from "../models/VideoNote.js";
 import Note from "../models/Note.js";
 import Subtask from "../models/Subtask.js";
+import { UPLOADS_DIR, VIDEOS_UPLOADS_DIR } from "../middleware/upload.js";
 
 /**
  * Upload a Video Note attached to a task (Note).
@@ -38,6 +40,8 @@ export const uploadVideoNote = async (req, res) => {
       mimeType: req.file.mimetype || "video/webm",
       subtaskId: subtaskId || null,
       createdBy: req.user?._id || null,
+      parentStatus: note.archived ? "archived" : "active",
+      markedForDeletionAt: null,
     });
 
     await newVideoNote.save();
@@ -143,6 +147,83 @@ export const getVideoNoteById = async (req, res) => {
   } catch (error) {
     console.error("Error in getVideoNoteById:", error);
     res.status(500).json({ message: "Error al obtener la video nota." });
+  }
+};
+
+/**
+ * Stream a video note with full HTTP Range request support (206 Partial Content).
+ * GET /api/video-notes/:id/stream
+ */
+export const streamVideoNote = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const videoNote = await VideoNote.findById(id);
+    if (!videoNote) {
+      return res.status(404).json({ message: "Video nota no encontrada." });
+    }
+
+    // Resolve file path on disk (check recorded path and both directory fallbacks)
+    let targetPath = videoNote.filePath;
+    if (!targetPath || !fs.existsSync(targetPath)) {
+      targetPath = path.join(VIDEOS_UPLOADS_DIR, path.basename(videoNote.fileUrl));
+    }
+    if (!fs.existsSync(targetPath)) {
+      targetPath = path.join(UPLOADS_DIR, path.basename(videoNote.fileUrl));
+    }
+    if (!fs.existsSync(targetPath)) {
+      targetPath = path.resolve(process.cwd(), `.${videoNote.fileUrl}`);
+    }
+
+    if (!fs.existsSync(targetPath)) {
+      console.warn("Video file not found at:", targetPath);
+      return res.status(404).json({ message: "Archivo de video no encontrado en el servidor." });
+    }
+
+    const stat = fs.statSync(targetPath);
+    const fileSize = stat.size;
+    const range = req.headers.range;
+
+    const isMp4 = targetPath.toLowerCase().endsWith(".mp4");
+    const contentType = isMp4 ? "video/mp4" : "video/webm";
+
+    if (range) {
+      const parts = range.replace(/bytes=/, "").split("-");
+      const start = parseInt(parts[0], 10);
+      const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+
+      if (start >= fileSize || end >= fileSize) {
+        res.status(416).setHeader("Content-Range", `bytes */${fileSize}`);
+        return res.end();
+      }
+
+      const chunksize = end - start + 1;
+      const fileStream = fs.createReadStream(targetPath, { start, end });
+      const head = {
+        "Content-Range": `bytes ${start}-${end}/${fileSize}`,
+        "Accept-Ranges": "bytes",
+        "Content-Length": chunksize,
+        "Content-Type": contentType,
+        "Access-Control-Allow-Origin": req.headers.origin || "*",
+        "Access-Control-Allow-Credentials": "true",
+      };
+      res.writeHead(206, head);
+      fileStream.pipe(res);
+    } else {
+      const head = {
+        "Content-Length": fileSize,
+        "Content-Type": contentType,
+        "Accept-Ranges": "bytes",
+        "Access-Control-Allow-Origin": req.headers.origin || "*",
+        "Access-Control-Allow-Credentials": "true",
+      };
+      res.writeHead(200, head);
+      fs.createReadStream(targetPath).pipe(res);
+    }
+  } catch (error) {
+    console.error("Error in streamVideoNote:", error);
+    if (!res.headersSent) {
+      res.status(500).json({ message: "Error al transmitir el video." });
+    }
   }
 };
 

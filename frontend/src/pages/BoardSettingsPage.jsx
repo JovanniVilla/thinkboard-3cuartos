@@ -22,6 +22,7 @@ import {
   DatabaseIcon,
   UploadIcon,
   DownloadIcon,
+  HardDriveIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
@@ -36,6 +37,7 @@ import { useBoardConfig } from "../lib/useBoardConfig";
 import { useTaskSizes } from "../lib/useTaskSizes";
 import { useAuth } from "../lib/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
+import StorageManagementView from "../components/storage/StorageManagementView";
 
 const PRESET_COLORS = [
   "#6B7280", "#EF4444", "#F97316", "#EAB308",
@@ -613,6 +615,17 @@ const BoardSettingsPage = () => {
               >
                 <DatabaseIcon className="w-5 h-5" />
                 <span>Respaldo BD</span>
+              </button>
+
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "storage" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("storage")}
+              >
+                <HardDriveIcon className="w-5 h-5" />
+                <span>Almacenamiento</span>
               </button>
             </div>
 
@@ -1892,6 +1905,13 @@ const BoardSettingsPage = () => {
 
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB 8: ALMACENAMIENTO Y ARCHIVOS */}
+          {activeTab === "storage" && (
+            <div className="space-y-6 overflow-y-auto pr-1 pb-4 flex-1">
+              <StorageManagementView />
             </div>
           )}
 

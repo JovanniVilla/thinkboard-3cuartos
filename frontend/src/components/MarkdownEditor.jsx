@@ -150,7 +150,9 @@ const MarkdownEditor = ({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        link: false,
+      }),
       Mention.configure({
         HTMLAttributes: {
           class: 'mention bg-primary/10 text-primary font-bold px-1 py-0.5 rounded-md cursor-pointer hover:bg-primary/20',

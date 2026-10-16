@@ -19,6 +19,8 @@ import taskSizeRoutes from "./routes/taskSizeRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
 import subtaskRoutes from "./routes/subtaskRoutes.js";
 import videoNoteRoutes from "./routes/videoNoteRoutes.js";
+import storageRoutes from "./routes/storageRoutes.js";
+import { initStorageCronJob } from "./cron/storageCleanup.js";
 import { UPLOADS_DIR } from "./middleware/upload.js";
 import { connectDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
@@ -30,21 +32,33 @@ app.set("trust proxy", true);
 const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
 
-// Static directory for uploaded visual assets (images and PDFs)
-app.use("/uploads", express.static(UPLOADS_DIR));
-app.use("/uploads", (req, res) => {
-  res.status(404).json({ message: "Archivo adjunto no encontrado en el almacenamiento" });
-});
-
-// middleware
+// CORS middleware (must be before any static files or API routes)
 if (process.env.NODE_ENV !== "production") {
   app.use(
     cors({
-      origin: "http://localhost:5173",
+      origin: true,
       credentials: true,
     })
   );
 }
+
+// Static directory for uploaded visual assets (images, PDFs, and videos)
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    res.setHeader("Accept-Ranges", "bytes");
+    next();
+  },
+  express.static(UPLOADS_DIR, {
+    setHeaders: (res) => {
+      res.setHeader("Accept-Ranges", "bytes");
+    },
+  })
+);
+app.use("/uploads", (req, res) => {
+  res.status(404).json({ message: "Archivo adjunto no encontrado en el almacenamiento" });
+});
+
 app.use(express.json()); // this middleware will parse JSON bodies: req.body
 app.use(cookieParser());
 app.use(rateLimiter);
@@ -74,6 +88,7 @@ app.use("/api/tasks", videoNoteRoutes); // /api/tasks/:taskId/video-notes
 app.use("/api/notes", videoNoteRoutes); // alias /api/notes/:taskId/video-notes
 app.use("/api/video-notes", videoNoteRoutes); // /api/video-notes/:id
 app.use("/api/subtasks", subtaskRoutes); // /api/subtasks
+app.use("/api/storage", storageRoutes); // /api/storage (stats, files, bulk-orphans)
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
@@ -84,6 +99,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 connectDB().then(() => {
+  initStorageCronJob();
   app.listen(PORT, () => {
     console.log("Server started on PORT:", PORT);
   });
