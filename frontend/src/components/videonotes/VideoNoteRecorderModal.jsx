@@ -65,8 +65,8 @@ export default function VideoNoteRecorderModal({
       overflowY: node.style.overflowY,
     }));
 
-    scrollContainers.forEach(({ node }) => {
-      if (!modalRef.current || !modalRef.current.contains(node)) {
+    savedStyles.forEach(({ node }) => {
+      if (node && (!modalRef.current || !modalRef.current.contains(node))) {
         node.style.overflow = "hidden";
         node.style.overflowY = "hidden";
       }
@@ -111,8 +111,10 @@ export default function VideoNoteRecorderModal({
       document.documentElement.style.overflow = originalHtmlOverflow;
 
       savedStyles.forEach(({ node, overflow, overflowY }) => {
-        node.style.overflow = overflow;
-        node.style.overflowY = overflowY;
+        if (node) {
+          node.style.overflow = overflow;
+          node.style.overflowY = overflowY;
+        }
       });
 
       window.removeEventListener("wheel", preventScrollPropagation);

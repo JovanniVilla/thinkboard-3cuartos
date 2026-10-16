@@ -113,6 +113,14 @@ const NoteDetailPage = () => {
   const [isVideoRecorderOpen, setIsVideoRecorderOpen] = useState(false);
   const [activeVideoForPlayer, setActiveVideoForPlayer] = useState(null);
 
+  const handleSubtasksCountChange = useCallback((_, totalFiles) => {
+    setVisualFilesCount((prev) => (prev !== totalFiles ? totalFiles : prev));
+  }, []);
+
+  const handleVideoNotesCountChange = useCallback((total) => {
+    setVideoNotesCount((prev) => (prev !== total ? total : prev));
+  }, []);
+
   // Active popover state
   const [activePopover, setActivePopover] = useState(null); // 'status', 'priority', 'project', 'labels', 'dates', 'members', 'size'
 
@@ -1323,14 +1331,14 @@ const NoteDetailPage = () => {
             <VisualAnnotationsSection
               taskId={note._id}
               accounts={accounts}
-              onSubtasksCountChange={(_, totalFiles) => setVisualFilesCount(totalFiles)}
+              onSubtasksCountChange={handleSubtasksCountChange}
               onNoteRefresh={fetchNote}
             />
 
             {/* Video Notes (Screen & Audio Recording) Section */}
             <VideoNotesSection
               taskId={note._id}
-              onVideoNotesCountChange={(total) => setVideoNotesCount(total)}
+              onVideoNotesCountChange={handleVideoNotesCountChange}
               onNoteRefresh={fetchNote}
               isRecorderOpen={isVideoRecorderOpen}
               setIsRecorderOpen={setIsVideoRecorderOpen}

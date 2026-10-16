@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import api from "../../lib/axios";
 import FileUploader from "./FileUploader";
 import AnnotationCanvas from "./AnnotationCanvas";
@@ -24,6 +24,11 @@ export default function VisualAnnotationsSection({
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
   const [activeFileForCanvas, setActiveFileForCanvas] = useState(null);
 
+  const onSubtasksCountChangeRef = useRef(onSubtasksCountChange);
+  useEffect(() => {
+    onSubtasksCountChangeRef.current = onSubtasksCountChange;
+  }, [onSubtasksCountChange]);
+
   const fetchFiles = useCallback(async () => {
     if (!taskId) return;
     try {
@@ -32,19 +37,19 @@ export default function VisualAnnotationsSection({
       const data = res.data || [];
       setFiles(data);
 
-      if (onSubtasksCountChange) {
+      if (onSubtasksCountChangeRef.current) {
         const totalSubtasks = data.reduce(
           (acc, f) => acc + (f.subtaskCount || 0),
           0
         );
-        onSubtasksCountChange(totalSubtasks, data.length);
+        onSubtasksCountChangeRef.current(totalSubtasks, data.length);
       }
     } catch (error) {
       console.error("Error fetching files:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [taskId, onSubtasksCountChange]);
+  }, [taskId]);
 
   useEffect(() => {
     fetchFiles();

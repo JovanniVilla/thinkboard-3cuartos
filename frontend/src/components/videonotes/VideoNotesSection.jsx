@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import api from "../../lib/axios";
 import { getFileUrl, formatFileSize, formatDuration } from "../../lib/fileUtils";
 import VideoNoteRecorderModal from "./VideoNoteRecorderModal";
@@ -31,6 +31,11 @@ export default function VideoNotesSection({
   const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'pending' | 'resolved'
   const [updatingId, setUpdatingId] = useState(null);
 
+  const onVideoNotesCountChangeRef = useRef(onVideoNotesCountChange);
+  useEffect(() => {
+    onVideoNotesCountChangeRef.current = onVideoNotesCountChange;
+  }, [onVideoNotesCountChange]);
+
   // Control coordinado del modal de grabación (desde prop externa o interno)
   const isModalOpen =
     isRecorderOpen !== undefined ? isRecorderOpen : internalRecorderOpen;
@@ -61,15 +66,15 @@ export default function VideoNotesSection({
       const data = res.data || [];
       setVideoNotes(data);
 
-      if (onVideoNotesCountChange) {
-        onVideoNotesCountChange(data.length);
+      if (onVideoNotesCountChangeRef.current) {
+        onVideoNotesCountChangeRef.current(data.length);
       }
     } catch (error) {
       console.error("Error al obtener las video notas:", error);
     } finally {
       setIsLoading(false);
     }
-  }, [taskId, onVideoNotesCountChange]);
+  }, [taskId]);
 
   useEffect(() => {
     fetchVideoNotes();
