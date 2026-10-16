@@ -33,6 +33,8 @@ export const uploadTaskFile = async (req, res) => {
       filePath: req.file.path,
       size: req.file.size,
       uploadedBy: req.user?._id || null,
+      parentStatus: note.archived ? "archived" : "active",
+      markedForDeletionAt: null,
     });
 
     await newFile.save();
@@ -123,6 +125,19 @@ export const deleteFile = async (req, res) => {
     const file = await File.findById(fileId);
     if (!file) {
       return res.status(404).json({ message: "Archivo no encontrado." });
+    }
+
+    // Authorization: only the uploader or admin can delete
+    const isOwner =
+      file.uploadedBy &&
+      req.user &&
+      file.uploadedBy.toString() === req.user._id.toString();
+    const isAdmin = req.user?.role === "admin";
+
+    if (!isOwner && !isAdmin) {
+      return res
+        .status(403)
+        .json({ message: "No tienes permiso para eliminar este archivo." });
     }
 
     // Delete associated subtasks / pins

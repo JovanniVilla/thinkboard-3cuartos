@@ -38,6 +38,8 @@ export const uploadVideoNote = async (req, res) => {
       mimeType: req.file.mimetype || "video/webm",
       subtaskId: subtaskId || null,
       createdBy: req.user?._id || null,
+      parentStatus: note.archived ? "archived" : "active",
+      markedForDeletionAt: null,
     });
 
     await newVideoNote.save();

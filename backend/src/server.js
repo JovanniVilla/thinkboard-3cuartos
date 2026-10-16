@@ -19,6 +19,8 @@ import taskSizeRoutes from "./routes/taskSizeRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
 import subtaskRoutes from "./routes/subtaskRoutes.js";
 import videoNoteRoutes from "./routes/videoNoteRoutes.js";
+import storageRoutes from "./routes/storageRoutes.js";
+import { initStorageCronJob } from "./cron/storageCleanup.js";
 import { UPLOADS_DIR } from "./middleware/upload.js";
 import { connectDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
@@ -74,6 +76,7 @@ app.use("/api/tasks", videoNoteRoutes); // /api/tasks/:taskId/video-notes
 app.use("/api/notes", videoNoteRoutes); // alias /api/notes/:taskId/video-notes
 app.use("/api/video-notes", videoNoteRoutes); // /api/video-notes/:id
 app.use("/api/subtasks", subtaskRoutes); // /api/subtasks
+app.use("/api/storage", storageRoutes); // /api/storage (stats, files, bulk-orphans)
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
@@ -84,6 +87,7 @@ if (process.env.NODE_ENV === "production") {
 }
 
 connectDB().then(() => {
+  initStorageCronJob();
   app.listen(PORT, () => {
     console.log("Server started on PORT:", PORT);
   });
