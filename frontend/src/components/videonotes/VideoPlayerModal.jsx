@@ -1,6 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import api from "../../lib/axios";
-import { getFileUrl, formatFileSize, formatDuration } from "../../lib/fileUtils";
+import {
+  getFileUrl,
+  getVideoNoteStreamUrl,
+  formatFileSize,
+  formatDuration,
+} from "../../lib/fileUtils";
 import {
   XIcon,
   DownloadIcon,
@@ -12,6 +18,8 @@ import {
   ArrowLeftIcon,
   CheckCircle2Icon,
   RotateCcwIcon,
+  PlayIcon,
+  AlertCircleIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -26,12 +34,18 @@ export default function VideoPlayerModal({
     videoNote?.status || "pending"
   );
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [hasPlaybackError, setHasPlaybackError] = useState(false);
 
-  if (!videoNote) return null;
+  const modalRef = useRef(null);
+  const videoRef = useRef(null);
 
-  const resolvedUrl = getFileUrl(videoNote.fileUrl);
-  const authorName = videoNote.createdBy?.name || "Usuario";
-  const authorColor = videoNote.createdBy?.color || "#3B82F6";
+  // URLs de transmisión por rangos HTTP y fallback estático
+  const streamUrl = getVideoNoteStreamUrl(videoNote);
+  const staticUrl = getFileUrl(videoNote?.fileUrl);
+
+  const authorName = videoNote?.createdBy?.name || "Usuario";
+  const authorColor = videoNote?.createdBy?.color || "#3B82F6";
 
   const getInitials = (name) => {
     if (!name) return "U";
@@ -42,6 +56,123 @@ export default function VideoPlayerModal({
       .toUpperCase()
       .substring(0, 2);
   };
+
+  // Bloqueo estricto del scroll de fondo mientras la caja de luz esté abierta
+  useEffect(() => {
+    // 1. Guardar estilos originales del body y html
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalBodyOverscroll = document.body.style.overscrollBehavior;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+    document.documentElement.style.overflow = "hidden";
+
+    // 2. Bloquear cualquier contenedor con scroll en la vista subyacente (ej: NoteDetailPage)
+    const scrollContainers = Array.from(
+      document.querySelectorAll(".overflow-y-auto, .overflow-auto")
+    );
+    const savedStyles = scrollContainers.map((node) => ({
+      node,
+      overflow: node.style.overflow,
+      overflowY: node.style.overflowY,
+    }));
+
+    scrollContainers.forEach(({ node }) => {
+      if (!modalRef.current || !modalRef.current.contains(node)) {
+        node.style.overflow = "hidden";
+        node.style.overflowY = "hidden";
+      }
+    });
+
+    // 3. Interceptar y cancelar eventos de rueda de ratón o táctiles para evitar propagación al fondo
+    const preventScrollPropagation = (e) => {
+      let node = e.target;
+      let canScrollInside = false;
+
+      while (node && node !== modalRef.current) {
+        if (
+          node.scrollHeight > node.clientHeight &&
+          window.getComputedStyle(node).overflowY.match(/(auto|scroll)/)
+        ) {
+          const isDown = e.deltaY > 0;
+          const atBottom =
+            node.scrollTop + node.clientHeight >= node.scrollHeight - 1;
+          const atTop = node.scrollTop <= 0;
+          if ((isDown && !atBottom) || (!isDown && !atTop)) {
+            canScrollInside = true;
+            break;
+          }
+        }
+        node = node.parentElement;
+      }
+
+      if (!canScrollInside) {
+        e.preventDefault();
+      }
+    };
+
+    // 4. Control por teclado: ESC cierra el modal, Espacio controla play/pause sin scrollear la página
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+        return;
+      }
+      if (e.code === "Space") {
+        const isEditingField = ["INPUT", "TEXTAREA", "SELECT"].includes(
+          document.activeElement?.tagName
+        );
+        if (!isEditingField && videoRef.current) {
+          e.preventDefault();
+          if (videoRef.current.paused) {
+            videoRef.current.play().catch(() => {});
+          } else {
+            videoRef.current.pause();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("wheel", preventScrollPropagation, {
+      passive: false,
+    });
+    window.addEventListener("touchmove", preventScrollPropagation, {
+      passive: false,
+    });
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      // Restaurar estilos en el desmontaje
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.overscrollBehavior = originalBodyOverscroll;
+      document.documentElement.style.overflow = originalHtmlOverflow;
+
+      savedStyles.forEach(({ node, overflow, overflowY }) => {
+        node.style.overflow = overflow;
+        node.style.overflowY = overflowY;
+      });
+
+      window.removeEventListener("wheel", preventScrollPropagation);
+      window.removeEventListener("touchmove", preventScrollPropagation);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
+
+  // Intentar reproducción automática sin romper si el navegador bloquea autoplay sin silenciar
+  useEffect(() => {
+    if (videoRef.current) {
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          // Autoplay bloqueado por política del navegador; el usuario puede pulsar el botón de play
+          console.log("Autoplay en espera de interacción del usuario:", err.message);
+        });
+      }
+    }
+  }, [streamUrl, staticUrl]);
+
+  if (!videoNote) return null;
 
   const handleToggleStatus = async () => {
     const nextStatus = currentStatus === "resolved" ? "pending" : "resolved";
@@ -57,7 +188,9 @@ export default function VideoPlayerModal({
           : "Video nota marcada como pendiente"
       );
       if (onStatusChange) {
-        onStatusChange(res.data.videoNote || { ...videoNote, status: nextStatus });
+        onStatusChange(
+          res.data.videoNote || { ...videoNote, status: nextStatus }
+        );
       }
     } catch (error) {
       console.error("Error updating video note status:", error);
@@ -67,15 +200,35 @@ export default function VideoPlayerModal({
     }
   };
 
+  const handleVideoCanvasClick = () => {
+    if (!videoRef.current) return;
+    if (videoRef.current.paused) {
+      videoRef.current.play().catch(() => {});
+    } else {
+      videoRef.current.pause();
+    }
+  };
+
+  const handleRetryPlayback = () => {
+    setHasPlaybackError(false);
+    if (videoRef.current) {
+      videoRef.current.load();
+      videoRef.current.play().catch(() => {});
+    }
+  };
+
   const isResolved = currentStatus === "resolved";
 
-  return (
+  const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+      ref={modalRef}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 select-none overscroll-contain"
       onClick={onClose}
+      onWheel={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
     >
       <div
-        className="w-full max-w-4xl bg-base-100 rounded-2xl shadow-2xl border border-base-content/10 overflow-hidden flex flex-col max-h-[95vh]"
+        className="w-full max-w-4xl bg-base-100 rounded-2xl shadow-2xl border border-base-content/10 overflow-hidden flex flex-col max-h-[95vh] overscroll-contain select-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Bar */}
@@ -165,7 +318,7 @@ export default function VideoPlayerModal({
 
             {/* Direct Download Button */}
             <a
-              href={resolvedUrl}
+              href={staticUrl || streamUrl}
               download={`${videoNote.title || "videonota"}.webm`}
               target="_blank"
               rel="noreferrer"
@@ -211,16 +364,91 @@ export default function VideoPlayerModal({
         </div>
 
         {/* Video Player Cinema Canvas */}
-        <div className="bg-black flex items-center justify-center relative flex-1 min-h-[300px] max-h-[70vh]">
+        <div
+          className="bg-black flex items-center justify-center relative flex-1 min-h-[320px] max-h-[70vh] cursor-pointer group"
+          onClick={handleVideoCanvasClick}
+        >
           <video
-            src={resolvedUrl}
+            ref={videoRef}
             controls
-            autoPlay
             playsInline
+            preload="auto"
+            crossOrigin="anonymous"
+            onPlay={() => setIsPlaying(true)}
+            onPause={() => setIsPlaying(false)}
+            onError={(e) => {
+              console.warn("Error en reproducción de video:", e);
+              setHasPlaybackError(true);
+            }}
             className="w-full h-full max-h-[70vh] object-contain shadow-2xl"
           >
+            {streamUrl && (
+              <source
+                src={streamUrl}
+                type={videoNote.mimeType || "video/webm"}
+              />
+            )}
+            {staticUrl && (
+              <source
+                src={staticUrl}
+                type={videoNote.mimeType || "video/webm"}
+              />
+            )}
             Tu navegador no soporta la reproducción de video HTML5.
           </video>
+
+          {/* Botón flotante grande de Play si está en pausa y listo */}
+          {!isPlaying && !hasPlaybackError && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (videoRef.current) {
+                  videoRef.current.play().catch(() => {});
+                }
+              }}
+              className="absolute inset-0 m-auto size-16 rounded-full bg-primary/90 hover:bg-primary text-white flex items-center justify-center shadow-2xl hover:scale-105 active:scale-95 transition-all z-10"
+              title="Reproducir video"
+            >
+              <PlayIcon className="size-8 ml-1 fill-white" />
+            </button>
+          )}
+
+          {/* Mensaje de error de reproducción con opciones de recuperación */}
+          {hasPlaybackError && (
+            <div
+              className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center text-center p-6 text-white space-y-3 z-20"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <AlertCircleIcon className="size-10 text-error" />
+              <p className="font-semibold text-sm">
+                No se pudo reproducir el video en streaming
+              </p>
+              <p className="text-xs text-white/70 max-w-md">
+                El archivo podría estar finalizando su procesamiento o necesitar descarga directa.
+              </p>
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={handleRetryPlayback}
+                  className="btn btn-sm btn-primary rounded-lg gap-1.5"
+                >
+                  <RotateCcwIcon className="size-3.5" />
+                  <span>Reintentar</span>
+                </button>
+                <a
+                  href={staticUrl || streamUrl}
+                  download={`${videoNote.title || "videonota"}.webm`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-sm btn-outline text-white rounded-lg gap-1.5"
+                >
+                  <DownloadIcon className="size-3.5" />
+                  <span>Descargar archivo</span>
+                </a>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer Info Metadata Bar */}
@@ -252,4 +480,10 @@ export default function VideoPlayerModal({
       </div>
     </div>
   );
+
+  // Renderizar a través de portal en document.body para desacoplar del contexto de apilamiento de la tarea
+  if (typeof document === "undefined") {
+    return modalContent;
+  }
+  return createPortal(modalContent, document.body);
 }

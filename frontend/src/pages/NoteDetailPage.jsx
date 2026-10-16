@@ -502,7 +502,11 @@ const NoteDetailPage = () => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 sm:p-6 bg-black/40 backdrop-blur-sm text-base-content"
+      className={`fixed inset-0 z-50 flex items-start justify-center ${
+        activeVideoForPlayer || isVideoRecorderOpen || canvasTarget
+          ? "overflow-hidden"
+          : "overflow-y-auto"
+      } p-4 sm:p-6 bg-black/40 backdrop-blur-sm text-base-content`}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           navigate("/");

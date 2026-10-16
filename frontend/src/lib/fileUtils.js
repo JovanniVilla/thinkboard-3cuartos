@@ -57,3 +57,15 @@ export function formatDuration(seconds = 0) {
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
+/**
+ * Resolves video note streaming URL supporting HTTP Range 206 Partial Content.
+ */
+export function getVideoNoteStreamUrl(videoNote) {
+  if (!videoNote) return "";
+  if (videoNote._id) {
+    return getFileUrl(`/api/video-notes/${videoNote._id}/stream`);
+  }
+  return getFileUrl(videoNote.fileUrl || "");
+}
+
+

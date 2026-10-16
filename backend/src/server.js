@@ -32,21 +32,40 @@ app.set("trust proxy", true);
 const PORT = process.env.PORT || 5001;
 const __dirname = path.resolve();
 
-// Static directory for uploaded visual assets (images and PDFs)
-app.use("/uploads", express.static(UPLOADS_DIR));
-app.use("/uploads", (req, res) => {
-  res.status(404).json({ message: "Archivo adjunto no encontrado en el almacenamiento" });
-});
-
-// middleware
+// CORS middleware (must be before any static files or API routes)
 if (process.env.NODE_ENV !== "production") {
   app.use(
     cors({
-      origin: "http://localhost:5173",
+      origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
       credentials: true,
     })
   );
 }
+
+// Static directory for uploaded visual assets (images, PDFs, and videos)
+app.use(
+  "/uploads",
+  (req, res, next) => {
+    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Range, Content-Type, Authorization");
+    res.setHeader("Accept-Ranges", "bytes");
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(204);
+    }
+    next();
+  },
+  express.static(UPLOADS_DIR, {
+    setHeaders: (res) => {
+      res.setHeader("Accept-Ranges", "bytes");
+    },
+  })
+);
+app.use("/uploads", (req, res) => {
+  res.status(404).json({ message: "Archivo adjunto no encontrado en el almacenamiento" });
+});
+
 app.use(express.json()); // this middleware will parse JSON bodies: req.body
 app.use(cookieParser());
 app.use(rateLimiter);
