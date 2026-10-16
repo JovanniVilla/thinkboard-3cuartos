@@ -59,6 +59,8 @@ export default function VideoPlayerModal({
 
   // Bloqueo estricto del scroll de fondo mientras la caja de luz esté abierta
   useEffect(() => {
+    if (!videoNote) return;
+
     // 1. Guardar estilos originales del body y html
     const originalBodyOverflow = document.body.style.overflow;
     const originalBodyOverscroll = document.body.style.overscrollBehavior;
@@ -157,7 +159,7 @@ export default function VideoPlayerModal({
       window.removeEventListener("touchmove", preventScrollPropagation);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, [videoNote, onClose]);
 
   // Intentar reproducción automática sin romper si el navegador bloquea autoplay sin silenciar
   useEffect(() => {
@@ -271,13 +273,17 @@ export default function VideoPlayerModal({
                 <span>•</span>
                 <span className="flex items-center gap-1">
                   <CalendarIcon className="size-3" />
-                  {new Date(videoNote.createdAt).toLocaleDateString("es-ES", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
+                  {videoNote.createdAt ? (
+                    new Date(videoNote.createdAt).toLocaleDateString("es-ES", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  ) : (
+                    "Fecha desconocida"
+                  )}
                 </span>
               </div>
             </div>
@@ -370,15 +376,24 @@ export default function VideoPlayerModal({
         >
           <video
             ref={videoRef}
+            src={streamUrl || staticUrl}
             controls
             playsInline
-            preload="auto"
-            crossOrigin="anonymous"
+            preload="metadata"
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onError={(e) => {
               console.warn("Error en reproducción de video:", e);
-              setHasPlaybackError(true);
+              if (
+                videoRef.current &&
+                staticUrl &&
+                videoRef.current.src !== staticUrl
+              ) {
+                videoRef.current.src = staticUrl;
+                videoRef.current.load();
+              } else {
+                setHasPlaybackError(true);
+              }
             }}
             className="w-full h-full max-h-[70vh] object-contain shadow-2xl"
           >

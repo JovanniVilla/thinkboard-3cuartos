@@ -36,7 +36,7 @@ const __dirname = path.resolve();
 if (process.env.NODE_ENV !== "production") {
   app.use(
     cors({
-      origin: ["http://localhost:5173", "http://127.0.0.1:5173"],
+      origin: true,
       credentials: true,
     })
   );
@@ -46,14 +46,7 @@ if (process.env.NODE_ENV !== "production") {
 app.use(
   "/uploads",
   (req, res, next) => {
-    res.setHeader("Access-Control-Allow-Origin", req.headers.origin || "*");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Range, Content-Type, Authorization");
     res.setHeader("Accept-Ranges", "bytes");
-    if (req.method === "OPTIONS") {
-      return res.sendStatus(204);
-    }
     next();
   },
   express.static(UPLOADS_DIR, {
