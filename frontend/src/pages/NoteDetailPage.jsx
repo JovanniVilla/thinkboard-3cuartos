@@ -111,6 +111,7 @@ const NoteDetailPage = () => {
   // Video Notes state
   const [videoNotesCount, setVideoNotesCount] = useState(0);
   const [isVideoRecorderOpen, setIsVideoRecorderOpen] = useState(false);
+  const [activeVideoForPlayer, setActiveVideoForPlayer] = useState(null);
 
   // Active popover state
   const [activePopover, setActivePopover] = useState(null); // 'status', 'priority', 'project', 'labels', 'dates', 'members', 'size'
@@ -416,6 +417,17 @@ const NoteDetailPage = () => {
     } catch (err) {
       console.error("Error loading file for pin:", err);
       toast.error("No se pudo cargar el archivo del marcador.");
+    }
+  };
+
+  const handleOpenVideoNoteFromChecklist = async (videoNoteId) => {
+    try {
+      const res = await api.get(`/video-notes/${videoNoteId}`);
+      setActiveVideoForPlayer(res.data);
+    } catch (err) {
+      console.error("Error loading video note for checklist:", err);
+      const el = document.getElementById("video-notes-section");
+      if (el) el.scrollIntoView({ behavior: "smooth" });
     }
   };
 
@@ -1224,6 +1236,23 @@ const NoteDetailPage = () => {
                                 <span>Pin {item.pageNumber > 1 ? `(Pág. ${item.pageNumber})` : ""}</span>
                               </button>
                             )}
+
+                            {/* Badge con enlace directo para reproducir la video nota */}
+                            {item.videoNoteId && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleOpenVideoNoteFromChecklist(item.videoNoteId);
+                                }}
+                                className="badge badge-xs bg-error/15 hover:bg-error/25 text-error border border-error/30 gap-1 py-1 px-1.5 ml-1 transition-all cursor-pointer font-medium"
+                                title="Reproducir Video Nota"
+                              >
+                                <VideoIcon className="size-2.5" />
+                                <span>Video Nota</span>
+                              </button>
+                            )}
                           </label>
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
@@ -1301,6 +1330,8 @@ const NoteDetailPage = () => {
               onNoteRefresh={fetchNote}
               isRecorderOpen={isVideoRecorderOpen}
               setIsRecorderOpen={setIsVideoRecorderOpen}
+              activeVideoForPlayer={activeVideoForPlayer}
+              setActiveVideoForPlayer={setActiveVideoForPlayer}
             />
 
             {/* Bottom Actions: Save & Delete */}

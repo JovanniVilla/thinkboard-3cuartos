@@ -13,6 +13,12 @@ const videoNoteSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    status: {
+      type: String,
+      enum: ["pending", "resolved"],
+      default: "pending",
+      index: true,
+    },
     fileUrl: {
       type: String,
       required: true, // e.g. '/uploads/videos/videonote-12345.webm'

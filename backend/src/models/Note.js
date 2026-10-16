@@ -78,6 +78,11 @@ const noteSchema = new mongoose.Schema(
           type: Number,
           default: 1,
         },
+        videoNoteId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "VideoNote",
+          default: null,
+        },
       },
     ],
     activities: [

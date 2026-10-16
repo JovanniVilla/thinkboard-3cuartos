@@ -59,6 +59,15 @@ export const uploadVideoNote = async (req, res) => {
       createdAt: new Date(),
     });
 
+    // Add Video Note to the main checklist of the Note
+    note.checklist.push({
+      id: Date.now().toString(),
+      title: `🎥 Video Nota: ${cleanTitle}`,
+      completed: false,
+      videoNoteId: newVideoNote._id,
+      subtaskId: subtaskId || null,
+    });
+
     await note.save();
 
     // If linked to a subtask, also log in subtask comments
@@ -170,9 +179,10 @@ export const deleteVideoNote = async (req, res) => {
       });
     }
 
-    // Log deletion activity in parent note
+    // Log deletion activity and remove checklist item in parent note
     const actor = req.user?.name || "Usuario";
     await Note.findByIdAndUpdate(videoNote.taskId, {
+      $pull: { checklist: { videoNoteId: videoNote._id } },
       $push: {
         activities: {
           id: Date.now().toString(),
@@ -190,5 +200,63 @@ export const deleteVideoNote = async (req, res) => {
   } catch (error) {
     console.error("Error in deleteVideoNote:", error);
     res.status(500).json({ message: "Error al eliminar la video nota." });
+  }
+};
+
+/**
+ * Update the status of a video note (e.g. 'pending' | 'resolved').
+ * PATCH /api/video-notes/:id/status or PATCH /api/video-notes/:id
+ */
+export const updateVideoNoteStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!["pending", "resolved"].includes(status)) {
+      return res
+        .status(400)
+        .json({ message: "Estado inválido. Debe ser 'pending' o 'resolved'." });
+    }
+
+    const videoNote = await VideoNote.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    ).populate("createdBy", "name email color");
+
+    if (!videoNote) {
+      return res.status(404).json({ message: "Video nota no encontrada." });
+    }
+
+    const isCompleted = status === "resolved";
+
+    // Synchronize parent Note checklist
+    await Note.updateOne(
+      { _id: videoNote.taskId, "checklist.videoNoteId": videoNote._id },
+      { $set: { "checklist.$.completed": isCompleted } }
+    );
+
+    // Log action in Note activities
+    const actor = req.user?.name || "Usuario";
+    const statusLabel = isCompleted ? "resuelta" : "pendiente";
+    await Note.findByIdAndUpdate(videoNote.taskId, {
+      $push: {
+        activities: {
+          id: Date.now().toString(),
+          type: "action",
+          text: `${actor} marcó la video nota "${videoNote.title}" como ${statusLabel}`,
+          user: actor,
+          createdAt: new Date(),
+        },
+      },
+    });
+
+    res.status(200).json({
+      message: `Video nota marcada como ${statusLabel}`,
+      videoNote,
+    });
+  } catch (error) {
+    console.error("Error in updateVideoNoteStatus:", error);
+    res.status(500).json({ message: "Error al actualizar el estado de la video nota." });
   }
 };

@@ -14,6 +14,7 @@ import {
   AlertCircleIcon,
   CheckCircle2Icon,
   MonitorIcon,
+  ArrowLeftIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -289,6 +290,28 @@ export default function VideoNoteRecorderModal({
     setErrorMsg("");
   };
 
+  // Cerrar el video/grabación y volver a la tarea
+  const handleCloseAndReturn = () => {
+    if (recordingState === "recording" || recordingState === "paused") {
+      if (
+        !window.confirm(
+          "¿Deseas cancelar la grabación y volver a la tarea? El video en curso se perderá."
+        )
+      ) {
+        return;
+      }
+    }
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    stopAllMediaTracks();
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    onClose();
+  };
+
   // Alternar audio del micrófono durante la grabación
   const toggleAudioTrack = () => {
     if (audioStreamRef.current) {
@@ -377,14 +400,27 @@ export default function VideoNoteRecorderModal({
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={recordingState === "recording" || isUploading}
-            className="btn btn-ghost btn-sm btn-circle text-base-content/60 hover:text-base-content"
-          >
-            <XIcon className="size-4" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={handleCloseAndReturn}
+              disabled={isUploading}
+              className="btn btn-ghost btn-xs sm:btn-sm gap-1.5 rounded-lg text-base-content/70 hover:text-base-content font-medium"
+              title="Cerrar el video y volver a la tarea"
+            >
+              <ArrowLeftIcon className="size-4" />
+              <span className="hidden sm:inline">Volver a la tarea</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCloseAndReturn}
+              disabled={isUploading}
+              className="btn btn-ghost btn-sm btn-circle text-base-content/60 hover:text-base-content"
+              title="Cerrar"
+            >
+              <XIcon className="size-4" />
+            </button>
+          </div>
         </div>
 
         {/* Modal Body */}
@@ -561,6 +597,16 @@ export default function VideoNoteRecorderModal({
                     <SquareIcon className="size-4 fill-current" />
                     <span>Finalizar</span>
                   </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCloseAndReturn}
+                    className="btn btn-sm btn-ghost gap-1.5 rounded-xl font-medium text-base-content/70 hover:text-error"
+                    title="Cancelar grabación y volver a la tarea"
+                  >
+                    <ArrowLeftIcon className="size-4" />
+                    <span>Volver a la tarea</span>
+                  </button>
                 </div>
               </div>
 
@@ -630,11 +676,13 @@ export default function VideoNoteRecorderModal({
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={onClose}
+                    onClick={handleCloseAndReturn}
                     disabled={isUploading}
-                    className="btn btn-sm btn-ghost rounded-lg font-medium"
+                    className="btn btn-sm btn-ghost gap-1.5 rounded-lg font-medium text-base-content/70 hover:text-base-content"
+                    title="Cerrar el video y volver a la tarea"
                   >
-                    Descartar
+                    <ArrowLeftIcon className="size-4" />
+                    <span>Volver a la tarea</span>
                   </button>
                   <button
                     type="button"

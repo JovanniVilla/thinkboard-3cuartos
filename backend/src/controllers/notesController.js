@@ -3,6 +3,7 @@ import BoardConfig from "../models/BoardConfig.js";
 import StatusConfig from "../models/StatusConfig.js";
 import Project from "../models/Project.js";
 import Subtask from "../models/Subtask.js";
+import VideoNote from "../models/VideoNote.js";
 
 export async function getAllNotes(req, res) {
   try {
@@ -276,12 +277,16 @@ export async function updateNote(req, res) {
       }
     ).populate("size");
 
-    // Sync checklist changes with associated Subtasks (pins)
+    // Sync checklist changes with associated Subtasks (pins) and VideoNotes
     if (checklist !== undefined && Array.isArray(checklist)) {
       for (const item of checklist) {
         if (item.subtaskId) {
           const subtaskStatus = item.completed ? "completed" : "pending";
           await Subtask.findByIdAndUpdate(item.subtaskId, { status: subtaskStatus });
+        }
+        if (item.videoNoteId) {
+          const videoStatus = item.completed ? "resolved" : "pending";
+          await VideoNote.findByIdAndUpdate(item.videoNoteId, { status: videoStatus });
         }
       }
     }

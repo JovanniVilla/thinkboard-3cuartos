@@ -10,6 +10,8 @@ import {
   Trash2Icon,
   ClockIcon,
   DownloadIcon,
+  CheckCircle2Icon,
+  RotateCcwIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -19,11 +21,15 @@ export default function VideoNotesSection({
   onNoteRefresh,
   isRecorderOpen,
   setIsRecorderOpen,
+  activeVideoForPlayer: externalActiveVideo,
+  setActiveVideoForPlayer: setExternalActiveVideo,
 }) {
   const [videoNotes, setVideoNotes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [internalRecorderOpen, setInternalRecorderOpen] = useState(false);
-  const [activeVideoForPlayer, setActiveVideoForPlayer] = useState(null);
+  const [internalActiveVideo, setInternalActiveVideo] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all"); // 'all' | 'pending' | 'resolved'
+  const [updatingId, setUpdatingId] = useState(null);
 
   // Control coordinado del modal de grabación (desde prop externa o interno)
   const isModalOpen =
@@ -33,6 +39,17 @@ export default function VideoNotesSection({
       setIsRecorderOpen(open);
     } else {
       setInternalRecorderOpen(open);
+    }
+  };
+
+  // Control coordinado del reproductor modal (externo desde checklist o interno)
+  const activeVideo =
+    externalActiveVideo !== undefined ? externalActiveVideo : internalActiveVideo;
+  const setActiveVideo = (video) => {
+    if (setExternalActiveVideo) {
+      setExternalActiveVideo(video);
+    } else {
+      setInternalActiveVideo(video);
     }
   };
 
@@ -68,6 +85,44 @@ export default function VideoNotesSection({
     }
   };
 
+  const handleToggleStatus = async (videoNote, e) => {
+    if (e) e.stopPropagation();
+    const currentStatus = videoNote.status || "pending";
+    const nextStatus = currentStatus === "resolved" ? "pending" : "resolved";
+
+    setUpdatingId(videoNote._id);
+    try {
+      const res = await api.patch(`/video-notes/${videoNote._id}/status`, {
+        status: nextStatus,
+      });
+
+      const updated = res.data.videoNote || { ...videoNote, status: nextStatus };
+      setVideoNotes((prev) =>
+        prev.map((v) => (v._id === videoNote._id ? updated : v))
+      );
+
+      if (activeVideo?._id === videoNote._id) {
+        setActiveVideo(updated);
+      }
+
+      toast.success(
+        nextStatus === "resolved"
+          ? `Video nota "${videoNote.title}" marcada como resuelta`
+          : `Video nota "${videoNote.title}" marcada como pendiente`
+      );
+
+      // Sincronizar checklist de la nota principal
+      if (onNoteRefresh) {
+        onNoteRefresh();
+      }
+    } catch (error) {
+      console.error("Error toggling video note status:", error);
+      toast.error("Error al actualizar el estado de la video nota.");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const handleDeleteVideoNote = async (videoNoteId, e) => {
     if (e) e.stopPropagation();
     if (!window.confirm("¿Estás seguro de que deseas eliminar esta video nota?")) {
@@ -85,8 +140,8 @@ export default function VideoNotesSection({
         return updated;
       });
 
-      if (activeVideoForPlayer?._id === videoNoteId) {
-        setActiveVideoForPlayer(null);
+      if (activeVideo?._id === videoNoteId) {
+        setActiveVideo(null);
       }
       if (onNoteRefresh) {
         onNoteRefresh();
@@ -109,10 +164,21 @@ export default function VideoNotesSection({
       .substring(0, 2);
   };
 
+  // Filtrado por estado
+  const pendingNotes = videoNotes.filter((v) => v.status !== "resolved");
+  const resolvedNotes = videoNotes.filter((v) => v.status === "resolved");
+
+  const filteredNotes =
+    statusFilter === "pending"
+      ? pendingNotes
+      : statusFilter === "resolved"
+      ? resolvedNotes
+      : videoNotes;
+
   return (
     <div id="video-notes-section" className="space-y-3 pt-2">
       {/* Encabezado de la sección */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <div className="size-2 rounded-full bg-error animate-pulse" />
           <VideoIcon className="size-4 text-error" />
@@ -124,15 +190,56 @@ export default function VideoNotesSection({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setModalOpen(true)}
-          className="btn btn-xs btn-outline btn-error gap-1 rounded-lg font-medium shadow-2xs"
-          title="Iniciar grabación de pantalla y micrófono"
-        >
-          <PlusIcon className="size-3" />
-          <span>Grabar Video Nota</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Filtros de Estado */}
+          {videoNotes.length > 0 && (
+            <div className="join bg-base-200/60 p-0.5 rounded-lg border border-base-content/10 text-xs">
+              <button
+                type="button"
+                onClick={() => setStatusFilter("all")}
+                className={`join-item btn btn-xs border-none font-medium ${
+                  statusFilter === "all"
+                    ? "btn-neutral text-neutral-content shadow-xs"
+                    : "btn-ghost text-base-content/70"
+                }`}
+              >
+                Todas ({videoNotes.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("pending")}
+                className={`join-item btn btn-xs border-none font-medium ${
+                  statusFilter === "pending"
+                    ? "btn-warning text-warning-content shadow-xs"
+                    : "btn-ghost text-base-content/70"
+                }`}
+              >
+                Pendientes ({pendingNotes.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setStatusFilter("resolved")}
+                className={`join-item btn btn-xs border-none font-medium ${
+                  statusFilter === "resolved"
+                    ? "btn-success text-success-content shadow-xs"
+                    : "btn-ghost text-base-content/70"
+                }`}
+              >
+                Resueltas ({resolvedNotes.length})
+              </button>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="btn btn-xs btn-outline btn-error gap-1 rounded-lg font-medium shadow-2xs"
+            title="Iniciar grabación de pantalla y micrófono"
+          >
+            <PlusIcon className="size-3" />
+            <span>Grabar Video Nota</span>
+          </button>
+        </div>
       </div>
 
       {/* Lista / Cuadrícula de Video Notas */}
@@ -153,22 +260,32 @@ export default function VideoNotesSection({
           </p>
           <p className="text-[11px] text-base-content/50 max-w-sm mx-auto leading-relaxed">
             Graba tu pantalla y micrófono (hasta 5 min en 1080p) para explicar
-            cambios visuales, reportar incidencias o dar feedback interactivo.
+            cambios visuales o dudas. Se agregarán automáticamente al checklist
+            de la tarea principal.
           </p>
+        </div>
+      ) : filteredNotes.length === 0 ? (
+        <div className="p-6 rounded-xl bg-base-200/30 border border-base-content/10 text-center text-xs text-base-content/60">
+          No hay video notas con el filtro seleccionado ({statusFilter === "pending" ? "Pendientes" : "Resueltas"}).
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {videoNotes.map((videoNote) => {
+          {filteredNotes.map((videoNote) => {
             const author = videoNote.createdBy;
             const authorName = author?.name || "Usuario";
             const authorColor = author?.color || "#3B82F6";
             const resolvedUrl = getFileUrl(videoNote.fileUrl);
+            const isResolved = videoNote.status === "resolved";
 
             return (
               <div
                 key={videoNote._id}
-                onClick={() => setActiveVideoForPlayer(videoNote)}
-                className="group relative bg-base-200/50 hover:bg-base-200 border border-base-content/10 rounded-xl p-3 cursor-pointer transition-all hover:shadow-md flex flex-col justify-between"
+                onClick={() => setActiveVideo(videoNote)}
+                className={`group relative bg-base-200/50 hover:bg-base-200 border rounded-xl p-3 cursor-pointer transition-all hover:shadow-md flex flex-col justify-between ${
+                  isResolved
+                    ? "border-success/30 bg-success/5"
+                    : "border-base-content/10"
+                }`}
               >
                 <div>
                   {/* Banner de previsualización con reproductor ligero */}
@@ -186,6 +303,21 @@ export default function VideoNotesSection({
                       </div>
                     </div>
 
+                    {/* Badge de Estado en esquina superior izquierda */}
+                    <div className="absolute top-1.5 left-1.5">
+                      {isResolved ? (
+                        <span className="badge badge-xs bg-success text-white font-bold border-none gap-0.5 py-1 px-1.5 shadow-sm">
+                          <CheckCircle2Icon className="size-2.5" />
+                          <span>Resuelta</span>
+                        </span>
+                      ) : (
+                        <span className="badge badge-xs bg-warning text-warning-content font-bold border-none gap-0.5 py-1 px-1.5 shadow-sm">
+                          <ClockIcon className="size-2.5" />
+                          <span>Pendiente</span>
+                        </span>
+                      )}
+                    </div>
+
                     {/* Badge de duración en esquina inferior derecha */}
                     <div className="absolute bottom-1.5 right-1.5 badge badge-xs bg-black/75 text-white font-mono text-[10px] font-bold border-none gap-1 py-1 px-1.5">
                       <ClockIcon className="size-2.5" />
@@ -195,7 +327,11 @@ export default function VideoNotesSection({
 
                   {/* Título y metadatos */}
                   <p
-                    className="text-xs font-semibold text-base-content truncate group-hover:text-error transition-colors"
+                    className={`text-xs font-semibold truncate transition-colors ${
+                      isResolved
+                        ? "line-through text-base-content/50"
+                        : "text-base-content group-hover:text-error"
+                    }`}
                     title={videoNote.title}
                   >
                     {videoNote.title}
@@ -217,10 +353,36 @@ export default function VideoNotesSection({
 
                 {/* Pie de tarjeta con acciones rápidas */}
                 <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-base-content/10 text-xs">
-                  <span className="text-error font-medium flex items-center gap-1 text-[11px]">
-                    <PlayIcon className="size-3 fill-current" />
-                    <span>Reproducir</span>
-                  </span>
+                  {/* Botón rápido para alternar estado */}
+                  <button
+                    type="button"
+                    onClick={(e) => handleToggleStatus(videoNote, e)}
+                    disabled={updatingId === videoNote._id}
+                    className={`btn btn-xs rounded-lg gap-1 font-medium text-[11px] h-6 min-h-0 ${
+                      isResolved
+                        ? "btn-ghost text-base-content/60 hover:text-warning"
+                        : "btn-ghost text-success hover:bg-success/10"
+                    }`}
+                    title={
+                      isResolved
+                        ? "Reabrir video nota (marcar como pendiente)"
+                        : "Marcar video nota como resuelta"
+                    }
+                  >
+                    {updatingId === videoNote._id ? (
+                      <span className="loading loading-spinner loading-xs" />
+                    ) : isResolved ? (
+                      <>
+                        <RotateCcwIcon className="size-3" />
+                        <span>Reabrir</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2Icon className="size-3" />
+                        <span>Resolver</span>
+                      </>
+                    )}
+                  </button>
 
                   <div className="flex items-center gap-1">
                     {/* Descargar video directamente */}
@@ -263,11 +425,20 @@ export default function VideoNotesSection({
       )}
 
       {/* Modal Reproductor HD Cinema */}
-      {activeVideoForPlayer && (
+      {activeVideo && (
         <VideoPlayerModal
-          videoNote={activeVideoForPlayer}
-          onClose={() => setActiveVideoForPlayer(null)}
-          onDelete={() => handleDeleteVideoNote(activeVideoForPlayer._id)}
+          videoNote={activeVideo}
+          onClose={() => setActiveVideo(null)}
+          onDelete={() => handleDeleteVideoNote(activeVideo._id)}
+          onStatusChange={(updatedVideo) => {
+            setVideoNotes((prev) =>
+              prev.map((v) => (v._id === updatedVideo._id ? updatedVideo : v))
+            );
+            setActiveVideo(updatedVideo);
+            if (onNoteRefresh) {
+              onNoteRefresh();
+            }
+          }}
         />
       )}
     </div>

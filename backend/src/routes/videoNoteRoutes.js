@@ -4,6 +4,7 @@ import {
   getVideoNotesByTask,
   getVideoNoteById,
   deleteVideoNote,
+  updateVideoNoteStatus,
 } from "../controllers/videoNoteController.js";
 import { protectRoute } from "../middleware/auth.js";
 import { uploadSingleVideo } from "../middleware/upload.js";
@@ -18,6 +19,8 @@ router.get("/:taskId/video-notes", getVideoNotesByTask);
 
 // Individual video note routes
 router.get("/:id", getVideoNoteById);
+router.patch("/:id/status", updateVideoNoteStatus);
+router.patch("/:id", updateVideoNoteStatus);
 router.delete("/:id", deleteVideoNote);
 
 export default router;
