@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import api from "../../lib/axios";
 import FileUploader from "./FileUploader";
 import AnnotationCanvas from "./AnnotationCanvas";
@@ -209,15 +210,26 @@ export default function VisualAnnotationsSection({
       )}
 
       {/* Upload Modal */}
-      {isUploaderOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <FileUploader
-            taskId={taskId}
-            onUploadSuccess={handleUploadSuccess}
-            onClose={() => setIsUploaderOpen(false)}
-          />
-        </div>
-      )}
+      {isUploaderOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200 select-none overscroll-contain"
+            onClick={() => setIsUploaderOpen(false)}
+          >
+            <div
+              className="select-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <FileUploader
+                taskId={taskId}
+                onUploadSuccess={handleUploadSuccess}
+                onClose={() => setIsUploaderOpen(false)}
+              />
+            </div>
+          </div>,
+          document.body
+        )}
 
       {/* Fullscreen Interactive Annotation Canvas Modal */}
       {activeFileForCanvas && (

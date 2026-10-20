@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import api from "../../lib/axios";
 import { useAuth } from "../../lib/AuthContext";
 import {
@@ -80,6 +81,20 @@ export default function SubtaskModal({
       commentsEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [activeTab, comments.length]);
+
+  // Escape key handler
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -206,10 +221,15 @@ export default function SubtaskModal({
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+  const modalContent = (
+    <div
+      className="fixed inset-0 z-[110] flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-xs animate-in fade-in duration-200 select-none overscroll-contain"
+      onClick={onClose}
+      onWheel={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+    >
       <div
-        className="bg-base-100 rounded-2xl border border-base-content/10 shadow-2xl w-full max-w-lg overflow-hidden text-left flex flex-col max-h-[90vh]"
+        className="bg-base-100 rounded-2xl border border-base-content/10 shadow-2xl w-full max-w-lg overflow-hidden text-left flex flex-col max-h-[90vh] overscroll-contain select-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -541,4 +561,7 @@ export default function SubtaskModal({
       )}
     </div>
   );
+
+  if (typeof document === "undefined") return null;
+  return createPortal(modalContent, document.body);
 }
