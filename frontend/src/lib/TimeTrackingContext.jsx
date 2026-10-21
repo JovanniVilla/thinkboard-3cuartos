@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 import api from "./axios";
 import { useAuth } from "./AuthContext";
 import toast from "react-hot-toast";
-import { formatDuration } from "./timeUtils";
 
 const TimeTrackingContext = createContext(null);
 
@@ -246,28 +245,38 @@ export const TimeTrackingProvider = ({ children }) => {
     }
   };
 
-  const startNoteTimer = async (noteId) => {
+  const startNoteTimer = async (noteId, { silent = false } = {}) => {
     try {
       const res = await api.post("/time/start", { type: "NOTE", noteId });
       setActiveNoteEntry(res.data);
       notifyBroadcast("NOTE_STARTED", res.data);
-      toast.success("Temporizador de tarea iniciado");
+      if (!silent) {
+        toast.success("Temporizador de tarea iniciado");
+      }
+      return res.data;
     } catch {
-      toast.error("Error al iniciar temporizador de tarea");
+      if (!silent) {
+        toast.error("Error al iniciar temporizador de tarea");
+      }
     }
   };
 
-  const pauseNoteTimer = async (entryId) => {
+  const pauseNoteTimer = async (entryId, { silent = false } = {}) => {
     const idToPause = entryId || activeNoteEntry?._id;
     if (!idToPause) return;
 
     try {
-      await api.post("/time/pause", { entryId: idToPause });
+      const res = await api.post("/time/pause", { entryId: idToPause });
       setActiveNoteEntry(null);
       notifyBroadcast("NOTE_PAUSED");
-      toast("Temporizador de tarea pausado", { icon: "⏸️" });
+      if (!silent) {
+        toast("Temporizador de tarea pausado", { icon: "⏸️" });
+      }
+      return res.data;
     } catch {
-      toast.error("Error al pausar temporizador de tarea");
+      if (!silent) {
+        toast.error("Error al pausar temporizador de tarea");
+      }
     }
   };
 

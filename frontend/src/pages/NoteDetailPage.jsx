@@ -1005,8 +1005,8 @@ const NoteDetailPage = () => {
             )}
 
             {/* Time Tracking Section */}
-            <div className="flex items-center gap-4 py-2 text-sm bg-base-200/50 p-3 rounded-xl border border-base-content/10">
-              <div className="flex-1">
+            <div className="bg-base-200/40 p-3 sm:p-3.5 rounded-xl border border-base-content/10 space-y-3">
+              <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Tiempo Estimado:</span>
                 <div className={`dropdown popover-container ${activePopover === 'size' ? 'dropdown-open' : ''}`}>
                   <div
@@ -1069,15 +1069,15 @@ const NoteDetailPage = () => {
                   </ul>
                 </div>
               </div>
-              <div className="flex-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Seguimiento de Tiempo:</span>
-                <div className="flex items-center gap-2">
-                  <NoteTimerWidget
-                    noteId={note._id}
-                    noteTitle={note.title}
-                    onTimeUpdated={fetchNote}
-                  />
-                </div>
+
+              {/* Seguimiento de Tiempo en su propia fila */}
+              <div className="pt-2.5 border-t border-base-content/10">
+                <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1.5">Seguimiento de Tiempo:</span>
+                <NoteTimerWidget
+                  noteId={note._id}
+                  noteTitle={note.title}
+                  onTimeUpdated={fetchNote}
+                />
               </div>
             </div>
 

@@ -59,10 +59,10 @@ const GlobalTimerWidget = () => {
       {/* Indicador adicional si hay una tarea activa en ejecución */}
       {activeNoteEntry && (
         <div
-          className="hidden lg:flex items-center gap-1 pl-1.5 border-l border-base-content/15 text-[11px] text-secondary max-w-[120px] truncate"
+          className="hidden lg:flex items-center gap-1.5 pl-1.5 border-l border-base-content/15 text-[11px] font-semibold text-emerald-500 max-w-[130px] truncate"
           title={`Tarea activa: ${activeNoteEntry.noteId?.title || "Tarea"}`}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span className="truncate">{activeNoteEntry.noteId?.title || "Tarea"}</span>
         </div>
       )}
