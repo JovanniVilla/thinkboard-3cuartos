@@ -308,6 +308,12 @@ export async function getNoteTimeStats(req, res) {
 
     const objectId = new mongoose.Types.ObjectId(noteId);
 
+    // Obtener la nota para considerar el timeSpent previo si ya existía antes de TimeEntry
+    const note = await Note.findById(objectId).select("timeSpent title");
+    if (!note) {
+      return res.status(404).json({ message: "Nota no encontrada" });
+    }
+
     // Sumar todos los intervalos completados de la nota
     const totalAggregation = await TimeEntry.aggregate([
       {
@@ -332,7 +338,10 @@ export async function getNoteTimeStats(req, res) {
       },
     ]);
 
-    const totalSeconds = Math.floor((totalAggregation[0]?.totalMs || 0) / 1000);
+    const trackedSecondsFromEntries = Math.floor((totalAggregation[0]?.totalMs || 0) / 1000);
+    const legacySeconds = Math.round((Number(note.timeSpent) || 0) * 3600);
+    // El total es el mayor entre lo acumulado en TimeEntry o el valor previo de timeSpent
+    const totalSeconds = Math.max(trackedSecondsFromEntries, legacySeconds);
     const entriesCount = totalAggregation[0]?.entriesCount || 0;
 
     // Verificar si el usuario actual tiene este temporizador corriendo

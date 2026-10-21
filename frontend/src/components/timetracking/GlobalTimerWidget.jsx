@@ -1,4 +1,5 @@
 import { PlayIcon, PauseIcon, ClockIcon } from "lucide-react";
+import { Link } from "react-router";
 import { useTimeTracking } from "../../lib/TimeTrackingContext";
 import { formatDuration } from "../../lib/timeUtils";
 
@@ -56,15 +57,16 @@ const GlobalTimerWidget = () => {
         )}
       </button>
 
-      {/* Indicador adicional si hay una tarea activa en ejecución */}
+      {/* Indicador adicional si hay una tarea activa en ejecución (clic para ir a ella) */}
       {activeNoteEntry && (
-        <div
-          className="hidden lg:flex items-center gap-1.5 pl-1.5 border-l border-base-content/15 text-[11px] font-semibold text-emerald-500 max-w-[130px] truncate"
-          title={`Tarea activa: ${activeNoteEntry.noteId?.title || "Tarea"}`}
+        <Link
+          to={`/note/${activeNoteEntry.noteId?._id || activeNoteEntry.noteId}`}
+          className="flex items-center gap-1.5 pl-1.5 border-l border-base-content/15 text-[11px] font-semibold text-emerald-500 hover:text-emerald-400 max-w-[120px] sm:max-w-[160px] truncate transition-colors"
+          title={`Tarea activa: ${activeNoteEntry.noteId?.title || "Tarea"} (clic para ver tarea)`}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
           <span className="truncate">{activeNoteEntry.noteId?.title || "Tarea"}</span>
-        </div>
+        </Link>
       )}
     </div>
   );

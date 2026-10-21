@@ -198,24 +198,7 @@ export const TimeTrackingProvider = ({ children }) => {
     };
   }, [user]);
 
-  // ─── 6. Beacon al cerrar la pestaña o navegar fuera ───────────────────────
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      const activeIds = [];
-      if (globalEntryRef.current?._id) activeIds.push(globalEntryRef.current._id);
-      if (activeNoteEntryRef.current?._id) activeIds.push(activeNoteEntryRef.current._id);
 
-      if (activeIds.length > 0 && navigator.sendBeacon) {
-        const url = api.defaults.baseURL + "/time/beacon-stop";
-        const data = JSON.stringify({ entryIds: activeIds });
-        const blob = new Blob([data], { type: "application/json" });
-        navigator.sendBeacon(url, blob);
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, []);
 
   // ─── 7. Acciones Expuestas ────────────────────────────────────────────────
   const startGlobalTimer = useCallback(async () => {

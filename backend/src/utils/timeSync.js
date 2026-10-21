@@ -15,6 +15,9 @@ export async function syncNoteTimeSpent(noteId) {
   try {
     const objectId = typeof noteId === "string" ? new mongoose.Types.ObjectId(noteId) : noteId;
 
+    const note = await Note.findById(objectId).select("timeSpent");
+    const currentNoteHours = Number(note?.timeSpent) || 0;
+
     const aggregation = await TimeEntry.aggregate([
       {
         $match: {
@@ -39,10 +42,12 @@ export async function syncNoteTimeSpent(noteId) {
 
     const totalMs = aggregation[0]?.totalMs || 0;
     // Hours rounded to 2 decimals
-    const hours = Math.round((totalMs / (1000 * 60 * 60)) * 100) / 100;
+    const hoursFromEntries = Math.round((totalMs / (1000 * 60 * 60)) * 100) / 100;
+    // Preservar el mayor entre lo acumulado por TimeEntry o el tiempo que ya tenía la nota
+    const finalHours = Math.max(hoursFromEntries, currentNoteHours);
 
-    await Note.findByIdAndUpdate(objectId, { timeSpent: hours });
-    return hours;
+    await Note.findByIdAndUpdate(objectId, { timeSpent: finalHours });
+    return finalHours;
   } catch (error) {
     console.error(`[timeSync] Error al sincronizar timeSpent para la nota ${noteId}:`, error);
     return 0;

@@ -16,9 +16,10 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
   const [loading, setLoading] = useState(true);
   const [, setTick] = useState(0);
 
-  const isCurrentNoteRunning =
+  const isCurrentNoteRunning = Boolean(
     activeNoteEntry &&
-    (activeNoteEntry.noteId?._id === noteId || activeNoteEntry.noteId === noteId);
+    (String(activeNoteEntry.noteId?._id || activeNoteEntry.noteId) === String(noteId))
+  );
 
   // Cargar estadísticas acumuladas históricas de la nota
   const fetchNoteStats = useCallback(async () => {
@@ -37,7 +38,7 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
     fetchNoteStats();
   }, [fetchNoteStats]);
 
-  // Tick local cada 1s mientras esté corriendo para actualizar suavemente el reloj
+  // Tick local cada 1s mientras la tarea esté corriendo para actualizar en vivo el reloj digital
   useEffect(() => {
     if (!isCurrentNoteRunning) return;
     const interval = setInterval(() => {
@@ -46,7 +47,7 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
     return () => clearInterval(interval);
   }, [isCurrentNoteRunning]);
 
-  // Solo cuando pasa de corriendo a pausado, refrescar acumulado
+  // Refrescar total acumulado cuando la tarea se pausa
   const wasRunningRef = useRef(false);
   useEffect(() => {
     if (wasRunningRef.current && !isCurrentNoteRunning) {
@@ -56,51 +57,7 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
     wasRunningRef.current = isCurrentNoteRunning;
   }, [isCurrentNoteRunning, fetchNoteStats, onTimeUpdated]);
 
-  // ─── 1. Auto-inicio: al abrir la nota empieza a correr automáticamente ───
-  const hasAutoStartedRef = useRef(false);
-  const activeNoteEntryRef = useRef(activeNoteEntry);
-  activeNoteEntryRef.current = activeNoteEntry;
-
-  useEffect(() => {
-    if (!noteId) return;
-
-    if (!hasAutoStartedRef.current) {
-      hasAutoStartedRef.current = true;
-      const current = activeNoteEntryRef.current;
-      const isAlreadyRunning =
-        current && (current.noteId?._id === noteId || current.noteId === noteId);
-
-      if (!isAlreadyRunning) {
-        startNoteTimer(noteId, { silent: true });
-      }
-    }
-  }, [noteId, startNoteTimer]);
-
-  // ─── 2. Auto-pausa: ÚNICAMENTE al cerrar o desmontar la vista de la nota ──
-  const activeEntryRef = useRef(activeNoteEntry);
-  activeEntryRef.current = activeNoteEntry;
-
-  const noteIdRef = useRef(noteId);
-  noteIdRef.current = noteId;
-
-  const pauseNoteTimerRef = useRef(pauseNoteTimer);
-  pauseNoteTimerRef.current = pauseNoteTimer;
-
-  useEffect(() => {
-    // Array de dependencias vacío: este cleanup SOLO se ejecuta al desmontar el componente
-    return () => {
-      const currentActive = activeEntryRef.current;
-      const currentNoteId = noteIdRef.current;
-      const runningThisNote =
-        currentActive &&
-        (currentActive.noteId?._id === currentNoteId || currentActive.noteId === currentNoteId);
-
-      if (runningThisNote && currentActive._id && pauseNoteTimerRef.current) {
-        pauseNoteTimerRef.current(currentActive._id, { silent: true });
-      }
-    };
-  }, []);
-
+  // Control 100% manual de inicio y pausa
   const handleToggleTimer = async () => {
     if (isCurrentNoteRunning) {
       await pauseNoteTimer(activeNoteEntry._id);
@@ -137,7 +94,7 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
             </span>
           )}
-          {/* Icono fijo sin rotación */}
+          {/* Icono fijo de reloj sin rotación */}
           <ClockIcon
             className={`w-4 h-4 transition-colors shrink-0 ${
               isCurrentNoteRunning ? "text-emerald-500" : "text-base-content/40"
@@ -148,7 +105,7 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
           Tiempo:
         </span>
 
-        {/* Reloj digital - Verde cuando está corriendo */}
+        {/* Reloj digital - Verde esmeralda vibrante cuando está corriendo */}
         <div className="font-mono text-sm sm:text-base font-bold flex items-center gap-1.5 min-w-0">
           <span
             className={`transition-colors truncate ${
@@ -163,7 +120,7 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
         </div>
       </div>
 
-      {/* Botón Iniciar / Pausar */}
+      {/* Botón Iniciar / Pausar manual */}
       <button
         type="button"
         onClick={handleToggleTimer}

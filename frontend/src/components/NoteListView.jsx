@@ -3,6 +3,7 @@ import { PenSquareIcon, ArchiveIcon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIc
 import { useAuth } from "../lib/AuthContext";
 import { useLabels } from "../lib/useLabels";
 import { useTaskSizes } from "../lib/useTaskSizes";
+import { useTimeTracking } from "../lib/TimeTrackingContext";
 import { Link, useNavigate } from "react-router";
 import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
@@ -35,6 +36,7 @@ const NoteListView = ({
   const navigate = useNavigate();
   const { labels: boardLabels } = useLabels();
   const { taskSizes } = useTaskSizes();
+  const { activeNoteEntry } = useTimeTracking();
   const [editingTitleId, setEditingTitleId] = useState(null);
   const [editingTitleValue, setEditingTitleValue] = useState("");
 
@@ -329,6 +331,17 @@ const NoteListView = ({
                           <AtSignIcon className="size-3" />
                           {getMentionCount(note)}
                         </div>
+                      )}
+
+                      {activeNoteEntry &&
+                        String(activeNoteEntry.noteId?._id || activeNoteEntry.noteId) === String(note._id) && (
+                          <span
+                            className="badge badge-xs font-semibold bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 gap-1 px-1.5 py-0.5 animate-pulse shrink-0"
+                            title="Esta tarea está registrando tiempo en este momento"
+                          >
+                            <ClockIcon className="size-3 text-emerald-500" />
+                            En curso
+                          </span>
                       )}
                     </div>
                   </td>

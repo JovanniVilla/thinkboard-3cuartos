@@ -43,6 +43,7 @@ import VisualAnnotationsSection from "../components/annotations/VisualAnnotation
 import AnnotationCanvas from "../components/annotations/AnnotationCanvas";
 import VideoNotesSection from "../components/videonotes/VideoNotesSection";
 import NoteTimerWidget from "../components/timetracking/NoteTimerWidget";
+import { useTimeTracking } from "../lib/TimeTrackingContext";
 import { FolderKeyIcon, ClockIcon } from "lucide-react";
 
 const getInitials = (name = "") => {
@@ -144,10 +145,72 @@ const NoteDetailPage = () => {
   const { taskSizes } = useTaskSizes();
   const accountsList = accounts.map((acc) => acc.name);
   const { user: currentUser } = useAuth();
+  const { activeNoteEntry, pauseNoteTimer } = useTimeTracking();
 
   const navigate = useNavigate();
   const { id } = useParams();
   const outletContext = useOutletContext();
+
+  const activeNoteEntryRef = useRef(activeNoteEntry);
+  activeNoteEntryRef.current = activeNoteEntry;
+
+  const pauseNoteTimerRef = useRef(pauseNoteTimer);
+  pauseNoteTimerRef.current = pauseNoteTimer;
+
+  const noteIdRef = useRef(id);
+  noteIdRef.current = id;
+
+  const isClosingRef = useRef(false);
+
+  // Pausar el temporizador si pertenece a esta nota al cerrarla
+  const handleCloseModal = useCallback(async () => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+
+    const active = activeNoteEntryRef.current || activeNoteEntry;
+    const currentNoteId = noteIdRef.current || id;
+    const isRunningThisNote =
+      active && (String(active.noteId?._id || active.noteId) === String(currentNoteId));
+
+    if (isRunningThisNote && active?._id && pauseNoteTimer) {
+      try {
+        await pauseNoteTimer(active._id);
+      } catch (err) {
+        console.error("Error al pausar timer al cerrar:", err);
+      }
+    }
+    navigate("/");
+  }, [navigate, activeNoteEntry, id, pauseNoteTimer]);
+
+  // Tecla Escape para cerrar la vista modal (si no hay dropdowns o submodales abiertos)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        if (activeVideoForPlayer || isVideoRecorderOpen || canvasTarget) return;
+        if (activePopover) {
+          setActivePopover(null);
+          return;
+        }
+        handleCloseModal();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleCloseModal, activeVideoForPlayer, isVideoRecorderOpen, canvasTarget, activePopover]);
+
+  // Cleanup de seguridad al desmontar la vista de la nota (ej. navegación por historial o URL)
+  useEffect(() => {
+    return () => {
+      const active = activeNoteEntryRef.current;
+      const currentNoteId = noteIdRef.current;
+      const isRunningThisNote =
+        active && (String(active.noteId?._id || active.noteId) === String(currentNoteId));
+
+      if (isRunningThisNote && active?._id && pauseNoteTimerRef.current) {
+        pauseNoteTimerRef.current(active._id, { silent: false });
+      }
+    };
+  }, [id]);
 
   const fetchNote = useCallback(async () => {
     try {
@@ -169,6 +232,15 @@ const NoteDetailPage = () => {
     if (!window.confirm("¿Estás seguro de que deseas archivar esta tarea?")) return;
 
     try {
+      const active = activeNoteEntryRef.current || activeNoteEntry;
+      const currentNoteId = noteIdRef.current || id;
+      const isRunningThisNote =
+        active && (String(active.noteId?._id || active.noteId) === String(currentNoteId));
+
+      if (isRunningThisNote && active?._id && pauseNoteTimer) {
+        await pauseNoteTimer(active._id, { silent: true });
+      }
+
       await api.delete(`/notes/${id}`);
       if (outletContext?.onNoteDeleted) {
         outletContext.onNoteDeleted(id);
@@ -518,7 +590,7 @@ const NoteDetailPage = () => {
       } p-4 sm:p-6 bg-black/40 backdrop-blur-sm text-base-content`}
       onClick={(e) => {
         if (e.target === e.currentTarget) {
-          navigate("/");
+          handleCloseModal();
         }
       }}
     >
@@ -769,13 +841,14 @@ const NoteDetailPage = () => {
             >
               <MoreHorizontalIcon className="size-5" />
             </button>
-            <Link
-              to="/"
-              className="p-1.5 hover:bg-base-200 rounded-lg transition-colors text-base-content/60 hover:text-base-content"
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="p-1.5 hover:bg-base-200 rounded-lg transition-colors text-base-content/60 hover:text-base-content cursor-pointer"
               title="Cerrar vista"
             >
               <XIcon className="size-5" />
-            </Link>
+            </button>
           </div>
         </div>
 
