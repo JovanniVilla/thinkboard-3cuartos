@@ -42,6 +42,7 @@ import DatesPopover from "../components/DatesPopover";
 import VisualAnnotationsSection from "../components/annotations/VisualAnnotationsSection";
 import AnnotationCanvas from "../components/annotations/AnnotationCanvas";
 import VideoNotesSection from "../components/videonotes/VideoNotesSection";
+import NoteTimerWidget from "../components/timetracking/NoteTimerWidget";
 import { FolderKeyIcon, ClockIcon } from "lucide-react";
 
 const getInitials = (name = "") => {
@@ -1069,17 +1070,12 @@ const NoteDetailPage = () => {
                 </div>
               </div>
               <div className="flex-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Tiempo Invertido (h):</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Seguimiento de Tiempo:</span>
                 <div className="flex items-center gap-2">
-                  <ClockIcon className="size-4 text-primary opacity-80" />
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    className="input input-sm input-bordered w-24 bg-base-100"
-                    value={note.timeSpent || 0}
-                    onChange={(e) => setNote({ ...note, timeSpent: e.target.value })}
-                    onBlur={(e) => handleSaveNote({ timeSpent: Number(e.target.value) })}
+                  <NoteTimerWidget
+                    noteId={note._id}
+                    noteTitle={note.title}
+                    onTimeUpdated={fetchNote}
                   />
                 </div>
               </div>

@@ -6,6 +6,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import toast from "react-hot-toast";
 import UserProfileModal from "./UserProfileModal";
+import GlobalTimerWidget from "./timetracking/GlobalTimerWidget";
 
 const Navbar = () => {
   const { user, isAdmin, logout } = useAuth();
@@ -60,6 +61,9 @@ const Navbar = () => {
               <PlusIcon className="size-5" />
               <span className="hidden sm:inline">New Note</span>
             </Link>
+
+            {/* Global Timer Widget */}
+            {user && <GlobalTimerWidget />}
 
             {/* User dropdown */}
             {user && (

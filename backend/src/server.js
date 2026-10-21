@@ -20,7 +20,10 @@ import fileRoutes from "./routes/fileRoutes.js";
 import subtaskRoutes from "./routes/subtaskRoutes.js";
 import videoNoteRoutes from "./routes/videoNoteRoutes.js";
 import storageRoutes from "./routes/storageRoutes.js";
+import timeRoutes from "./routes/timeRoutes.js";
+import timeAdminRoutes from "./routes/timeAdminRoutes.js";
 import { initStorageCronJob } from "./cron/storageCleanup.js";
+import { initTimeTrackingCronJob } from "./cron/timeTrackingReconcile.js";
 import { UPLOADS_DIR } from "./middleware/upload.js";
 import { connectDB } from "./config/db.js";
 import rateLimiter from "./middleware/rateLimiter.js";
@@ -89,6 +92,8 @@ app.use("/api/notes", videoNoteRoutes); // alias /api/notes/:taskId/video-notes
 app.use("/api/video-notes", videoNoteRoutes); // /api/video-notes/:id
 app.use("/api/subtasks", subtaskRoutes); // /api/subtasks
 app.use("/api/storage", storageRoutes); // /api/storage (stats, files, bulk-orphans)
+app.use("/api/time", timeRoutes); // /api/time (active, start, pause, heartbeat, stop)
+app.use("/api/admin/time", timeAdminRoutes); // /api/admin/time (reports, goals, entries, audits)
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
@@ -100,6 +105,7 @@ if (process.env.NODE_ENV === "production") {
 
 connectDB().then(() => {
   initStorageCronJob();
+  initTimeTrackingCronJob();
   app.listen(PORT, () => {
     console.log("Server started on PORT:", PORT);
   });

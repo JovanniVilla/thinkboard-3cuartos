@@ -23,6 +23,7 @@ import {
   UploadIcon,
   DownloadIcon,
   HardDriveIcon,
+  TimerIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
@@ -38,6 +39,7 @@ import { useTaskSizes } from "../lib/useTaskSizes";
 import { useAuth } from "../lib/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
 import StorageManagementView from "../components/storage/StorageManagementView";
+import TimeTrackingAdminView from "../components/timetracking/TimeTrackingAdminView";
 
 const PRESET_COLORS = [
   "#6B7280", "#EF4444", "#F97316", "#EAB308",
@@ -626,6 +628,17 @@ const BoardSettingsPage = () => {
               >
                 <HardDriveIcon className="w-5 h-5" />
                 <span>Almacenamiento</span>
+              </button>
+
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "time_tracking" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("time_tracking")}
+              >
+                <TimerIcon className="w-5 h-5" />
+                <span>Control de Tiempos</span>
               </button>
             </div>
 
@@ -1912,6 +1925,13 @@ const BoardSettingsPage = () => {
           {activeTab === "storage" && (
             <div className="space-y-6 overflow-y-auto pr-1 pb-4 flex-1">
               <StorageManagementView />
+            </div>
+          )}
+
+          {/* TAB 9: CONTROL DE TIEMPOS Y AUDITORÍA */}
+          {activeTab === "time_tracking" && (
+            <div className="space-y-6 overflow-y-auto pr-1 pb-4 flex-1">
+              <TimeTrackingAdminView />
             </div>
           )}
 
