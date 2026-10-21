@@ -14,12 +14,13 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
 
   const [totalSeconds, setTotalSeconds] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [, setTick] = useState(0);
 
   const isCurrentNoteRunning =
     activeNoteEntry &&
     (activeNoteEntry.noteId?._id === noteId || activeNoteEntry.noteId === noteId);
 
-  // Cargar estadísticas acumuladas de la nota
+  // Cargar estadísticas acumuladas históricas de la nota
   const fetchNoteStats = useCallback(async () => {
     if (!noteId) return;
     try {
@@ -36,48 +37,69 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
     fetchNoteStats();
   }, [fetchNoteStats]);
 
-  // Si se pausa la nota externamente o internamente, actualizar total acumulado
+  // Tick local cada 1s mientras esté corriendo para actualizar suavemente el reloj
   useEffect(() => {
-    if (!isCurrentNoteRunning) {
+    if (!isCurrentNoteRunning) return;
+    const interval = setInterval(() => {
+      setTick((t) => t + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isCurrentNoteRunning]);
+
+  // Solo cuando pasa de corriendo a pausado, refrescar acumulado
+  const wasRunningRef = useRef(false);
+  useEffect(() => {
+    if (wasRunningRef.current && !isCurrentNoteRunning) {
       fetchNoteStats();
       if (onTimeUpdated) onTimeUpdated();
     }
+    wasRunningRef.current = isCurrentNoteRunning;
   }, [isCurrentNoteRunning, fetchNoteStats, onTimeUpdated]);
 
   // ─── 1. Auto-inicio: al abrir la nota empieza a correr automáticamente ───
   const hasAutoStartedRef = useRef(false);
+  const activeNoteEntryRef = useRef(activeNoteEntry);
+  activeNoteEntryRef.current = activeNoteEntry;
 
   useEffect(() => {
     if (!noteId) return;
 
     if (!hasAutoStartedRef.current) {
       hasAutoStartedRef.current = true;
+      const current = activeNoteEntryRef.current;
       const isAlreadyRunning =
-        activeNoteEntry &&
-        (activeNoteEntry.noteId?._id === noteId || activeNoteEntry.noteId === noteId);
+        current && (current.noteId?._id === noteId || current.noteId === noteId);
 
       if (!isAlreadyRunning) {
         startNoteTimer(noteId, { silent: true });
       }
     }
-  }, [noteId, activeNoteEntry, startNoteTimer]);
+  }, [noteId, startNoteTimer]);
 
-  // ─── 2. Auto-pausa: al cerrar o desmontar la nota se pausa automáticamente ─
+  // ─── 2. Auto-pausa: ÚNICAMENTE al cerrar o desmontar la vista de la nota ──
   const activeEntryRef = useRef(activeNoteEntry);
   activeEntryRef.current = activeNoteEntry;
 
+  const noteIdRef = useRef(noteId);
+  noteIdRef.current = noteId;
+
+  const pauseNoteTimerRef = useRef(pauseNoteTimer);
+  pauseNoteTimerRef.current = pauseNoteTimer;
+
   useEffect(() => {
+    // Array de dependencias vacío: este cleanup SOLO se ejecuta al desmontar el componente
     return () => {
       const currentActive = activeEntryRef.current;
+      const currentNoteId = noteIdRef.current;
       const runningThisNote =
         currentActive &&
-        (currentActive.noteId?._id === noteId || currentActive.noteId === noteId);
+        (currentActive.noteId?._id === currentNoteId || currentActive.noteId === currentNoteId);
 
-      if (runningThisNote && currentActive._id) {
-        pauseNoteTimer(currentActive._id, { silent: true });
+      if (runningThisNote && currentActive._id && pauseNoteTimerRef.current) {
+        pauseNoteTimerRef.current(currentActive._id, { silent: true });
       }
     };
-  }, [noteId, pauseNoteTimer]);
+  }, []);
 
   const handleToggleTimer = async () => {
     if (isCurrentNoteRunning) {
@@ -95,7 +117,7 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
 
   if (loading) {
     return (
-      <div className="skeleton h-9 w-48 rounded-lg bg-base-200/60" />
+      <div className="skeleton h-10 w-full rounded-xl bg-base-200/60" />
     );
   }
 
@@ -126,7 +148,7 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
           Tiempo:
         </span>
 
-        {/* Reloj digital - Verde cuando está corriendo como en el mockup */}
+        {/* Reloj digital - Verde cuando está corriendo */}
         <div className="font-mono text-sm sm:text-base font-bold flex items-center gap-1.5 min-w-0">
           <span
             className={`transition-colors truncate ${

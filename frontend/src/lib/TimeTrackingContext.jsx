@@ -106,10 +106,6 @@ export const TimeTrackingProvider = ({ children }) => {
       if (globalEntryRef.current) {
         setTodayGlobalSeconds((prev) => prev + 1);
       }
-      // Forzar re-render para actualizar el cálculo de segundos de la nota activa si está corriendo
-      if (activeNoteEntryRef.current) {
-        setActiveNoteEntry((prev) => (prev ? { ...prev } : null));
-      }
     }, 1000);
 
     return () => clearInterval(interval);
@@ -222,7 +218,7 @@ export const TimeTrackingProvider = ({ children }) => {
   }, []);
 
   // ─── 7. Acciones Expuestas ────────────────────────────────────────────────
-  const startGlobalTimer = async () => {
+  const startGlobalTimer = useCallback(async () => {
     try {
       const res = await api.post("/time/start", { type: "GLOBAL" });
       setGlobalEntry(res.data);
@@ -231,21 +227,23 @@ export const TimeTrackingProvider = ({ children }) => {
     } catch {
       toast.error("Error al iniciar contador global");
     }
-  };
+  }, []);
 
-  const pauseGlobalTimer = async () => {
-    if (!globalEntry?._id) return;
+  const pauseGlobalTimer = useCallback(async () => {
+    const idToPause = globalEntryRef.current?._id;
+    if (!idToPause) return;
     try {
-      await api.post("/time/pause", { entryId: globalEntry._id });
+      await api.post("/time/pause", { entryId: idToPause });
       setGlobalEntry(null);
       notifyBroadcast("GLOBAL_PAUSED");
       toast("Jornada pausada", { icon: "⏸️" });
     } catch {
       toast.error("Error al pausar contador global");
     }
-  };
+  }, []);
 
-  const startNoteTimer = async (noteId, { silent = false } = {}) => {
+  const startNoteTimer = useCallback(async (noteId, { silent = false } = {}) => {
+    if (!noteId) return;
     try {
       const res = await api.post("/time/start", { type: "NOTE", noteId });
       setActiveNoteEntry(res.data);
@@ -259,10 +257,10 @@ export const TimeTrackingProvider = ({ children }) => {
         toast.error("Error al iniciar temporizador de tarea");
       }
     }
-  };
+  }, []);
 
-  const pauseNoteTimer = async (entryId, { silent = false } = {}) => {
-    const idToPause = entryId || activeNoteEntry?._id;
+  const pauseNoteTimer = useCallback(async (entryId, { silent = false } = {}) => {
+    const idToPause = entryId || activeNoteEntryRef.current?._id;
     if (!idToPause) return;
 
     try {
@@ -278,9 +276,9 @@ export const TimeTrackingProvider = ({ children }) => {
         toast.error("Error al pausar temporizador de tarea");
       }
     }
-  };
+  }, []);
 
-  const resumeFromIdle = async () => {
+  const resumeFromIdle = useCallback(async () => {
     if (!idleInfo) {
       setIsIdleModalOpen(false);
       return;
@@ -298,19 +296,20 @@ export const TimeTrackingProvider = ({ children }) => {
       setIdleInfo(null);
       lastActivityRef.current = Date.now();
     }
-  };
+  }, [idleInfo, startGlobalTimer, startNoteTimer]);
 
-  const dismissIdleModal = () => {
+  const dismissIdleModal = useCallback(() => {
     setIsIdleModalOpen(false);
     setIdleInfo(null);
     lastActivityRef.current = Date.now();
-  };
+  }, []);
 
   // Cálculo de duración actual de la nota activa
-  const getActiveNoteElapsedSeconds = () => {
-    if (!activeNoteEntry?.startedAt) return 0;
-    return Math.max(0, Math.floor((Date.now() - new Date(activeNoteEntry.startedAt).getTime()) / 1000));
-  };
+  const getActiveNoteElapsedSeconds = useCallback(() => {
+    const active = activeNoteEntryRef.current;
+    if (!active?.startedAt) return 0;
+    return Math.max(0, Math.floor((Date.now() - new Date(active.startedAt).getTime()) / 1000));
+  }, []);
 
   return (
     <TimeTrackingContext.Provider
