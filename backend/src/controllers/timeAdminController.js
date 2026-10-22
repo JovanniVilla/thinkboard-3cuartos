@@ -47,6 +47,16 @@ export async function getDailyReport(req, res) {
       const defaultSeconds = dayOfWeek >= 1 && dayOfWeek <= 5 ? 28800 : 0;
       const targetSeconds = goal ? goal.targetSeconds : defaultSeconds;
 
+      // Purgar registros sub-3-segundo ya finalizados para mantener limpio el historial
+      await TimeEntry.deleteMany({
+        userId: u._id,
+        status: { $in: ["PAUSED", "CLOSED_BY_TIMEOUT"] },
+        endedAt: { $ne: null },
+        $expr: {
+          $lt: [{ $subtract: ["$endedAt", "$startedAt"] }, 3000],
+        },
+      }).catch(() => {});
+
       // 2. Obtener todas las entradas de tiempo en el rango del día
       const entries = await TimeEntry.find({
         userId: u._id,
@@ -59,30 +69,36 @@ export async function getDailyReport(req, res) {
       let trackedGlobalSeconds = 0;
       let trackedNotesSeconds = 0;
 
-      const formattedEntries = entries.map((entry) => {
-        const endTime = entry.endedAt ? new Date(entry.endedAt) : (entry.status === "RUNNING" ? new Date() : entry.lastPingAt);
-        const durationSeconds = Math.max(0, Math.floor((endTime - new Date(entry.startedAt)) / 1000));
+      const formattedEntries = entries
+        .map((entry) => {
+          const endTime = entry.endedAt
+            ? new Date(entry.endedAt)
+            : entry.status === "RUNNING"
+            ? new Date()
+            : entry.lastPingAt;
+          const durationSeconds = Math.max(0, Math.floor((endTime - new Date(entry.startedAt)) / 1000));
 
-        if (entry.type === "GLOBAL") {
-          trackedGlobalSeconds += durationSeconds;
-        } else if (entry.type === "NOTE") {
-          trackedNotesSeconds += durationSeconds;
-        }
+          if (entry.type === "GLOBAL") {
+            trackedGlobalSeconds += durationSeconds;
+          } else if (entry.type === "NOTE") {
+            trackedNotesSeconds += durationSeconds;
+          }
 
-        return {
-          id: entry._id,
-          type: entry.type,
-          note_id: entry.noteId?._id || null,
-          note_title: entry.noteId?.title || null,
-          note_key: entry.noteId?.keyId || entry.noteId?.globalKeyId || null,
-          project_id: entry.projectId?._id || null,
-          project_name: entry.projectId?.name || "Sin proyecto",
-          started_at: entry.startedAt,
-          ended_at: entry.endedAt,
-          status: entry.status,
-          duration_seconds: durationSeconds,
-        };
-      });
+          return {
+            id: entry._id,
+            type: entry.type,
+            note_id: entry.noteId?._id || null,
+            note_title: entry.noteId?.title || null,
+            note_key: entry.noteId?.keyId || entry.noteId?.globalKeyId || null,
+            project_id: entry.projectId?._id || null,
+            project_name: entry.projectId?.name || "Sin proyecto",
+            started_at: entry.startedAt,
+            ended_at: entry.endedAt,
+            status: entry.status,
+            duration_seconds: durationSeconds,
+          };
+        })
+        .filter((entry) => entry.status === "RUNNING" || entry.duration_seconds >= 3);
 
       const idleSeconds = Math.max(0, trackedGlobalSeconds - trackedNotesSeconds);
       const compliancePercentage =
@@ -350,5 +366,29 @@ export async function getAuditLogs(req, res) {
   } catch (error) {
     console.error("Error en getAuditLogs:", error);
     res.status(500).json({ message: "Error al obtener registros de auditoría" });
+  }
+}
+
+/**
+ * Endpoint de mantenimiento para purgar registros con duración menor a 3 segundos.
+ */
+export async function cleanZeroDurationEntries(req, res) {
+  try {
+    const result = await TimeEntry.deleteMany({
+      status: { $in: ["PAUSED", "CLOSED_BY_TIMEOUT"] },
+      endedAt: { $ne: null },
+      $expr: {
+        $lt: [{ $subtract: ["$endedAt", "$startedAt"] }, 3000],
+      },
+    });
+
+    res.json({
+      status: "SUCCESS",
+      deleted_count: result.deletedCount,
+      message: `Se eliminaron ${result.deletedCount} registros con duración menor a 3 segundos`,
+    });
+  } catch (error) {
+    console.error("Error en cleanZeroDurationEntries:", error);
+    res.status(500).json({ message: "Error al limpiar registros de 0 segundos" });
   }
 }

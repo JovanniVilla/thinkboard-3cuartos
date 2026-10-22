@@ -7,6 +7,7 @@ import {
   updateTimeEntry,
   createManualTimeEntry,
   getAuditLogs,
+  cleanZeroDurationEntries,
 } from "../controllers/timeAdminController.js";
 
 const router = express.Router();
@@ -20,6 +21,7 @@ router.get("/goals/:userId", getUserGoals);
 router.put("/goals/:userId", setUserGoals);
 router.put("/entries/:id", updateTimeEntry);
 router.post("/entries/manual", createManualTimeEntry);
+router.post("/entries/clean-zero-duration", cleanZeroDurationEntries);
 router.get("/audits", getAuditLogs);
 
 export default router;

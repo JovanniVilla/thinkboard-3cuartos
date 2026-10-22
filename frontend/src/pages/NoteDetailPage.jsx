@@ -162,43 +162,72 @@ const NoteDetailPage = () => {
 
   const isClosingRef = useRef(false);
 
+  // Resetear el flag de cierre al desmontar para que sea reutilizable
+  useEffect(() => {
+    isClosingRef.current = false;
+    return () => {
+      isClosingRef.current = false;
+    };
+  }, [id]);
+
   // Pausar el temporizador si pertenece a esta nota al cerrarla
+  // IMPORTANTE: Solo depende de [navigate] para no recrearse en cada render.
+  // Toda la info del timer se lee desde refs (activeNoteEntryRef, noteIdRef, pauseNoteTimerRef).
   const handleCloseModal = useCallback(async () => {
     if (isClosingRef.current) return;
     isClosingRef.current = true;
 
-    const active = activeNoteEntryRef.current || activeNoteEntry;
-    const currentNoteId = noteIdRef.current || id;
+    const active = activeNoteEntryRef.current;
+    const currentNoteId = noteIdRef.current;
     const isRunningThisNote =
       active && (String(active.noteId?._id || active.noteId) === String(currentNoteId));
 
-    if (isRunningThisNote && active?._id && pauseNoteTimer) {
+    if (isRunningThisNote && active?._id && pauseNoteTimerRef.current) {
       try {
-        await pauseNoteTimer(active._id);
+        await pauseNoteTimerRef.current(active._id);
       } catch (err) {
         console.error("Error al pausar timer al cerrar:", err);
       }
     }
     navigate("/");
-  }, [navigate, activeNoteEntry, id, pauseNoteTimer]);
+  }, [navigate]);
 
-  // Tecla Escape para cerrar la vista modal (si no hay dropdowns o submodales abiertos)
+  // Manejo seguro del clic en el fondo oscuro: no cerrar al arrastrar o hacer clic en la scrollbar
+  const mouseDownTargetRef = useRef(null);
+
+  const handleBackdropMouseDown = (e) => {
+    mouseDownTargetRef.current = e.target;
+  };
+
+  const handleBackdropClick = (e) => {
+    // Si el mousedown no empezó en el backdrop, o si el target no es exactamente el contenedor exterior, ignorar
+    if (e.target !== e.currentTarget || mouseDownTargetRef.current !== e.currentTarget) {
+      return;
+    }
+    // Si el clic ocurrió sobre la barra de desplazamiento (scrollbar), ignorar
+    if (e.clientX >= e.currentTarget.clientWidth) {
+      return;
+    }
+    handleCloseModal();
+  };
+
+  // Tecla Escape para cerrar la vista modal
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === "Escape") {
-        if (activeVideoForPlayer || isVideoRecorderOpen || canvasTarget) return;
-        if (activePopover) {
-          setActivePopover(null);
-          return;
-        }
-        handleCloseModal();
+      if (e.key !== "Escape") return;
+      // Leer refs en lugar de state para evitar closures obsoletos
+      if (activeVideoForPlayer || isVideoRecorderOpen || canvasTarget) return;
+      if (activePopover) {
+        setActivePopover(null);
+        return;
       }
+      handleCloseModal();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleCloseModal, activeVideoForPlayer, isVideoRecorderOpen, canvasTarget, activePopover]);
 
-  // Cleanup de seguridad al desmontar la vista de la nota (ej. navegación por historial o URL)
+  // Cleanup de seguridad al desmontar la vista de la nota (ej. navegación por historial del browser)
   useEffect(() => {
     return () => {
       const active = activeNoteEntryRef.current;
@@ -207,7 +236,8 @@ const NoteDetailPage = () => {
         active && (String(active.noteId?._id || active.noteId) === String(currentNoteId));
 
       if (isRunningThisNote && active?._id && pauseNoteTimerRef.current) {
-        pauseNoteTimerRef.current(active._id, { silent: false });
+        // fire-and-forget silencioso: el usuario navegó hacia atrás con el browser
+        pauseNoteTimerRef.current(active._id, { silent: true }).catch(() => {});
       }
     };
   }, [id]);
@@ -232,13 +262,13 @@ const NoteDetailPage = () => {
     if (!window.confirm("¿Estás seguro de que deseas archivar esta tarea?")) return;
 
     try {
-      const active = activeNoteEntryRef.current || activeNoteEntry;
-      const currentNoteId = noteIdRef.current || id;
+      const active = activeNoteEntryRef.current;
+      const currentNoteId = noteIdRef.current;
       const isRunningThisNote =
         active && (String(active.noteId?._id || active.noteId) === String(currentNoteId));
 
-      if (isRunningThisNote && active?._id && pauseNoteTimer) {
-        await pauseNoteTimer(active._id, { silent: true });
+      if (isRunningThisNote && active?._id && pauseNoteTimerRef.current) {
+        await pauseNoteTimerRef.current(active._id, { silent: true });
       }
 
       await api.delete(`/notes/${id}`);
@@ -588,11 +618,8 @@ const NoteDetailPage = () => {
           ? "overflow-hidden"
           : "overflow-y-auto"
       } p-4 sm:p-6 bg-black/40 backdrop-blur-sm text-base-content`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          handleCloseModal();
-        }
-      }}
+      onMouseDown={handleBackdropMouseDown}
+      onClick={handleBackdropClick}
     >
       {/* Card Detail Modal Window Container */}
       <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-2 mb-4 flex-shrink-0" onClick={e => e.stopPropagation()}>

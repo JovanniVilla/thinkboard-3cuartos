@@ -16,25 +16,22 @@ const IdleModal = () => {
         <div className="space-y-2">
           <h3 className="text-xl font-bold text-base-content">Pausa por Inactividad</h3>
           <p className="text-sm text-base-content/70">
-            Hemos detectado más de 5 minutos sin interacción. Tus contadores se pausaron automáticamente en el momento en que comenzó la inactividad.
+            Hemos detectado más de 5 minutos sin interacción. El contador de jornada general se pausó automáticamente. Los temporizadores de tareas activas siguen corriendo.
           </p>
         </div>
 
         {idleInfo && (
           <div className="bg-base-200/70 border border-base-content/10 rounded-xl p-3 text-left text-xs space-y-1.5">
-            <span className="font-semibold text-base-content/60 uppercase tracking-wider block mb-1">
-              Contadores pausados:
-            </span>
             {idleInfo.wasGlobalRunning && (
               <div className="flex items-center gap-2 text-base-content">
-                <span className="w-2 h-2 rounded-full bg-primary" />
-                <span>Jornada general (Contador Global)</span>
+                <span className="w-2 h-2 rounded-full bg-warning shrink-0" />
+                <span><strong>Pausado:</strong> Contador de Jornada General</span>
               </div>
             )}
             {idleInfo.wasNoteRunning && (
-              <div className="flex items-center gap-2 text-base-content">
-                <span className="w-2 h-2 rounded-full bg-secondary" />
-                <span>Tarea: <strong>{idleInfo.noteTitle}</strong></span>
+              <div className="flex items-center gap-2 text-emerald-600">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                <span><strong>Sigue activo:</strong> Tarea <em>{idleInfo.noteTitle}</em></span>
               </div>
             )}
           </div>

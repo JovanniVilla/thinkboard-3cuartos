@@ -185,6 +185,21 @@ export async function pauseTimer(req, res) {
       end = entry.startedAt;
     }
 
+    const durationSeconds = Math.max(0, Math.floor((end - entry.startedAt) / 1000));
+
+    // Si la duración es menor a 3 segundos, eliminar la entrada para no contaminar
+    // el historial con registros de 0 segundos (ej. doble-clic rápido, micro-pausas)
+    if (durationSeconds < 3) {
+      await TimeEntry.findByIdAndDelete(entry._id);
+      return res.json({
+        id: entry._id,
+        status: "DELETED_TOO_SHORT",
+        ended_at: end,
+        duration_seconds: durationSeconds,
+        message: "Entrada eliminada por duración menor a 3 segundos",
+      });
+    }
+
     entry.endedAt = end;
     entry.status = "PAUSED";
     await entry.save();
@@ -192,8 +207,6 @@ export async function pauseTimer(req, res) {
     if (entry.type === "NOTE" && entry.noteId) {
       await syncNoteTimeSpent(entry.noteId);
     }
-
-    const durationSeconds = Math.max(0, Math.floor((entry.endedAt - entry.startedAt) / 1000));
 
     res.json({
       id: entry._id,
@@ -279,6 +292,11 @@ export async function beaconStop(req, res) {
 
     const running = await TimeEntry.find(query);
     for (const entry of running) {
+      const durationSeconds = Math.max(0, Math.floor((now - entry.startedAt) / 1000));
+      if (durationSeconds < 3) {
+        await TimeEntry.findByIdAndDelete(entry._id);
+        continue;
+      }
       entry.endedAt = now;
       entry.status = "PAUSED";
       await entry.save();

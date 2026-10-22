@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { PlayIcon, PauseIcon, ClockIcon } from "lucide-react";
 import { Link } from "react-router";
 import { useTimeTracking } from "../../lib/TimeTrackingContext";
@@ -12,6 +13,24 @@ const GlobalTimerWidget = () => {
     activeNoteEntry,
     loading,
   } = useTimeTracking();
+
+  const isTogglingRef = useRef(false);
+
+  const handleToggleGlobal = async () => {
+    if (isTogglingRef.current) return;
+    isTogglingRef.current = true;
+    try {
+      if (isGlobalRunning) {
+        await pauseGlobalTimer();
+      } else {
+        await startGlobalTimer();
+      }
+    } finally {
+      setTimeout(() => {
+        isTogglingRef.current = false;
+      }, 500);
+    }
+  };
 
   if (loading) {
     return (
@@ -42,7 +61,7 @@ const GlobalTimerWidget = () => {
       {/* Botón Play / Pause */}
       <button
         type="button"
-        onClick={isGlobalRunning ? pauseGlobalTimer : startGlobalTimer}
+        onClick={handleToggleGlobal}
         className={`btn btn-circle btn-xs ${
           isGlobalRunning
             ? "btn-ghost text-warning hover:bg-warning/10"

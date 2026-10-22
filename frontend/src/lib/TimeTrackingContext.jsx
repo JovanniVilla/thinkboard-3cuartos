@@ -23,16 +23,20 @@ export const TimeTrackingProvider = ({ children }) => {
   const [idleInfo, setIdleInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Referencias para timers e idle detector
+  // ─── Refs para usar en callbacks/effects sin re-crear funciones ────────────
   const broadcastChannelRef = useRef(null);
   const lastActivityRef = useRef(Date.now());
   const globalEntryRef = useRef(null);
   const activeNoteEntryRef = useRef(null);
+  // Ref para operaciones en curso (evitar doble-pausa)
+  const pausingNoteRef = useRef(false);
+  const pausingGlobalRef = useRef(false);
 
+  // Mantener refs sincronizados con el state (sin causar re-renders)
   globalEntryRef.current = globalEntry;
   activeNoteEntryRef.current = activeNoteEntry;
 
-  // ─── 1. Sincronización Inicial y Consulta de Temporizadores ───────────────
+  // ─── 1. Sincronización inicial con el backend ──────────────────────────────
   const fetchActiveTimers = useCallback(async () => {
     if (!user) {
       setGlobalEntry(null);
@@ -87,10 +91,11 @@ export const TimeTrackingProvider = ({ children }) => {
 
     return () => {
       channel.close();
+      broadcastChannelRef.current = null;
     };
   }, [fetchActiveTimers]);
 
-  const notifyBroadcast = (type, payload = null) => {
+  const notifyBroadcast = useCallback((type, payload = null) => {
     if (broadcastChannelRef.current) {
       try {
         broadcastChannelRef.current.postMessage({ type, payload });
@@ -98,9 +103,9 @@ export const TimeTrackingProvider = ({ children }) => {
         console.warn("Error enviando mensaje por BroadcastChannel:", err);
       }
     }
-  };
+  }, []);
 
-  // ─── 3. Contador Visual de Segundos (Tick local cada 1s) ──────────────────
+  // ─── 3. Tick global visual cada 1s (solo incrementa cuando hay globalEntry) ─
   useEffect(() => {
     const interval = setInterval(() => {
       if (globalEntryRef.current) {
@@ -111,71 +116,90 @@ export const TimeTrackingProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, []);
 
-  // ─── 4. Heartbeat cada 30 segundos al backend ─────────────────────────────
-  useEffect(() => {
-    const heartbeatInterval = setInterval(async () => {
-      if (!user) return;
+  // ─── 4. Heartbeat cada 30s al backend ─────────────────────────────────────
+  // ─── 4. Heartbeat cada 30s al backend ─────────────────────────────────────
+  const sendHeartbeat = useCallback(async () => {
+    const activeIds = [];
+    if (globalEntryRef.current?._id) activeIds.push(globalEntryRef.current._id);
+    if (activeNoteEntryRef.current?._id) activeIds.push(activeNoteEntryRef.current._id);
 
-      const activeIds = [];
-      if (globalEntryRef.current?._id) activeIds.push(globalEntryRef.current._id);
-      if (activeNoteEntryRef.current?._id) activeIds.push(activeNoteEntryRef.current._id);
-
-      if (activeIds.length > 0) {
-        try {
-          await api.post("/time/heartbeat", { activeEntryIds: activeIds });
-        } catch (err) {
-          console.warn("Heartbeat falló:", err.message);
-        }
+    if (activeIds.length > 0) {
+      try {
+        await api.post("/time/heartbeat", { activeEntryIds: activeIds });
+      } catch (err) {
+        console.warn("Heartbeat falló:", err.message);
       }
-    }, 30000);
+    }
+  }, []);
 
+  useEffect(() => {
+    if (!user) return;
+    const heartbeatInterval = setInterval(sendHeartbeat, 30000);
     return () => clearInterval(heartbeatInterval);
-  }, [user]);
+  }, [user, sendHeartbeat]);
 
-  // ─── 5. Detección de Inactividad (Idle Detector: 5 minutos / 300s) ─────────
+  // Al volver a la pestaña (visibilitychange), enviar heartbeat inmediato y sincronizar estado
   useEffect(() => {
     if (!user) return;
 
-    const IDLE_LIMIT_MS = 5 * 60 * 1000; // 5 minutos = 300,000 ms
-
-    const handleUserActivity = () => {
-      lastActivityRef.current = Date.now();
-    };
-
-    const events = ["mousemove", "keydown", "scroll", "touchstart", "click"];
-    // Throttle listener
-    let throttleTimeout = null;
-    const throttledListener = () => {
-      if (!throttleTimeout) {
-        throttleTimeout = setTimeout(() => {
-          handleUserActivity();
-          throttleTimeout = null;
-        }, 3000);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        lastActivityRef.current = Date.now();
+        sendHeartbeat();
+        fetchActiveTimers();
       }
     };
 
-    events.forEach((ev) => window.addEventListener(ev, throttledListener, { passive: true }));
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [user, sendHeartbeat, fetchActiveTimers]);
+
+  // ─── 5. Detección de Inactividad ── SOLO pausa el contador GLOBAL ──────────
+  // El temporizador de nota NO se pausa por inactividad. Solo el de jornada general.
+  // La razón: el usuario puede estar en una reunión o revisando documentos mientras
+  // trabaja en una tarea, y no queremos interrumpir su registro de trabajo en esa nota.
+  useEffect(() => {
+    if (!user) return;
+
+    const IDLE_LIMIT_MS = 5 * 60 * 1000; // 5 minutos
+
+    let lastHandled = 0;
+    const throttledListener = () => {
+      const now = Date.now();
+      if (now - lastHandled > 2000) {
+        lastHandled = now;
+        lastActivityRef.current = now;
+      }
+    };
+
+    const events = ["mousemove", "keydown", "scroll", "touchstart", "click"];
+    events.forEach((ev) =>
+      window.addEventListener(ev, throttledListener, { capture: true, passive: true })
+    );
 
     // Verificador periódico de inactividad cada 10 segundos
     const idleCheckInterval = setInterval(async () => {
       const now = Date.now();
       const elapsedSinceActivity = now - lastActivityRef.current;
 
-      const isRunning = !!(globalEntryRef.current || activeNoteEntryRef.current);
+      // Solo pausar GLOBAL si está corriendo y hay inactividad
+      const isGlobalRunning = !!globalEntryRef.current;
+      if (!isGlobalRunning) return; // Nada que hacer
 
-      if (isRunning && elapsedSinceActivity >= IDLE_LIMIT_MS) {
-        console.warn("[IdleDetector] Inactividad detectada. Pausando contadores con retroactividad...");
+      if (elapsedSinceActivity >= IDLE_LIMIT_MS) {
+        console.warn("[IdleDetector] Inactividad detectada. Pausando contador global...");
 
         const idleStartTime = new Date(now - IDLE_LIMIT_MS);
         const savedGlobal = globalEntryRef.current;
+        // Guardamos si había nota corriendo para informar al usuario (pero NO la pausamos)
         const savedNote = activeNoteEntryRef.current;
 
-        // Pausar en backend con fecha en que empezó la inactividad
+        // Pausar SOLO el global con fecha retroactiva al inicio de inactividad
         if (savedGlobal?._id) {
-          await api.post("/time/pause", { entryId: savedGlobal._id, customEndedAt: idleStartTime }).catch(() => {});
-        }
-        if (savedNote?._id) {
-          await api.post("/time/pause", { entryId: savedNote._id, customEndedAt: idleStartTime }).catch(() => {});
+          await api
+            .post("/time/pause", { entryId: savedGlobal._id, customEndedAt: idleStartTime })
+            .catch(() => {});
+          setGlobalEntry(null);
         }
 
         setIdleInfo({
@@ -185,23 +209,22 @@ export const TimeTrackingProvider = ({ children }) => {
           noteTitle: savedNote?.noteId?.title || "Tarea",
         });
 
-        setGlobalEntry(null);
-        setActiveNoteEntry(null);
         setIsIdleModalOpen(true);
-        notifyBroadcast("REFRESH_TIMERS");
+        notifyBroadcast("GLOBAL_PAUSED");
       }
     }, 10000);
 
     return () => {
-      events.forEach((ev) => window.removeEventListener(ev, throttledListener));
+      events.forEach((ev) =>
+        window.removeEventListener(ev, throttledListener, { capture: true })
+      );
       clearInterval(idleCheckInterval);
     };
-  }, [user]);
+  }, [user, notifyBroadcast]);
 
-
-
-  // ─── 7. Acciones Expuestas ────────────────────────────────────────────────
+  // ─── 6. Acciones Expuestas ─────────────────────────────────────────────────
   const startGlobalTimer = useCallback(async () => {
+    if (pausingGlobalRef.current) return;
     try {
       const res = await api.post("/time/start", { type: "GLOBAL" });
       setGlobalEntry(res.data);
@@ -210,11 +233,14 @@ export const TimeTrackingProvider = ({ children }) => {
     } catch {
       toast.error("Error al iniciar contador global");
     }
-  }, []);
+  }, [notifyBroadcast]);
 
   const pauseGlobalTimer = useCallback(async () => {
+    if (pausingGlobalRef.current) return;
     const idToPause = globalEntryRef.current?._id;
     if (!idToPause) return;
+
+    pausingGlobalRef.current = true;
     try {
       await api.post("/time/pause", { entryId: idToPause });
       setGlobalEntry(null);
@@ -222,11 +248,14 @@ export const TimeTrackingProvider = ({ children }) => {
       toast("Jornada pausada", { icon: "⏸️" });
     } catch {
       toast.error("Error al pausar contador global");
+    } finally {
+      pausingGlobalRef.current = false;
     }
-  }, []);
+  }, [notifyBroadcast]);
 
   const startNoteTimer = useCallback(async (noteId, { silent = false } = {}) => {
     if (!noteId) return;
+    if (pausingNoteRef.current) return;
     try {
       const res = await api.post("/time/start", { type: "NOTE", noteId });
       setActiveNoteEntry(res.data);
@@ -240,12 +269,14 @@ export const TimeTrackingProvider = ({ children }) => {
         toast.error("Error al iniciar temporizador de tarea");
       }
     }
-  }, []);
+  }, [notifyBroadcast]);
 
   const pauseNoteTimer = useCallback(async (entryId, { silent = false } = {}) => {
     const idToPause = entryId || activeNoteEntryRef.current?._id;
     if (!idToPause) return;
+    if (pausingNoteRef.current) return;
 
+    pausingNoteRef.current = true;
     try {
       const res = await api.post("/time/pause", { entryId: idToPause });
       setActiveNoteEntry(null);
@@ -258,8 +289,10 @@ export const TimeTrackingProvider = ({ children }) => {
       if (!silent) {
         toast.error("Error al pausar temporizador de tarea");
       }
+    } finally {
+      pausingNoteRef.current = false;
     }
-  }, []);
+  }, [notifyBroadcast]);
 
   const resumeFromIdle = useCallback(async () => {
     if (!idleInfo) {
@@ -268,18 +301,17 @@ export const TimeTrackingProvider = ({ children }) => {
     }
 
     try {
+      // Solo reanudar el global (la nota sigue corriendo si estaba corriendo)
       if (idleInfo.wasGlobalRunning) {
         await startGlobalTimer();
       }
-      if (idleInfo.wasNoteRunning && idleInfo.noteId) {
-        await startNoteTimer(idleInfo.noteId);
-      }
+      // NO reanudar la nota porque nunca la pausamos por idle
     } finally {
       setIsIdleModalOpen(false);
       setIdleInfo(null);
       lastActivityRef.current = Date.now();
     }
-  }, [idleInfo, startGlobalTimer, startNoteTimer]);
+  }, [idleInfo, startGlobalTimer]);
 
   const dismissIdleModal = useCallback(() => {
     setIsIdleModalOpen(false);
@@ -287,7 +319,7 @@ export const TimeTrackingProvider = ({ children }) => {
     lastActivityRef.current = Date.now();
   }, []);
 
-  // Cálculo de duración actual de la nota activa
+  // Calcula los segundos transcurridos de la sesión activa de nota
   const getActiveNoteElapsedSeconds = useCallback(() => {
     const active = activeNoteEntryRef.current;
     if (!active?.startedAt) return 0;

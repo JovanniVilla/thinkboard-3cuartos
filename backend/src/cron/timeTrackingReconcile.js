@@ -7,7 +7,7 @@ import { syncNoteTimeSpent } from "../utils/timeSync.js";
  */
 export async function reconcileAbandonedTimers() {
   try {
-    const cutoffDate = new Date(Date.now() - 90 * 1000); // 90 segundos atrás
+    const cutoffDate = new Date(Date.now() - 5 * 60 * 1000); // 5 minutos atrás para tolerar throttling en pestañas secundarias
 
     const abandonedEntries = await TimeEntry.find({
       status: "RUNNING",
@@ -19,7 +19,16 @@ export async function reconcileAbandonedTimers() {
     console.log(`⏰ [TimeReconcile] Encontrados ${abandonedEntries.length} temporizadores abandonados. Cerrando...`);
 
     for (const entry of abandonedEntries) {
-      entry.endedAt = entry.lastPingAt || cutoffDate;
+      const endTime = entry.lastPingAt || cutoffDate;
+      const durationSeconds = Math.max(0, Math.floor((endTime - entry.startedAt) / 1000));
+
+      // Eliminar entradas sub-3-segundo: son ruido (doble-clic, cambio de pestaña inmediato)
+      if (durationSeconds < 3) {
+        await TimeEntry.findByIdAndDelete(entry._id);
+        continue;
+      }
+
+      entry.endedAt = endTime;
       entry.status = "CLOSED_BY_TIMEOUT";
       await entry.save();
 

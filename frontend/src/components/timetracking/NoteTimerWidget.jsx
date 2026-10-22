@@ -57,14 +57,25 @@ const NoteTimerWidget = ({ noteId, noteTitle, onTimeUpdated }) => {
     wasRunningRef.current = isCurrentNoteRunning;
   }, [isCurrentNoteRunning, fetchNoteStats, onTimeUpdated]);
 
+  const isTogglingRef = useRef(false);
+
   // Control 100% manual de inicio y pausa
   const handleToggleTimer = async () => {
-    if (isCurrentNoteRunning) {
-      await pauseNoteTimer(activeNoteEntry._id);
-      await fetchNoteStats();
-      if (onTimeUpdated) onTimeUpdated();
-    } else {
-      await startNoteTimer(noteId);
+    if (isTogglingRef.current) return;
+    isTogglingRef.current = true;
+    try {
+      if (isCurrentNoteRunning) {
+        await pauseNoteTimer(activeNoteEntry._id);
+        await fetchNoteStats();
+        if (onTimeUpdated) onTimeUpdated();
+      } else {
+        await startNoteTimer(noteId);
+      }
+    } finally {
+      // Esperar un pequeño delay antes de permitir otro clic
+      setTimeout(() => {
+        isTogglingRef.current = false;
+      }, 500);
     }
   };
 
