@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { PlusIcon, Settings2Icon, LogOutIcon, UserIcon, ShieldIcon, FolderKeyIcon } from "lucide-react";
+import { PlusIcon, SettingsIcon, UserRoundCogIcon, LogOutIcon, UserIcon, ShieldIcon, FolderKeyIcon } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
 import { useBoardConfig } from "../lib/useBoardConfig";
@@ -45,13 +45,6 @@ const Navbar = () => {
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-
-            {/* Board Settings - Admin only */}
-            {isAdmin && (
-              <Link to={"/board-settings"} className="btn btn-ghost btn-sm" title="Configuración del tablero">
-                <Settings2Icon className="size-5" />
-              </Link>
-            )}
 
             <Link to={"/projects"} className="btn btn-ghost btn-sm" title="Proyectos">
               <FolderKeyIcon className="size-5" />
@@ -115,16 +108,33 @@ const Navbar = () => {
                   {/* Profile Config */}
                   <li>
                     <button
-                      onClick={() => setIsProfileModalOpen(true)}
+                      onClick={() => {
+                        setIsProfileModalOpen(true);
+                        document.activeElement?.blur();
+                      }}
                       className="text-base-content hover:bg-base-200 font-medium gap-2"
                     >
-                      <Settings2Icon className="size-4" />
+                      <UserRoundCogIcon className="size-4" />
                       Configuración de perfil
                     </button>
                   </li>
 
+                  {/* Board Settings - Admin only */}
+                  {isAdmin && (
+                    <li>
+                      <Link
+                        to="/board-settings"
+                        onClick={() => document.activeElement?.blur()}
+                        className="text-base-content hover:bg-base-200 font-medium gap-2"
+                      >
+                        <SettingsIcon className="size-4" />
+                        Gestión del Tablero
+                      </Link>
+                    </li>
+                  )}
+
                   {/* Logout */}
-                  <li>
+                  <li className="border-t border-base-content/10 mt-1 pt-1">
                     <button
                       onClick={handleLogout}
                       className="text-error hover:bg-error/10 hover:text-error font-medium gap-2"
