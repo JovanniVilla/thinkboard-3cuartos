@@ -1,6 +1,6 @@
 {
   "name": "mern-thinkboard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "scripts": {
     "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend",
@@ -9,5 +9,5 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "Proyecto para la creacion de notas y gestion de los equipo de trabajo"
 }

@@ -39,11 +39,24 @@ const HomePage = () => {
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedPriority, setSelectedPriority] = useState("");
   const [selectedUser, setSelectedUser] = useState("");
-  const [selectedProject, setSelectedProject] = useState("");
+  const [selectedProject, setSelectedProject] = useState(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    return searchParams.get("projectId") || "";
+  });
   const [showCompleted, setShowCompleted] = useState(false);
   const [showMyTasks, setShowMyTasks] = useState(false);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const projectId = searchParams.get("projectId");
+    if (projectId) {
+      setSelectedProject(projectId);
+    } else if (location.pathname === "/") {
+      setSelectedProject("");
+    }
+  }, [location.pathname, location.search]);
 
   const fetchNotes = useCallback(async () => {
     try {

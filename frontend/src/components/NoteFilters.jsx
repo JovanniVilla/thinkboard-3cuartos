@@ -59,9 +59,26 @@ const NoteFilters = ({
       <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-4">
         
         {/* Left Side: Title and Count */}
-        <div className="flex items-center gap-2 pl-1">
+        <div className="flex items-center gap-2 pl-1 flex-wrap">
           <h2 className="font-bold text-base sm:text-lg text-base-content whitespace-nowrap">Tareas</h2>
           <span className="badge badge-primary badge-sm font-semibold">{totalNotes}</span>
+          {selectedProject && (
+            <div className="badge badge-sm sm:badge-md bg-primary/10 text-primary border border-primary/20 gap-1.5 font-medium py-2.5 px-2.5">
+              <span className="truncate max-w-[140px] sm:max-w-[220px]">
+                {selectedProject === "Sin asignar"
+                  ? "Sin proyecto"
+                  : projects.find((p) => p._id === selectedProject)?.name || "Proyecto"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedProject("")}
+                className="hover:text-error transition-colors"
+                title="Quitar filtro de proyecto"
+              >
+                <XIcon className="size-3" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Right Side: View Mode & Icons */}
