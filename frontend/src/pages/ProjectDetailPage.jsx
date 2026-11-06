@@ -313,7 +313,7 @@ const ProjectDetailPage = () => {
     <div className="min-h-screen bg-base-200 flex flex-col">
       {/* Top Bar */}
       <div className="sticky top-0 z-30 bg-base-100/90 backdrop-blur-xl border-b border-base-content/10">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 max-w-screen-2xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 md:px-6 lg:px-8 py-3 w-full">
           <div className="flex items-center gap-3 self-start sm:self-auto">
             <Link to="/projects" className="btn btn-ghost btn-sm gap-2 text-base-content/70 hover:text-base-content hover:bg-base-200">
               <XIcon className="size-4" />
@@ -344,7 +344,7 @@ const ProjectDetailPage = () => {
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 w-full max-w-screen-2xl mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-8">
+      <div className="flex-1 w-full p-4 md:p-6 lg:p-8 flex flex-col gap-6">
         {/* Header Title (Full Width) */}
         <div className="flex flex-col gap-3">
           <textarea
@@ -358,9 +358,9 @@ const ProjectDetailPage = () => {
           />
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* LEFT COLUMN: Main Details */}
-          <div className="flex-1 min-w-0 flex flex-col gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          {/* COLUMN 1: Cards del proyecto */}
+          <div className="min-w-0 flex flex-col gap-6">
             {/* Inline Properties Row */}
             <div className="flex flex-wrap items-center gap-4 p-4 bg-base-100 rounded-2xl border border-base-content/10 shadow-sm">
               {/* Status Dropdown */}
@@ -999,88 +999,6 @@ const ProjectDetailPage = () => {
               </div>
             </div>
 
-            <div className="bg-base-100 p-5 rounded-2xl border border-base-content/10 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold flex items-center gap-2 text-base-content/80">
-                    <CheckCircle2Icon className="size-4 text-primary" /> Tareas
-                    del Proyecto ({tasks.length})
-                  </h3>
-                  <Link
-                    to={`/?projectId=${project._id}`}
-                    className="btn btn-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg px-2.5 font-medium gap-1"
-                    title="Ver tareas filtradas por este proyecto en el tablero"
-                  >
-                    <span>Ver en tablero</span>
-                    <ExternalLinkIcon className="size-3" />
-                  </Link>
-                </div>
-                <Link
-                  to={`/create?projectId=${project._id}`}
-                  state={{ returnTo: `/projects/${project._id}` }}
-                  className="btn btn-xs btn-primary btn-outline gap-1"
-                >
-                  <PlusIcon className="size-3" />
-                  Nueva
-                </Link>
-              </div>
-
-              {tasks.length > 0 && (
-                <div className="mb-4">
-                  <div className="flex items-center justify-between text-xs font-semibold mb-1 text-base-content/60">
-                    <span>Progreso ({completedTasksCount}/{tasks.length})</span>
-                    <span>{tasksProgress}%</span>
-                  </div>
-                  <progress className="progress progress-primary w-full h-2" value={tasksProgress} max="100"></progress>
-                </div>
-              )}
-
-              {tasks.length === 0 ? (
-                <p className="text-sm text-base-content/50 italic py-4 text-center">
-                  No hay tareas vinculadas a este proyecto todavía.
-                </p>
-              ) : (
-                <div className="flex flex-col gap-2">
-                  {tasks.map((task) => {
-                    const isDone = isTaskCompleted(task.status, doneStatuses);
-                    return (
-                      <Link
-                        key={task._id}
-                        to={`/note/${task._id}`}
-                        className="flex items-center gap-3 p-3 rounded-xl border border-base-content/10 hover:border-primary/50 hover:bg-base-200/50 transition-colors group"
-                      >
-                        <div
-                          className={`w-2 h-2 rounded-full flex-shrink-0 ${isDone ? "bg-success" : "bg-primary"}`}
-                        />
-                        {(task.projectKeyId || task.keyId) && (
-                          <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0">
-                            {task.projectKeyId || task.keyId}
-                          </span>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className={`text-sm font-semibold truncate ${isDone ? "line-through opacity-60" : ""}`}
-                          >
-                            {task.title}
-                          </p>
-                        </div>
-                        {task.user && task.user !== "Sin asignar" && (
-                          <div className="avatar placeholder">
-                            <div className="bg-neutral text-neutral-content rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold">
-                              <span>{getInitials(task.user)}</span>
-                            </div>
-                          </div>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* CENTER COLUMN: Sidebar (Config) */}
-          <div className="w-full lg:w-72 xl:w-80 flex-shrink-0 flex flex-col gap-6">
             {/* Contacto Card */}
             <div className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm overflow-hidden">
               <div className="p-4 border-b border-base-content/5 bg-base-200/30">
@@ -1267,8 +1185,90 @@ const ProjectDetailPage = () => {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Log de Actividad */}
-          <div className="w-full lg:w-80 xl:w-96 flex-shrink-0 flex flex-col">
+          {/* COLUMN 2: Tareas del Proyecto */}
+          <div className="min-w-0 flex flex-col">
+            <div className="bg-base-100 p-5 rounded-2xl border border-base-content/10 shadow-sm flex flex-col">
+              <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-bold flex items-center gap-2 text-base-content/80">
+                    <CheckCircle2Icon className="size-4 text-primary" /> Tareas
+                    del Proyecto ({tasks.length})
+                  </h3>
+                  <Link
+                    to={`/?projectId=${project._id}`}
+                    className="btn btn-xs bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 rounded-lg px-2.5 font-medium gap-1"
+                    title="Ver tareas filtradas por este proyecto en el tablero"
+                  >
+                    <span>Ver en tablero</span>
+                    <ExternalLinkIcon className="size-3" />
+                  </Link>
+                </div>
+                <Link
+                  to={`/create?projectId=${project._id}`}
+                  state={{ returnTo: `/projects/${project._id}` }}
+                  className="btn btn-xs btn-primary btn-outline gap-1"
+                >
+                  <PlusIcon className="size-3" />
+                  Nueva
+                </Link>
+              </div>
+
+              {tasks.length > 0 && (
+                <div className="mb-4">
+                  <div className="flex items-center justify-between text-xs font-semibold mb-1 text-base-content/60">
+                    <span>Progreso ({completedTasksCount}/{tasks.length})</span>
+                    <span>{tasksProgress}%</span>
+                  </div>
+                  <progress className="progress progress-primary w-full h-2" value={tasksProgress} max="100"></progress>
+                </div>
+              )}
+
+              {tasks.length === 0 ? (
+                <p className="text-sm text-base-content/50 italic py-4 text-center">
+                  No hay tareas vinculadas a este proyecto todavía.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {tasks.map((task) => {
+                    const isDone = isTaskCompleted(task.status, doneStatuses);
+                    return (
+                      <Link
+                        key={task._id}
+                        to={`/note/${task._id}`}
+                        className="flex items-center gap-3 p-3 rounded-xl border border-base-content/10 hover:border-primary/50 hover:bg-base-200/50 transition-colors group"
+                      >
+                        <div
+                          className={`w-2 h-2 rounded-full flex-shrink-0 ${isDone ? "bg-success" : "bg-primary"}`}
+                        />
+                        {(task.projectKeyId || task.keyId) && (
+                          <span className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 flex-shrink-0">
+                            {task.projectKeyId || task.keyId}
+                          </span>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p
+                            className={`text-sm font-semibold truncate ${isDone ? "line-through opacity-60" : ""}`}
+                          >
+                            {task.title}
+                          </p>
+                        </div>
+                        {task.user && task.user !== "Sin asignar" && (
+                          <div className="avatar placeholder">
+                            <div className="bg-neutral text-neutral-content rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold">
+                              <span>{getInitials(task.user)}</span>
+                            </div>
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* COLUMN 3: Log de Actividad */}
+          <div className="min-w-0 flex flex-col">
             <div
               className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm flex flex-col sticky top-[80px]"
               style={{ height: "calc(100vh - 120px)" }}
