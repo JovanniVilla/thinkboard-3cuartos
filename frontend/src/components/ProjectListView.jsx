@@ -1,15 +1,27 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router";
-import { PenIcon, Trash2Icon, LinkIcon, FolderIcon, ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon } from "lucide-react";
+import { PenIcon, Trash2Icon, LinkIcon, FolderIcon, ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon, UserIcon } from "lucide-react";
 import { isTaskCompleted } from "../lib/utils";
+import { useAuth } from "../lib/AuthContext";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 };
 
-const ProjectListView = ({ projects, projectStatuses, doneStatuses, canManageProjects, openEditModal, handleDelete }) => {
+const ProjectListView = ({ projects, projectStatuses, doneStatuses, accounts = [], canManageProjects, openEditModal, handleDelete }) => {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
+
+  const getUserColor = (userName) => {
+    if (!userName || userName === "Sin asignar") return null;
+    const normalized = userName.trim().toLowerCase();
+    if (currentUser?.name?.trim().toLowerCase() === normalized && currentUser?.color) {
+      return currentUser.color;
+    }
+    const found = accounts.find((a) => a.name?.trim().toLowerCase() === normalized);
+    return found?.color || "#3B82F6";
+  };
 
   const getStatusColor = (statusName) => {
     const s = projectStatuses.find(p => p.name === statusName);
@@ -126,14 +138,27 @@ const ProjectListView = ({ projects, projectStatuses, doneStatuses, canManagePro
                     </div>
                   </td>
                   <td>
-                    <div className="flex items-center gap-2">
-                      <div className="avatar placeholder">
-                        <div className="bg-neutral text-neutral-content rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold">
-                          <span>{getInitials(project.assignedTo)}</span>
+                    {(() => {
+                      const isAssigned = project.assignedTo && project.assignedTo !== "Sin asignar";
+                      const userColor = getUserColor(project.assignedTo);
+                      return (
+                        <div className="flex items-center gap-2">
+                          {isAssigned ? (
+                            <div
+                              className="rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0"
+                              style={{ backgroundColor: userColor }}
+                            >
+                              <span>{getInitials(project.assignedTo)}</span>
+                            </div>
+                          ) : (
+                            <div className="bg-base-300 text-base-content/50 rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold shrink-0">
+                              <UserIcon className="size-3.5" />
+                            </div>
+                          )}
+                          <span className="text-xs font-semibold">{project.assignedTo || "Sin asignar"}</span>
                         </div>
-                      </div>
-                      <span className="text-xs font-semibold">{project.assignedTo || "Sin asignar"}</span>
-                    </div>
+                      );
+                    })()}
                   </td>
                   <td>
                     {(project.startDate || project.endDate) ? (

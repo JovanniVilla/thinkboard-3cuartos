@@ -361,6 +361,7 @@ const ProjectsPage = () => {
   const { projects, setProjects, loading } = useProjects();
   const { statuses } = useStatuses();
   const { projectStatuses } = useProjectStatuses();
+  const { accounts } = useAccounts();
   const { isAdmin, isTeam } = useAuth();
   
   const [editingProject, setEditingProject] = useState(null);
@@ -420,6 +421,7 @@ const ProjectsPage = () => {
     setProjects,
     projectStatuses,
     doneStatuses,
+    accounts,
     canManageProjects,
     openEditModal,
     handleDelete

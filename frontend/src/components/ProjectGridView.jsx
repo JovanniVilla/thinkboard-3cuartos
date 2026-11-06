@@ -1,9 +1,21 @@
 import { useNavigate } from "react-router";
 import { PenIcon, Trash2Icon, UserIcon, CalendarIcon, LayersIcon } from "lucide-react";
 import { isTaskCompleted } from "../lib/utils";
+import { useAuth } from "../lib/AuthContext";
 
-const ProjectGridView = ({ projects, projectStatuses, doneStatuses, canManageProjects, openEditModal, handleDelete }) => {
+const ProjectGridView = ({ projects, projectStatuses, doneStatuses, accounts = [], canManageProjects, openEditModal, handleDelete }) => {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
+
+  const getUserColor = (userName) => {
+    if (!userName || userName === "Sin asignar") return null;
+    const normalized = userName.trim().toLowerCase();
+    if (currentUser?.name?.trim().toLowerCase() === normalized && currentUser?.color) {
+      return currentUser.color;
+    }
+    const found = accounts.find((a) => a.name?.trim().toLowerCase() === normalized);
+    return found?.color || "#3B82F6";
+  };
 
   const getStatusColor = (statusName) => {
     const s = projectStatuses.find(p => p.name === statusName);
@@ -17,7 +29,9 @@ const ProjectGridView = ({ projects, projectStatuses, doneStatuses, canManagePro
         const totalTasks = project.taskCount || 0;
         const completedTasks = project.noteStatuses ? project.noteStatuses.filter(s => isTaskCompleted(s, doneStatuses)).length : 0;
         const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-        const initials = project.assignedTo ? project.assignedTo.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() : "";
+        const isAssigned = project.assignedTo && project.assignedTo !== "Sin asignar";
+        const initials = isAssigned ? project.assignedTo.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase() : "";
+        const userColor = getUserColor(project.assignedTo);
 
         return (
           <div 
@@ -98,13 +112,22 @@ const ProjectGridView = ({ projects, projectStatuses, doneStatuses, canManagePro
             {/* Footer */}
             <div className="border-t border-base-content/5 pt-5 flex items-center justify-between">
               {/* Avatar */}
-              <div className="flex items-center" title={`Responsable: ${project.assignedTo || "Sin asignar"}`}>
-                <div 
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md text-sm border-[3px] border-base-100"
-                  style={{ backgroundColor: project.color || '#6366f1' }}
-                >
-                  {initials || <UserIcon className="size-4" />}
-                </div>
+              <div className="flex items-center gap-2 min-w-0" title={`Responsable: ${project.assignedTo || "Sin asignar"}`}>
+                {isAssigned ? (
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shadow-md text-sm border-[3px] border-base-100 shrink-0"
+                    style={{ backgroundColor: userColor }}
+                  >
+                    {initials}
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-base-300 text-base-content/50 flex items-center justify-center font-bold shadow-sm text-sm border-[3px] border-base-100 shrink-0">
+                    <UserIcon className="size-4" />
+                  </div>
+                )}
+                <span className="text-xs font-semibold text-base-content/70 truncate">
+                  {project.assignedTo || "Sin asignar"}
+                </span>
               </div>
 
               {/* Dates */}

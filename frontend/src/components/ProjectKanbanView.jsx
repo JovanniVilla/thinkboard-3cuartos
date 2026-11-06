@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useNavigate } from "react-router";
 import { UserIcon, LayersIcon } from "lucide-react";
 import { isTaskCompleted } from "../lib/utils";
+import { useAuth } from "../lib/AuthContext";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 
@@ -10,10 +11,21 @@ const getInitials = (name = "") => {
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 };
 
-const ProjectKanbanView = ({ projects, setProjects, projectStatuses, doneStatuses, canManageProjects }) => {
+const ProjectKanbanView = ({ projects, setProjects, projectStatuses, doneStatuses, accounts = [], canManageProjects }) => {
   const navigate = useNavigate();
+  const { user: currentUser } = useAuth();
   const [draggedProject, setDraggedProject] = useState(null);
   const [dragOverStatus, setDragOverStatus] = useState(null);
+
+  const getUserColor = (userName) => {
+    if (!userName || userName === "Sin asignar") return null;
+    const normalized = userName.trim().toLowerCase();
+    if (currentUser?.name?.trim().toLowerCase() === normalized && currentUser?.color) {
+      return currentUser.color;
+    }
+    const found = accounts.find((a) => a.name?.trim().toLowerCase() === normalized);
+    return found?.color || "#3B82F6";
+  };
   
   // To avoid rapid drag issues
   const dragCounter = useRef(0);
@@ -158,11 +170,18 @@ const ProjectKanbanView = ({ projects, setProjects, projectStatuses, doneStatuse
 
                   <div className="flex items-center justify-between mt-3 pt-3 border-t border-base-content/5">
                     <div className="flex items-center gap-1.5">
-                      <div className="avatar placeholder">
-                        <div className="bg-neutral text-neutral-content rounded-full w-5 h-5 flex items-center justify-center text-[9px] font-bold">
+                      {project.assignedTo && project.assignedTo !== "Sin asignar" ? (
+                        <div
+                          className="rounded-full w-5 h-5 flex items-center justify-center text-[9px] font-bold text-white shadow-sm shrink-0"
+                          style={{ backgroundColor: getUserColor(project.assignedTo) }}
+                        >
                           <span>{getInitials(project.assignedTo)}</span>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="bg-base-300 text-base-content/50 rounded-full w-5 h-5 flex items-center justify-center text-[9px] font-bold shrink-0">
+                          <UserIcon className="size-3" />
+                        </div>
+                      )}
                       <span className="text-[10px] font-semibold text-base-content/60 truncate max-w-[80px]">
                         {project.assignedTo === "Sin asignar" ? "Sin resp." : project.assignedTo}
                       </span>

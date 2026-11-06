@@ -103,6 +103,16 @@ const ProjectDetailPage = () => {
   const { statuses } = useStatuses();
   const accountsList = accounts.filter((a) => a.isApproved).map((a) => a.name);
 
+  const getUserColor = (userName, fallback = "#3B82F6") => {
+    if (!userName || userName === "Sin asignar") return null;
+    const normalized = userName.trim().toLowerCase();
+    if (currentUser?.name?.trim().toLowerCase() === normalized && currentUser?.color) {
+      return currentUser.color;
+    }
+    const found = accounts.find((a) => a.name?.trim().toLowerCase() === normalized);
+    return found?.color || fallback;
+  };
+
   const doneStatuses = useMemo(() => {
     const fromCategory = (statuses || []).filter((s) => s.category === "done").map((s) => s.name);
     if (fromCategory.length > 0) return fromCategory;
@@ -564,11 +574,18 @@ const ProjectDetailPage = () => {
                   role="button"
                   className="btn btn-sm btn-ghost gap-2 border border-base-content/10 hover:border-base-content/30 rounded-xl"
                 >
-                  <div className="avatar placeholder">
-                    <div className="bg-neutral text-neutral-content rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
+                  {project.assignedTo && project.assignedTo !== "Sin asignar" ? (
+                    <div
+                      className="rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0"
+                      style={{ backgroundColor: getUserColor(project.assignedTo) }}
+                    >
                       <span>{getInitials(project.assignedTo)}</span>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="bg-base-300 text-base-content/50 rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold shrink-0">
+                      <UserIcon className="size-3" />
+                    </div>
+                  )}
                   <span>
                     {project.assignedTo === "Sin asignar"
                       ? "Responsable"
@@ -586,8 +603,12 @@ const ProjectDetailPage = () => {
                         handleSaveProject({ assignedTo: "Sin asignar" });
                         document.activeElement?.blur();
                       }}
+                      className="flex items-center gap-2"
                     >
-                      Sin asignar
+                      <span className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-base-content/50 shrink-0">
+                        <UserIcon className="size-3" />
+                      </span>
+                      <span>Sin asignar</span>
                     </button>
                   </li>
                   {accountsList.map((accName) => (
@@ -598,8 +619,15 @@ const ProjectDetailPage = () => {
                           handleSaveProject({ assignedTo: accName });
                           document.activeElement?.blur();
                         }}
+                        className="flex items-center gap-2"
                       >
-                        {accName}
+                        <span
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shadow-sm shrink-0"
+                          style={{ backgroundColor: getUserColor(accName) }}
+                        >
+                          {getInitials(accName)}
+                        </span>
+                        <span className="truncate">{accName}</span>
                       </button>
                     </li>
                   ))}
@@ -1299,10 +1327,12 @@ const ProjectDetailPage = () => {
                           </p>
                         </div>
                         {task.user && task.user !== "Sin asignar" && (
-                          <div className="avatar placeholder">
-                            <div className="bg-neutral text-neutral-content rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold">
-                              <span>{getInitials(task.user)}</span>
-                            </div>
+                          <div
+                            className="rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0"
+                            style={{ backgroundColor: getUserColor(task.user) }}
+                            title={task.user}
+                          >
+                            <span>{getInitials(task.user)}</span>
                           </div>
                         )}
                       </Link>
@@ -1528,9 +1558,10 @@ const ProjectDetailPage = () => {
                       act.type === "comment" || act.type === "task_comment";
                     const isDirectProjectComment =
                       act.type === "comment" && !act.taskId;
-                    const userColor =
-                      accounts.find((a) => a.name === act.user)?.color ||
-                      (isComment ? "#3B82F6" : "#6B7280");
+                    const userColor = getUserColor(
+                      act.user,
+                      isComment ? "#3B82F6" : "#6B7280"
+                    );
 
                     return (
                       <div
