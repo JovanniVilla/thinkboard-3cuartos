@@ -35,8 +35,14 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
   const [description, setDescription] = useState(project?.description || "");
   
   const [projectType, setProjectType] = useState(project?.projectType || "General");
-  const [status, setStatus] = useState(project?.status || "En planeación");
+  const [status, setStatus] = useState(project?.status || "");
   const [isActive, setIsActive] = useState(project?.isActive ?? true);
+
+  useEffect(() => {
+    if (!project && !status && projectStatuses.length > 0) {
+      setStatus(projectStatuses[0].name);
+    }
+  }, [project, status, projectStatuses]);
   const [objective, setObjective] = useState(project?.objective || "");
   const [briefUrl, setBriefUrl] = useState(project?.briefUrl || "");
   const [folderUrl, setFolderUrl] = useState(project?.folderUrl || "");
@@ -59,8 +65,9 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
     }
     setSaving(true);
     try {
+      const finalStatus = status || projectStatuses[0]?.name || "En planeación";
       const payload = {
-        name: name.trim(), projectKey: projectKey.trim(), color, description, projectType, status, isActive, objective,
+        name: name.trim(), projectKey: projectKey.trim(), color, description, projectType, status: finalStatus, isActive, objective,
         briefUrl, folderUrl, assignedTo, defaultAssignee,
         startDate: startDate ? new Date(startDate).toISOString() : null,
         endDate: endDate ? new Date(endDate).toISOString() : null,
@@ -159,11 +166,19 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
 
           <div className="form-control">
             <label className="label font-bold text-sm">Estado</label>
-            <select className="select select-bordered w-full" value={status} onChange={(e) => setStatus(e.target.value)}>
-              <option value="En planeación">En planeación</option>
-              {projectStatuses.map((ps) => (
-                <option key={ps._id} value={ps.name}>{ps.name}</option>
-              ))}
+            <select className="select select-bordered w-full" value={status || projectStatuses[0]?.name || "En planeación"} onChange={(e) => setStatus(e.target.value)}>
+              {projectStatuses.length === 0 ? (
+                <option value="En planeación">En planeación</option>
+              ) : (
+                <>
+                  {project?.status && !projectStatuses.some((ps) => ps.name === project.status) && (
+                    <option value={project.status}>{project.status}</option>
+                  )}
+                  {projectStatuses.map((ps) => (
+                    <option key={ps._id} value={ps.name}>{ps.name}</option>
+                  ))}
+                </>
+              )}
             </select>
           </div>
 

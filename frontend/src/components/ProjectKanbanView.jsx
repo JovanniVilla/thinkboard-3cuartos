@@ -84,10 +84,10 @@ const ProjectKanbanView = ({ projects, setProjects, projectStatuses, doneStatuse
   };
 
   // Group projects by status
-  const columns = projectStatuses.map(status => {
+  const columns = projectStatuses.map((status, index) => {
     return {
       ...status,
-      items: projects.filter(p => p.status === status.name || (!p.status && status.name === "En planeación"))
+      items: projects.filter(p => p.status === status.name || (!p.status && index === 0))
     };
   });
 
