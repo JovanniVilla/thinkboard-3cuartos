@@ -11,6 +11,7 @@ import RegisterPage from "./pages/RegisterPage";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useTheme } from "./lib/ThemeContext";
+import IdleModal from "./components/timetracking/IdleModal";
 
 const App = () => {
   const { theme } = useTheme();
@@ -38,6 +39,7 @@ const App = () => {
         <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
         <Route path="/board-settings" element={<ProtectedRoute adminOnly><BoardSettingsPage /></ProtectedRoute>} />
       </Routes>
+      <IdleModal />
     </div>
   );
 };

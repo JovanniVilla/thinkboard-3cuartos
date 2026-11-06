@@ -1,8 +1,9 @@
-import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, ClockIcon } from "lucide-react";
 import { Link } from "react-router";
 import { formatDate, stripMarkdown } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
+import { useTimeTracking } from "../lib/TimeTrackingContext";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -15,6 +16,12 @@ const getInitials = (name = "") => {
 };
 
 const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }) => {
+  const { activeNoteEntry } = useTimeTracking();
+  const isRunning = Boolean(
+    activeNoteEntry &&
+    (String(activeNoteEntry.noteId?._id || activeNoteEntry.noteId) === String(note._id))
+  );
+
   const statusConfig = statuses.find((s) => s.name === note.status);
   const statusColor = statusConfig?.color || "#6B7280";
 
@@ -123,6 +130,25 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
               💬 {note.activities.filter((a) => a.type === "comment").length}
             </span>
           )}
+
+          {/* Time Tracking Indicator */}
+          {isRunning ? (
+            <span
+              className="badge badge-xs font-semibold bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 gap-1 px-2 py-2 animate-pulse"
+              title="Esta tarea está registrando tiempo en este momento"
+            >
+              <ClockIcon className="size-3 text-emerald-500" />
+              En curso
+            </span>
+          ) : note.timeSpent && note.timeSpent > 0 ? (
+            <span
+              className="inline-flex items-center gap-1 text-[11px] text-base-content/70 bg-base-200 px-2 py-0.5 rounded font-mono"
+              title={`Tiempo acumulado: ${note.timeSpent}h`}
+            >
+              <ClockIcon className="size-3 text-base-content/50" />
+              {note.timeSpent}h
+            </span>
+          ) : null}
         </div>
 
         <p className="text-sm text-base-content/70 line-clamp-3 leading-relaxed">{cleanContent}</p>

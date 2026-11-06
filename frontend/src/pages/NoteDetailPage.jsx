@@ -42,6 +42,8 @@ import DatesPopover from "../components/DatesPopover";
 import VisualAnnotationsSection from "../components/annotations/VisualAnnotationsSection";
 import AnnotationCanvas from "../components/annotations/AnnotationCanvas";
 import VideoNotesSection from "../components/videonotes/VideoNotesSection";
+import NoteTimerWidget from "../components/timetracking/NoteTimerWidget";
+import { useTimeTracking } from "../lib/TimeTrackingContext";
 import { FolderKeyIcon, ClockIcon } from "lucide-react";
 
 const getInitials = (name = "") => {
@@ -143,10 +145,102 @@ const NoteDetailPage = () => {
   const { taskSizes } = useTaskSizes();
   const accountsList = accounts.map((acc) => acc.name);
   const { user: currentUser } = useAuth();
+  const { activeNoteEntry, pauseNoteTimer } = useTimeTracking();
 
   const navigate = useNavigate();
   const { id } = useParams();
   const outletContext = useOutletContext();
+
+  const activeNoteEntryRef = useRef(activeNoteEntry);
+  activeNoteEntryRef.current = activeNoteEntry;
+
+  const pauseNoteTimerRef = useRef(pauseNoteTimer);
+  pauseNoteTimerRef.current = pauseNoteTimer;
+
+  const noteIdRef = useRef(id);
+  noteIdRef.current = id;
+
+  const isClosingRef = useRef(false);
+
+  // Resetear el flag de cierre al desmontar para que sea reutilizable
+  useEffect(() => {
+    isClosingRef.current = false;
+    return () => {
+      isClosingRef.current = false;
+    };
+  }, [id]);
+
+  // Pausar el temporizador si pertenece a esta nota al cerrarla
+  // IMPORTANTE: Solo depende de [navigate] para no recrearse en cada render.
+  // Toda la info del timer se lee desde refs (activeNoteEntryRef, noteIdRef, pauseNoteTimerRef).
+  const handleCloseModal = useCallback(async () => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+
+    const active = activeNoteEntryRef.current;
+    const currentNoteId = noteIdRef.current;
+    const isRunningThisNote =
+      active && (String(active.noteId?._id || active.noteId) === String(currentNoteId));
+
+    if (isRunningThisNote && active?._id && pauseNoteTimerRef.current) {
+      try {
+        await pauseNoteTimerRef.current(active._id);
+      } catch (err) {
+        console.error("Error al pausar timer al cerrar:", err);
+      }
+    }
+    navigate("/");
+  }, [navigate]);
+
+  // Manejo seguro del clic en el fondo oscuro: no cerrar al arrastrar o hacer clic en la scrollbar
+  const mouseDownTargetRef = useRef(null);
+
+  const handleBackdropMouseDown = (e) => {
+    mouseDownTargetRef.current = e.target;
+  };
+
+  const handleBackdropClick = (e) => {
+    // Si el mousedown no empezó en el backdrop, o si el target no es exactamente el contenedor exterior, ignorar
+    if (e.target !== e.currentTarget || mouseDownTargetRef.current !== e.currentTarget) {
+      return;
+    }
+    // Si el clic ocurrió sobre la barra de desplazamiento (scrollbar), ignorar
+    if (e.clientX >= e.currentTarget.clientWidth) {
+      return;
+    }
+    handleCloseModal();
+  };
+
+  // Tecla Escape para cerrar la vista modal
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== "Escape") return;
+      // Leer refs en lugar de state para evitar closures obsoletos
+      if (activeVideoForPlayer || isVideoRecorderOpen || canvasTarget) return;
+      if (activePopover) {
+        setActivePopover(null);
+        return;
+      }
+      handleCloseModal();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleCloseModal, activeVideoForPlayer, isVideoRecorderOpen, canvasTarget, activePopover]);
+
+  // Cleanup de seguridad al desmontar la vista de la nota (ej. navegación por historial del browser)
+  useEffect(() => {
+    return () => {
+      const active = activeNoteEntryRef.current;
+      const currentNoteId = noteIdRef.current;
+      const isRunningThisNote =
+        active && (String(active.noteId?._id || active.noteId) === String(currentNoteId));
+
+      if (isRunningThisNote && active?._id && pauseNoteTimerRef.current) {
+        // fire-and-forget silencioso: el usuario navegó hacia atrás con el browser
+        pauseNoteTimerRef.current(active._id, { silent: true }).catch(() => {});
+      }
+    };
+  }, [id]);
 
   const fetchNote = useCallback(async () => {
     try {
@@ -168,6 +262,15 @@ const NoteDetailPage = () => {
     if (!window.confirm("¿Estás seguro de que deseas archivar esta tarea?")) return;
 
     try {
+      const active = activeNoteEntryRef.current;
+      const currentNoteId = noteIdRef.current;
+      const isRunningThisNote =
+        active && (String(active.noteId?._id || active.noteId) === String(currentNoteId));
+
+      if (isRunningThisNote && active?._id && pauseNoteTimerRef.current) {
+        await pauseNoteTimerRef.current(active._id, { silent: true });
+      }
+
       await api.delete(`/notes/${id}`);
       if (outletContext?.onNoteDeleted) {
         outletContext.onNoteDeleted(id);
@@ -515,11 +618,8 @@ const NoteDetailPage = () => {
           ? "overflow-hidden"
           : "overflow-y-auto"
       } p-4 sm:p-6 bg-black/40 backdrop-blur-sm text-base-content`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) {
-          navigate("/");
-        }
-      }}
+      onMouseDown={handleBackdropMouseDown}
+      onClick={handleBackdropClick}
     >
       {/* Card Detail Modal Window Container */}
       <div className="w-full max-w-5xl bg-base-100 border border-base-content/10 rounded-2xl shadow-2xl overflow-hidden mt-2 mb-4 flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -768,13 +868,14 @@ const NoteDetailPage = () => {
             >
               <MoreHorizontalIcon className="size-5" />
             </button>
-            <Link
-              to="/"
-              className="p-1.5 hover:bg-base-200 rounded-lg transition-colors text-base-content/60 hover:text-base-content"
+            <button
+              type="button"
+              onClick={handleCloseModal}
+              className="p-1.5 hover:bg-base-200 rounded-lg transition-colors text-base-content/60 hover:text-base-content cursor-pointer"
               title="Cerrar vista"
             >
               <XIcon className="size-5" />
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -1004,8 +1105,8 @@ const NoteDetailPage = () => {
             )}
 
             {/* Time Tracking Section */}
-            <div className="flex items-center gap-4 py-2 text-sm bg-base-200/50 p-3 rounded-xl border border-base-content/10">
-              <div className="flex-1">
+            <div className="bg-base-200/40 p-3 sm:p-3.5 rounded-xl border border-base-content/10 space-y-3">
+              <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Tiempo Estimado:</span>
                 <div className={`dropdown popover-container ${activePopover === 'size' ? 'dropdown-open' : ''}`}>
                   <div
@@ -1068,20 +1169,15 @@ const NoteDetailPage = () => {
                   </ul>
                 </div>
               </div>
-              <div className="flex-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1">Tiempo Invertido (h):</span>
-                <div className="flex items-center gap-2">
-                  <ClockIcon className="size-4 text-primary opacity-80" />
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    className="input input-sm input-bordered w-24 bg-base-100"
-                    value={note.timeSpent || 0}
-                    onChange={(e) => setNote({ ...note, timeSpent: e.target.value })}
-                    onBlur={(e) => handleSaveNote({ timeSpent: Number(e.target.value) })}
-                  />
-                </div>
+
+              {/* Seguimiento de Tiempo en su propia fila */}
+              <div className="pt-2.5 border-t border-base-content/10">
+                <span className="text-xs font-bold uppercase tracking-wider text-base-content/50 block mb-1.5">Seguimiento de Tiempo:</span>
+                <NoteTimerWidget
+                  noteId={note._id}
+                  noteTitle={note.title}
+                  onTimeUpdated={fetchNote}
+                />
               </div>
             </div>
 

@@ -7,14 +7,17 @@ import { Toaster } from "react-hot-toast";
 
 import { ThemeProvider } from "./lib/ThemeContext";
 import { AuthProvider } from "./lib/AuthContext";
+import { TimeTrackingProvider } from "./lib/TimeTrackingContext";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <App />
-          <Toaster />
+          <TimeTrackingProvider>
+            <App />
+            <Toaster />
+          </TimeTrackingProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

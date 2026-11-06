@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate, useLocation, useOutletContext } from "react-router";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate, useLocation, useOutletContext } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import {
@@ -14,7 +14,9 @@ import {
   CheckSquareIcon,
   PlusIcon,
   Trash2Icon,
-  PencilIcon
+  PencilIcon,
+  AlertTriangleIcon,
+  ArrowLeftIcon
 } from "lucide-react";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
@@ -50,6 +52,18 @@ const CreatePage = () => {
   const [editingChecklistId, setEditingChecklistId] = useState(null);
   const [editingChecklistTitle, setEditingChecklistTitle] = useState("");
   const [showMembersModal, setShowMembersModal] = useState(false);
+  const [hasModifiedMetadata, setHasModifiedMetadata] = useState(false);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
+
+  const mouseDownTargetRef = useRef(null);
+
+  // Detect if the user has captured any information in the form
+  const hasUnsavedChanges =
+    Boolean(title.trim()) ||
+    Boolean(content.trim()) ||
+    checklist.length > 0 ||
+    Boolean(newChecklistItem.trim()) ||
+    hasModifiedMetadata;
 
   // Initialize from query parameters
   useEffect(() => {
@@ -111,9 +125,61 @@ const CreatePage = () => {
     ? 0
     : Math.round((checklist.filter(i => i.completed).length / checklist.length) * 100);
 
-  const handleClose = () => {
+  const forceClose = useCallback(() => {
     navigate(location.state?.returnTo || "/");
+  }, [navigate, location.state?.returnTo]);
+
+  const handleRequestClose = useCallback(() => {
+    if (loading) return;
+    if (hasUnsavedChanges) {
+      setShowDiscardConfirm(true);
+      return;
+    }
+    forceClose();
+  }, [loading, hasUnsavedChanges, forceClose]);
+
+  const handleBackdropMouseDown = (e) => {
+    mouseDownTargetRef.current = e.target;
   };
+
+  const handleBackdropClick = (e) => {
+    // Ignore if mousedown started inside the modal or target is not the backdrop itself
+    if (e.target !== e.currentTarget || mouseDownTargetRef.current !== e.currentTarget) {
+      return;
+    }
+    // Ignore clicks on the scrollbar
+    if (e.clientX >= e.currentTarget.clientWidth) {
+      return;
+    }
+    handleRequestClose();
+  };
+
+  // Keyboard accessibility: Escape closes confirmation dialog or requests modal close
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== "Escape") return;
+      if (showDiscardConfirm) {
+        e.stopPropagation();
+        setShowDiscardConfirm(false);
+        return;
+      }
+      if (showMembersModal || editingChecklistId) return;
+      handleRequestClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [showDiscardConfirm, showMembersModal, editingChecklistId, handleRequestClose]);
+
+  // Warn before unloading browser tab if there are unsaved changes
+  useEffect(() => {
+    if (!hasUnsavedChanges || loading) return;
+    const handleBeforeUnload = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges, loading]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -152,7 +218,7 @@ const CreatePage = () => {
         })
       );
 
-      handleClose();
+      forceClose();
     } catch (error) {
       console.error("Error creating note", error);
       if (error.response?.status === 429) {
@@ -173,7 +239,8 @@ const CreatePage = () => {
   return (
     <div
       className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-start justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
-      onClick={handleClose}
+      onMouseDown={handleBackdropMouseDown}
+      onClick={handleBackdropClick}
     >
       {/* Card Detail Modal Window Container */}
       <div
@@ -193,7 +260,14 @@ const CreatePage = () => {
               <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1">
                 {statuses.map((st) => (
                   <li key={st._id}>
-                    <button type="button" onClick={() => setStatus(st.name)} className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setStatus(st.name);
+                        setHasModifiedMetadata(true);
+                      }}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${currentStatus === st.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}
+                    >
                       <span className="flex items-center gap-2">
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: st.color || "#6B7280" }} />
                         {st.name}
@@ -214,7 +288,14 @@ const CreatePage = () => {
               <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1">
                 {priorities.map((p) => (
                   <li key={p._id}>
-                    <button type="button" onClick={() => setPriority(p.name)} className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${priority === p.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPriority(p.name);
+                        setHasModifiedMetadata(true);
+                      }}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${priority === p.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}
+                    >
                       <span className="flex items-center gap-2">
                         <ZapIcon className="size-4" style={{ color: p.color }} />
                         {p.name}
@@ -234,14 +315,28 @@ const CreatePage = () => {
               </label>
               <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-60 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1">
                 <li>
-                  <button type="button" onClick={() => setProject("")} className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${!project ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProject("");
+                      setHasModifiedMetadata(true);
+                    }}
+                    className={`text-sm py-2 rounded-lg font-medium flex items-center gap-2 ${!project ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}
+                  >
                     <FolderKeyIcon className="size-4 text-base-content/60 flex-shrink-0" />
                     Sin proyecto
                   </button>
                 </li>
                 {projects.map((p) => (
                   <li key={p._id}>
-                    <button type="button" onClick={() => setProject(p._id)} className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProject(p._id);
+                        setHasModifiedMetadata(true);
+                      }}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${project === p._id ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}
+                    >
                       <span className="flex items-center gap-2 text-left">
                         <FolderKeyIcon className="size-4 flex-shrink-0" style={{ color: p.color }} />
                         <span>{p.name}</span>
@@ -279,7 +374,7 @@ const CreatePage = () => {
 
           <button
             type="button"
-            onClick={handleClose}
+            onClick={handleRequestClose}
             className="btn btn-sm btn-ghost btn-square text-base-content/50 hover:text-base-content flex-shrink-0"
             title="Cerrar vista"
           >
@@ -460,7 +555,7 @@ const CreatePage = () => {
 
             {/* Bottom Fixed Action Buttons */}
             <div className="p-3 sm:px-6 sm:py-3.5 border-t border-base-content/10 bg-base-100 flex justify-end gap-3 flex-shrink-0">
-              <button type="button" className="btn btn-ghost" onClick={handleClose}>
+              <button type="button" className="btn btn-ghost" onClick={handleRequestClose}>
                 Cancelar
               </button>
               <button
@@ -523,9 +618,67 @@ const CreatePage = () => {
         isOpen={showMembersModal}
         onClose={() => setShowMembersModal(false)}
         selectedUser={user}
-        onSelectUser={setUser}
+        onSelectUser={(selected) => {
+          setUser(selected);
+          setHasModifiedMetadata(true);
+        }}
         accounts={accounts}
       />
+
+      {/* Confirmation Alert Modal for Unsaved Information */}
+      {showDiscardConfirm && (
+        <div
+          className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDiscardConfirm(false);
+          }}
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="discard-note-title"
+          aria-describedby="discard-note-description"
+        >
+          <div
+            className="card bg-base-100 max-w-md w-full shadow-2xl border border-error/30 rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="card-body p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-full bg-error/10 text-error shrink-0">
+                  <AlertTriangleIcon className="size-6" />
+                </div>
+                <h3 id="discard-note-title" className="font-semibold text-lg text-base-content">
+                  ¿Salir sin guardar la nota?
+                </h3>
+              </div>
+
+              <p id="discard-note-description" className="text-sm text-base-content/80 leading-relaxed">
+                Tienes información capturada en esta nota. Si sales ahora, se perderá toda la información que has escrito.
+              </p>
+
+              <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-2">
+                <button
+                  type="button"
+                  autoFocus
+                  className="btn btn-sm sm:btn-md btn-primary gap-2 font-medium"
+                  onClick={() => setShowDiscardConfirm(false)}
+                >
+                  <ArrowLeftIcon className="size-4" />
+                  <span>Regresar a la nota</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-sm sm:btn-md btn-error text-white gap-2 font-medium"
+                  onClick={forceClose}
+                >
+                  <Trash2Icon className="size-4" />
+                  <span>Aceptar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

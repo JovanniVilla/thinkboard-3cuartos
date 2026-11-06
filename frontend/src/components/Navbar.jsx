@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
-import { PlusIcon, Settings2Icon, LogOutIcon, UserIcon, ShieldIcon, FolderKeyIcon } from "lucide-react";
+import { PlusIcon, SettingsIcon, UserRoundCogIcon, LogOutIcon, UserIcon, ShieldIcon, FolderKeyIcon } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import toast from "react-hot-toast";
 import UserProfileModal from "./UserProfileModal";
+import GlobalTimerWidget from "./timetracking/GlobalTimerWidget";
 
 const Navbar = () => {
   const { user, isAdmin, logout } = useAuth();
@@ -36,30 +37,26 @@ const Navbar = () => {
 
   return (
     <header className="bg-base-300 border-b border-base-content/10 w-full">
-      <div className="w-full px-4 sm:px-8 py-4">
-        <div className="flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
-            <h1 className="hidden sm:block text-2xl md:text-3xl font-bold text-primary font-mono tracking-tight truncate max-w-[200px] md:max-w-[300px]">{boardConfig?.projectName || "ThinkBoard"}</h1>
+      <div className="w-full px-2.5 sm:px-6 md:px-8 py-2.5 sm:py-3.5">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-4">
+          <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <img src="/logo.png" alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain shrink-0" />
+            <h1 className="hidden sm:block text-2xl md:text-3xl font-bold text-primary font-mono tracking-tight truncate max-w-[180px] md:max-w-[300px]">{boardConfig?.projectName || "ThinkBoard"}</h1>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <ThemeToggle />
 
-            {/* Board Settings - Admin only */}
-            {isAdmin && (
-              <Link to={"/board-settings"} className="btn btn-ghost btn-sm" title="Configuración del tablero">
-                <Settings2Icon className="size-5" />
-              </Link>
-            )}
-
-            <Link to={"/projects"} className="btn btn-ghost btn-sm" title="Proyectos">
-              <FolderKeyIcon className="size-5" />
+            <Link to={"/projects"} className="btn btn-ghost btn-circle btn-sm" title="Proyectos">
+              <FolderKeyIcon className="size-4 sm:size-5" />
             </Link>
 
-            <Link to={"/create"} className="btn btn-primary">
-              <PlusIcon className="size-5" />
-              <span className="hidden sm:inline">New Note</span>
+            <Link to={"/create"} className="btn btn-primary btn-sm px-2.5 sm:px-3 gap-1.5" title="New Note">
+              <PlusIcon className="size-4 sm:size-5" />
+              <span className="hidden sm:inline font-medium">New Note</span>
             </Link>
+
+            {/* Global Timer Widget */}
+            {user && <GlobalTimerWidget />}
 
             {/* User dropdown */}
             {user && (
@@ -67,9 +64,9 @@ const Navbar = () => {
                 <div
                   tabIndex={0}
                   role="button"
-                  className="btn btn-ghost btn-sm gap-2 pl-2 pr-3"
+                  className="btn btn-ghost btn-sm p-0.5 sm:px-2 gap-2 rounded-full sm:rounded-lg"
                 >
-                  <div className="w-8 h-8 rounded-full border border-base-content/10 flex items-center justify-center text-white font-bold text-xs shadow-sm"
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full border border-base-content/10 flex items-center justify-center text-white font-bold text-xs shadow-sm shrink-0"
                        style={{ backgroundColor: user.color || "#3B82F6" }}>
                     <span>{getInitials(user.name)}</span>
                   </div>
@@ -111,16 +108,45 @@ const Navbar = () => {
                   {/* Profile Config */}
                   <li>
                     <button
-                      onClick={() => setIsProfileModalOpen(true)}
+                      onClick={() => {
+                        setIsProfileModalOpen(true);
+                        document.activeElement?.blur();
+                      }}
                       className="text-base-content hover:bg-base-200 font-medium gap-2"
                     >
-                      <Settings2Icon className="size-4" />
+                      <UserRoundCogIcon className="size-4" />
                       Configuración de perfil
                     </button>
                   </li>
 
+                  {/* Board Settings - Admin only */}
+                  {isAdmin && (
+                    <li>
+                      <Link
+                        to="/board-settings"
+                        onClick={() => document.activeElement?.blur()}
+                        className="text-base-content hover:bg-base-200 font-medium gap-2"
+                      >
+                        <SettingsIcon className="size-4" />
+                        Gestión del Tablero
+                      </Link>
+                    </li>
+                  )}
+
+                  {/* Proyectos link on mobile dropdown */}
+                  <li className="sm:hidden">
+                    <Link
+                      to="/projects"
+                      onClick={() => document.activeElement?.blur()}
+                      className="text-base-content hover:bg-base-200 font-medium gap-2"
+                    >
+                      <FolderKeyIcon className="size-4" />
+                      Proyectos
+                    </Link>
+                  </li>
+
                   {/* Logout */}
-                  <li>
+                  <li className="border-t border-base-content/10 mt-1 pt-1">
                     <button
                       onClick={handleLogout}
                       className="text-error hover:bg-error/10 hover:text-error font-medium gap-2"
