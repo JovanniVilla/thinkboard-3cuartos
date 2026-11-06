@@ -29,6 +29,8 @@ import {
   TelescopeIcon,
   CheckSquareIcon,
   ExternalLinkIcon,
+  PieChartIcon,
+  BarChart3Icon,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useProjectTypes } from "../lib/useProjectTypes";
@@ -86,6 +88,11 @@ const ProjectDetailPage = () => {
   const [postingComment, setPostingComment] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  const [chartType, setChartType] = useState(() => localStorage.getItem("project_tasks_chart_type") || "donut");
+
+  useEffect(() => {
+    localStorage.setItem("project_tasks_chart_type", chartType);
+  }, [chartType]);
 
   const { projectTypes } = useProjectTypes();
   const { projectStatuses } = useProjectStatuses();
@@ -109,6 +116,34 @@ const ProjectDetailPage = () => {
   }, [tasks, doneStatuses]);
 
   const tasksProgress = tasks.length > 0 ? Math.round((completedTasksCount / tasks.length) * 100) : 0;
+
+  const taskStatusStats = useMemo(() => {
+    const counts = {};
+    tasks.forEach((t) => {
+      const s = t.status || "Pendiente";
+      counts[s] = (counts[s] || 0) + 1;
+    });
+
+    const stats = (statuses || []).map((s) => ({
+      name: s.name,
+      color: s.color || "#6B7280",
+      count: counts[s.name] || 0,
+      percentage: tasks.length > 0 ? Math.round(((counts[s.name] || 0) / tasks.length) * 100) : 0,
+    }));
+
+    Object.keys(counts).forEach((statusName) => {
+      if (!stats.some((s) => s.name === statusName)) {
+        stats.push({
+          name: statusName,
+          color: "#6B7280",
+          count: counts[statusName],
+          percentage: tasks.length > 0 ? Math.round((counts[statusName] / tasks.length) * 100) : 0,
+        });
+      }
+    });
+
+    return stats;
+  }, [tasks, statuses]);
 
   const titleTextareaRef = useRef(null);
 
@@ -1267,8 +1302,167 @@ const ProjectDetailPage = () => {
             </div>
           </div>
 
-          {/* COLUMN 3: Log de Actividad */}
-          <div className="min-w-0 lg:col-span-1 flex flex-col">
+          {/* COLUMN 3: Gráfica de Estados y Log de Actividad */}
+          <div className="min-w-0 lg:col-span-1 flex flex-col gap-6">
+            {/* Tasks by Status Chart Card */}
+            <div className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm overflow-hidden">
+              <div className="p-4 border-b border-base-content/5 bg-base-200/30 flex items-center justify-between gap-2">
+                <h3 className="text-sm font-bold flex items-center gap-2 truncate">
+                  {chartType === "donut" ? (
+                    <PieChartIcon className="size-4 text-primary shrink-0" />
+                  ) : (
+                    <BarChart3Icon className="size-4 text-primary shrink-0" />
+                  )}
+                  <span className="truncate">Tareas por Estado</span>
+                </h3>
+                <div className="flex items-center bg-base-200 p-0.5 rounded-lg border border-base-content/10 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setChartType("donut")}
+                    className={`btn btn-xs border-none px-2 rounded-md ${
+                      chartType === "donut"
+                        ? "bg-primary text-primary-content hover:bg-primary shadow-sm"
+                        : "btn-ghost text-base-content/60 hover:text-base-content"
+                    }`}
+                    title="Gráfica de Dona"
+                  >
+                    <PieChartIcon className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setChartType("bar")}
+                    className={`btn btn-xs border-none px-2 rounded-md ${
+                      chartType === "bar"
+                        ? "bg-primary text-primary-content hover:bg-primary shadow-sm"
+                        : "btn-ghost text-base-content/60 hover:text-base-content"
+                    }`}
+                    title="Gráfica de Barras"
+                  >
+                    <BarChart3Icon className="size-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4">
+                {tasks.length === 0 ? (
+                  <p className="text-center text-xs text-base-content/40 py-6 italic">
+                    Sin tareas para graficar.
+                  </p>
+                ) : chartType === "donut" ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative size-32 flex items-center justify-center">
+                      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+                        <circle
+                          cx="18"
+                          cy="18"
+                          r="15.91549430918954"
+                          fill="transparent"
+                          stroke="currentColor"
+                          className="text-base-200"
+                          strokeWidth="4"
+                        />
+                        {(() => {
+                          let cumulativePercent = 0;
+                          return taskStatusStats
+                            .filter((s) => s.count > 0)
+                            .map((stat) => {
+                              const percent = (stat.count / tasks.length) * 100;
+                              const strokeDasharray = `${percent} ${100 - percent}`;
+                              const strokeDashoffset = -cumulativePercent;
+                              cumulativePercent += percent;
+                              return (
+                                <circle
+                                  key={stat.name}
+                                  cx="18"
+                                  cy="18"
+                                  r="15.91549430918954"
+                                  fill="transparent"
+                                  stroke={stat.color}
+                                  strokeWidth="4"
+                                  strokeDasharray={strokeDasharray}
+                                  strokeDashoffset={strokeDashoffset}
+                                  className="transition-all duration-500"
+                                >
+                                  <title>{`${stat.name}: ${stat.count} (${stat.percentage}%)`}</title>
+                                </circle>
+                              );
+                            });
+                        })()}
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                        <span className="text-xl font-black text-base-content leading-none">
+                          {tasks.length}
+                        </span>
+                        <span className="text-[10px] font-semibold text-base-content/50 uppercase mt-0.5">
+                          {tasks.length === 1 ? "Tarea" : "Tareas"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="w-full space-y-1.5">
+                      {taskStatusStats.map((stat) => (
+                        <div
+                          key={stat.name}
+                          className="flex items-center justify-between text-xs gap-2"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span
+                              className="w-2.5 h-2.5 rounded-full shrink-0"
+                              style={{ backgroundColor: stat.color }}
+                            />
+                            <span className="truncate text-base-content/80 font-medium">
+                              {stat.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0 font-mono">
+                            <span className="font-bold text-base-content">
+                              {stat.count}
+                            </span>
+                            <span className="text-[10px] text-base-content/40 w-8 text-right">
+                              ({stat.percentage}%)
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {taskStatusStats.map((stat) => (
+                      <div key={stat.name} className="space-y-1">
+                        <div className="flex items-center justify-between text-xs gap-2">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: stat.color }}
+                            />
+                            <span className="truncate font-medium text-base-content/80">
+                              {stat.name}
+                            </span>
+                          </div>
+                          <span className="font-mono text-[11px] font-bold text-base-content shrink-0">
+                            {stat.count}{" "}
+                            <span className="text-base-content/40 font-normal">
+                              ({stat.percentage}%)
+                            </span>
+                          </span>
+                        </div>
+                        <div className="w-full bg-base-200 rounded-full h-2 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${stat.percentage}%`,
+                              backgroundColor: stat.color,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div
               className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm flex flex-col sticky top-[80px]"
               style={{ height: "calc(100vh - 120px)" }}
