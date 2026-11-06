@@ -2,6 +2,11 @@ import fs from "fs";
 import File from "../models/File.js";
 import Note from "../models/Note.js";
 import Subtask from "../models/Subtask.js";
+import {
+  generateActivityId,
+  buildProjectTaskActivity,
+  appendProjectActivities,
+} from "../utils/projectActivity.js";
 
 /**
  * Upload a file attached to a task (Note).
@@ -39,6 +44,36 @@ export const uploadTaskFile = async (req, res) => {
 
     await newFile.save();
     await newFile.populate("uploadedBy", "name email color");
+
+    const actor = req.user?.name || "Usuario";
+    const actId = generateActivityId();
+    const now = new Date();
+
+    await Note.findByIdAndUpdate(note._id, {
+      $push: {
+        activities: {
+          id: actId,
+          type: "action",
+          text: `${actor} adjuntó el archivo "${req.file.originalname}"`,
+          user: actor,
+          createdAt: now,
+        },
+      },
+    });
+
+    if (note.project) {
+      await appendProjectActivities(
+        note.project,
+        buildProjectTaskActivity({
+          note,
+          user: actor,
+          text: `Adjuntó el archivo "${req.file.originalname}"`,
+          type: "task_action",
+          sourceActivityId: actId,
+          createdAt: now,
+        })
+      );
+    }
 
     res.status(201).json({
       message: "Archivo subido exitosamente",
@@ -154,6 +189,39 @@ export const deleteFile = async (req, res) => {
 
     // Delete file document
     await File.findByIdAndDelete(fileId);
+
+    const parentNote = await Note.findById(file.taskId);
+    if (parentNote) {
+      const actor = req.user?.name || "Usuario";
+      const actId = generateActivityId();
+      const now = new Date();
+
+      await Note.findByIdAndUpdate(parentNote._id, {
+        $push: {
+          activities: {
+            id: actId,
+            type: "action",
+            text: `${actor} eliminó el archivo adjunto "${file.originalName}"`,
+            user: actor,
+            createdAt: now,
+          },
+        },
+      });
+
+      if (parentNote.project) {
+        await appendProjectActivities(
+          parentNote.project,
+          buildProjectTaskActivity({
+            note: parentNote,
+            user: actor,
+            text: `Eliminó el archivo adjunto "${file.originalName}"`,
+            type: "task_action",
+            sourceActivityId: actId,
+            createdAt: now,
+          })
+        );
+      }
+    }
 
     res.status(200).json({
       message: "Archivo y sus subtareas asociadas eliminados correctamente.",

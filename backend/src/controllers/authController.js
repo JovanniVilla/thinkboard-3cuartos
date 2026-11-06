@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import Note from "../models/Note.js";
+import Project from "../models/Project.js";
 
 /**
  * Generates a JWT and sets it as an httpOnly cookie on the response.
@@ -188,6 +189,21 @@ export async function updateProfile(req, res) {
 
       // Update note.activities.user
       await Note.updateMany(
+        { "activities.user": oldName },
+        { $set: { "activities.$[elem].user": newName } },
+        { arrayFilters: [{ "elem.user": oldName }] }
+      );
+
+      // Update project assignees and project.activities.user
+      await Project.updateMany(
+        { assignedTo: oldName },
+        { $set: { assignedTo: newName } }
+      );
+      await Project.updateMany(
+        { defaultAssignee: oldName },
+        { $set: { defaultAssignee: newName } }
+      );
+      await Project.updateMany(
         { "activities.user": oldName },
         { $set: { "activities.$[elem].user": newName } },
         { arrayFilters: [{ "elem.user": oldName }] }

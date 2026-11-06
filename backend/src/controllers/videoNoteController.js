@@ -4,6 +4,11 @@ import VideoNote from "../models/VideoNote.js";
 import Note from "../models/Note.js";
 import Subtask from "../models/Subtask.js";
 import { UPLOADS_DIR, VIDEOS_UPLOADS_DIR } from "../middleware/upload.js";
+import {
+  generateActivityId,
+  buildProjectTaskActivity,
+  appendProjectActivities,
+} from "../utils/projectActivity.js";
 
 /**
  * Upload a Video Note attached to a task (Note).
@@ -53,19 +58,21 @@ export const uploadVideoNote = async (req, res) => {
     const formattedDuration = `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 
     const actor = req.user?.name || "Usuario";
+    const actId = generateActivityId();
+    const now = new Date();
 
     // Add activity record in Note
     note.activities.push({
-      id: Date.now().toString(),
+      id: actId,
       type: "comment",
       text: `🎥 **Video Nota grabada:** [${cleanTitle}](${newVideoNote.fileUrl}) (${formattedDuration})`,
       user: actor,
-      createdAt: new Date(),
+      createdAt: now,
     });
 
     // Add Video Note to the main checklist of the Note
     note.checklist.push({
-      id: Date.now().toString(),
+      id: generateActivityId(),
       title: `🎥 Video Nota: ${cleanTitle}`,
       completed: false,
       videoNoteId: newVideoNote._id,
@@ -73,6 +80,20 @@ export const uploadVideoNote = async (req, res) => {
     });
 
     await note.save();
+
+    if (note.project) {
+      await appendProjectActivities(
+        note.project,
+        buildProjectTaskActivity({
+          note,
+          user: actor,
+          text: `🎥 Grabó la video nota "${cleanTitle}" (${formattedDuration})`,
+          type: "task_action",
+          sourceActivityId: actId,
+          createdAt: now,
+        })
+      );
+    }
 
     // If linked to a subtask, also log in subtask comments
     if (subtaskId) {
@@ -262,18 +283,38 @@ export const deleteVideoNote = async (req, res) => {
 
     // Log deletion activity and remove checklist item in parent note
     const actor = req.user?.name || "Usuario";
-    await Note.findByIdAndUpdate(videoNote.taskId, {
-      $pull: { checklist: { videoNoteId: videoNote._id } },
-      $push: {
-        activities: {
-          id: Date.now().toString(),
-          type: "action",
-          text: `${actor} eliminó la video nota "${videoNote.title}"`,
-          user: actor,
-          createdAt: new Date(),
+    const actId = generateActivityId();
+    const now = new Date();
+    const parentNote = await Note.findByIdAndUpdate(
+      videoNote.taskId,
+      {
+        $pull: { checklist: { videoNoteId: videoNote._id } },
+        $push: {
+          activities: {
+            id: actId,
+            type: "action",
+            text: `${actor} eliminó la video nota "${videoNote.title}"`,
+            user: actor,
+            createdAt: now,
+          },
         },
       },
-    });
+      { new: true }
+    );
+
+    if (parentNote && parentNote.project) {
+      await appendProjectActivities(
+        parentNote.project,
+        buildProjectTaskActivity({
+          note: parentNote,
+          user: actor,
+          text: `Eliminó la video nota "${videoNote.title}"`,
+          type: "task_action",
+          sourceActivityId: actId,
+          createdAt: now,
+        })
+      );
+    }
 
     await VideoNote.findByIdAndDelete(id);
 
@@ -320,17 +361,37 @@ export const updateVideoNoteStatus = async (req, res) => {
     // Log action in Note activities
     const actor = req.user?.name || "Usuario";
     const statusLabel = isCompleted ? "resuelta" : "pendiente";
-    await Note.findByIdAndUpdate(videoNote.taskId, {
-      $push: {
-        activities: {
-          id: Date.now().toString(),
-          type: "action",
-          text: `${actor} marcó la video nota "${videoNote.title}" como ${statusLabel}`,
-          user: actor,
-          createdAt: new Date(),
+    const actId = generateActivityId();
+    const now = new Date();
+    const parentNote = await Note.findByIdAndUpdate(
+      videoNote.taskId,
+      {
+        $push: {
+          activities: {
+            id: actId,
+            type: "action",
+            text: `${actor} marcó la video nota "${videoNote.title}" como ${statusLabel}`,
+            user: actor,
+            createdAt: now,
+          },
         },
       },
-    });
+      { new: true }
+    );
+
+    if (parentNote && parentNote.project) {
+      await appendProjectActivities(
+        parentNote.project,
+        buildProjectTaskActivity({
+          note: parentNote,
+          user: actor,
+          text: `Marcó la video nota "${videoNote.title}" como ${statusLabel}`,
+          type: "task_action",
+          sourceActivityId: actId,
+          createdAt: now,
+        })
+      );
+    }
 
     res.status(200).json({
       message: `Video nota marcada como ${statusLabel}`,

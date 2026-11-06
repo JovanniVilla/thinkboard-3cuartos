@@ -84,9 +84,18 @@ const projectSchema = new mongoose.Schema(
     activities: [
       {
         id: { type: String },
-        type: { type: String, default: "comment" },
+        type: { type: String, default: "comment" }, // "comment" | "project_action" | "task_action" | "task_comment"
         text: { type: String, required: true },
         user: { type: String, default: "Usuario" },
+        taskId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Note",
+          default: null,
+        },
+        taskKeyId: { type: String, default: null },
+        taskTitle: { type: String, default: null },
+        sourceActivityId: { type: String, default: null },
+        editedAt: { type: Date, default: null },
         createdAt: { type: Date, default: Date.now },
       },
     ],

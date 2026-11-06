@@ -2,6 +2,19 @@ import mongoose from "mongoose";
 import TimeEntry from "../models/TimeEntry.js";
 import Note from "../models/Note.js";
 import { syncNoteTimeSpent } from "../utils/timeSync.js";
+import {
+  generateActivityId,
+  buildProjectTaskActivity,
+  appendProjectActivities,
+} from "../utils/projectActivity.js";
+
+function formatDurationHuman(seconds) {
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  if (hrs > 0 && mins > 0) return `${hrs}h ${mins}m`;
+  if (hrs > 0) return `${hrs}h`;
+  return `${Math.max(1, mins)}m`;
+}
 
 /**
  * Retorna los temporizadores actualmente activos (RUNNING) del usuario autenticado
@@ -206,6 +219,41 @@ export async function pauseTimer(req, res) {
 
     if (entry.type === "NOTE" && entry.noteId) {
       await syncNoteTimeSpent(entry.noteId);
+
+      if (durationSeconds >= 60) {
+        const parentNote = await Note.findById(entry.noteId);
+        if (parentNote) {
+          const actor = req.user?.name || "Usuario";
+          const formatted = formatDurationHuman(durationSeconds);
+          const actId = generateActivityId();
+
+          await Note.findByIdAndUpdate(parentNote._id, {
+            $push: {
+              activities: {
+                id: actId,
+                type: "action",
+                text: `${actor} registró ${formatted} de tiempo en la tarea`,
+                user: actor,
+                createdAt: end,
+              },
+            },
+          });
+
+          if (parentNote.project) {
+            await appendProjectActivities(
+              parentNote.project,
+              buildProjectTaskActivity({
+                note: parentNote,
+                user: actor,
+                text: `⏱️ Registró ${formatted} de trabajo`,
+                type: "task_action",
+                sourceActivityId: actId,
+                createdAt: end,
+              })
+            );
+          }
+        }
+      }
     }
 
     res.json({

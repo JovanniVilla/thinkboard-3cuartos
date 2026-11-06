@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { Link, useNavigate, useParams, useOutletContext } from "react-router";
+import { Link, useNavigate, useLocation, useParams, useOutletContext } from "react-router";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import {
@@ -148,8 +148,12 @@ const NoteDetailPage = () => {
   const { activeNoteEntry, pauseNoteTimer } = useTimeTracking();
 
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams();
   const outletContext = useOutletContext();
+
+  const returnToRef = useRef(location.state?.returnTo || "/");
+  returnToRef.current = location.state?.returnTo || "/";
 
   const activeNoteEntryRef = useRef(activeNoteEntry);
   activeNoteEntryRef.current = activeNoteEntry;
@@ -189,7 +193,7 @@ const NoteDetailPage = () => {
         console.error("Error al pausar timer al cerrar:", err);
       }
     }
-    navigate("/");
+    navigate(returnToRef.current);
   }, [navigate]);
 
   // Manejo seguro del clic en el fondo oscuro: no cerrar al arrastrar o hacer clic en la scrollbar
@@ -281,7 +285,7 @@ const NoteDetailPage = () => {
         })
       );
       toast.success("Tarea archivada");
-      navigate("/");
+      navigate(returnToRef.current);
     } catch (error) {
       console.error("Error archiving the note:", error);
       toast.error("Error al archivar la tarea");

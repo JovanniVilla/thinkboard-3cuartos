@@ -1,6 +1,11 @@
 import Subtask from "../models/Subtask.js";
 import Note from "../models/Note.js";
 import File from "../models/File.js";
+import {
+  generateActivityId,
+  buildProjectTaskActivity,
+  appendProjectActivities,
+} from "../utils/projectActivity.js";
 
 /**
  * Create a new subtask with optional visual marker coordinates.
@@ -79,9 +84,36 @@ export const createSubtask = async (req, res) => {
     subtask.checklistId = checklistItemId;
     await subtask.save();
 
+    const actor = req.user?.name || "Usuario";
+    const actId = generateActivityId();
+    const now = new Date();
+
     await Note.findByIdAndUpdate(note._id, {
-      $push: { checklist: checklistItem },
+      $push: {
+        checklist: checklistItem,
+        activities: {
+          id: actId,
+          type: "action",
+          text: `${actor} creó el marcador visual "${subtask.title}"`,
+          user: actor,
+          createdAt: now,
+        },
+      },
     });
+
+    if (note.project) {
+      await appendProjectActivities(
+        note.project,
+        buildProjectTaskActivity({
+          note,
+          user: actor,
+          text: `Creó el marcador visual "${subtask.title}"`,
+          type: "task_action",
+          sourceActivityId: actId,
+          createdAt: now,
+        })
+      );
+    }
 
     await subtask.populate("assignedTo", "name email color");
 
@@ -160,6 +192,8 @@ export const updateSubtask = async (req, res) => {
       return res.status(404).json({ message: "Subtarea no encontrada." });
     }
 
+    const oldStatus = subtask.status;
+
     if (title !== undefined) subtask.title = title.trim();
     if (description !== undefined) subtask.description = description.trim();
     if (assignedTo !== undefined) subtask.assignedTo = assignedTo || null;
@@ -202,6 +236,47 @@ export const updateSubtask = async (req, res) => {
     await subtask.populate("assignedTo", "name email color");
     await subtask.populate("comments.user", "name email color");
 
+    if (status !== undefined && status !== oldStatus) {
+      const parentNote = await Note.findById(subtask.parentTaskId);
+      if (parentNote) {
+        const statusLabels = {
+          pending: "pendiente",
+          in_progress: "en progreso",
+          completed: "completado",
+        };
+        const statusLabel = statusLabels[status] || status;
+        const actor = req.user?.name || "Usuario";
+        const actId = generateActivityId();
+        const now = new Date();
+
+        await Note.findByIdAndUpdate(parentNote._id, {
+          $push: {
+            activities: {
+              id: actId,
+              type: "action",
+              text: `${actor} marcó el marcador "${subtask.title}" como ${statusLabel}`,
+              user: actor,
+              createdAt: now,
+            },
+          },
+        });
+
+        if (parentNote.project) {
+          await appendProjectActivities(
+            parentNote.project,
+            buildProjectTaskActivity({
+              note: parentNote,
+              user: actor,
+              text: `Marcó el marcador "${subtask.title}" como ${statusLabel}`,
+              type: "task_action",
+              sourceActivityId: actId,
+              createdAt: now,
+            })
+          );
+        }
+      }
+    }
+
     res.status(200).json({
       message: "Subtarea actualizada exitosamente",
       subtask,
@@ -226,7 +301,7 @@ export const deleteSubtask = async (req, res) => {
     }
 
     // Remover el ítem del checklist en la Note padre
-    await Note.updateOne(
+    const pullResult = await Note.updateOne(
       { _id: subtask.parentTaskId },
       {
         $pull: {
@@ -242,6 +317,41 @@ export const deleteSubtask = async (req, res) => {
     );
 
     await Subtask.findByIdAndDelete(subtaskId);
+
+    if (pullResult.modifiedCount > 0) {
+      const parentNote = await Note.findById(subtask.parentTaskId);
+      if (parentNote) {
+        const actor = req.user?.name || "Usuario";
+        const actId = generateActivityId();
+        const now = new Date();
+
+        await Note.findByIdAndUpdate(parentNote._id, {
+          $push: {
+            activities: {
+              id: actId,
+              type: "action",
+              text: `${actor} eliminó el marcador visual "${subtask.title}"`,
+              user: actor,
+              createdAt: now,
+            },
+          },
+        });
+
+        if (parentNote.project) {
+          await appendProjectActivities(
+            parentNote.project,
+            buildProjectTaskActivity({
+              note: parentNote,
+              user: actor,
+              text: `Eliminó el marcador visual "${subtask.title}"`,
+              type: "task_action",
+              sourceActivityId: actId,
+              createdAt: now,
+            })
+          );
+        }
+      }
+    }
 
     res.status(200).json({
       message: "Subtarea eliminada y retirada del checklist correctamente.",
@@ -291,18 +401,38 @@ export const addSubtaskComment = async (req, res) => {
     const preview =
       cleanText.length > 80 ? `${cleanText.substring(0, 80)}...` : cleanText;
     const activityText = `💬 ${userName} comentó en el marcador "${subtask.title}": "${preview}"`;
+    const actId = generateActivityId();
+    const now = new Date();
 
-    await Note.findByIdAndUpdate(subtask.parentTaskId, {
-      $push: {
-        activities: {
-          id: Date.now().toString(),
-          type: "comment",
-          text: activityText,
-          user: userName,
-          createdAt: new Date(),
+    const parentNote = await Note.findByIdAndUpdate(
+      subtask.parentTaskId,
+      {
+        $push: {
+          activities: {
+            id: actId,
+            type: "comment",
+            text: activityText,
+            user: userName,
+            createdAt: now,
+          },
         },
       },
-    });
+      { new: true }
+    );
+
+    if (parentNote && parentNote.project) {
+      await appendProjectActivities(
+        parentNote.project,
+        buildProjectTaskActivity({
+          note: parentNote,
+          user: userName,
+          text: `Comentó en el marcador "${subtask.title}": "${preview}"`,
+          type: "task_comment",
+          sourceActivityId: actId,
+          createdAt: now,
+        })
+      );
+    }
 
     await subtask.populate("assignedTo", "name email color");
     await subtask.populate("comments.user", "name email color");

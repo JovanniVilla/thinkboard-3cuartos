@@ -31,6 +31,7 @@ import {
   ExternalLinkIcon,
   PieChartIcon,
   BarChart3Icon,
+  ActivityIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useProjectTypes } from "../lib/useProjectTypes";
@@ -88,6 +89,8 @@ const ProjectDetailPage = () => {
   const [postingComment, setPostingComment] = useState(false);
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentText, setEditingCommentText] = useState("");
+  const [activityFilter, setActivityFilter] = useState("all"); // "all" | "actions" | "comments"
+  const activityFeedRef = useRef(null);
   const [chartType, setChartType] = useState(() => localStorage.getItem("project_tasks_chart_type") || "donut");
 
   useEffect(() => {
@@ -145,6 +148,27 @@ const ProjectDetailPage = () => {
     return stats;
   }, [tasks, statuses]);
 
+  const filteredActivities = useMemo(() => {
+    const raw = Array.isArray(project?.activities) ? project.activities : [];
+    const sorted = [...raw].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+    if (activityFilter === "actions") {
+      return sorted.filter(
+        (act) =>
+          act.type === "task_action" ||
+          act.type === "project_action" ||
+          act.type === "action"
+      );
+    }
+    if (activityFilter === "comments") {
+      return sorted.filter(
+        (act) => act.type === "comment" || act.type === "task_comment"
+      );
+    }
+    return sorted;
+  }, [project?.activities, activityFilter]);
+
   const titleTextareaRef = useRef(null);
 
   useEffect(() => {
@@ -189,16 +213,16 @@ const ProjectDetailPage = () => {
       toast.error("El título es obligatorio");
       return;
     }
-    // Only send known editable fields — avoid sending tasks, _id, __v, etc.
+    // Only send known editable fields — avoid sending tasks, activities, _id, __v, etc.
     const {
       name, color, description, scope, acceptanceCriteria, projectType,
       startDate, endDate, objective, status, isActive, projectKey, briefUrl, assignedTo,
-      defaultAssignee, folderUrl, activities, contact,
+      defaultAssignee, folderUrl, contact,
     } = mergedProject;
     const payload = {
       name, color, description, scope, acceptanceCriteria, projectType,
       startDate, endDate, objective, status, isActive, projectKey, briefUrl, assignedTo,
-      defaultAssignee, folderUrl, activities, contact,
+      defaultAssignee, folderUrl, contact,
     };
     setSaving(true);
     try {
@@ -230,22 +254,18 @@ const ProjectDetailPage = () => {
     if (!commentText.trim()) return;
     setPostingComment(true);
 
-    const newActivity = {
-      id: Date.now().toString(),
-      type: "comment",
-      text: commentText.trim(),
-      user: currentUser?.name || "Usuario",
-      createdAt: new Date().toISOString(),
-    };
-
-    const nextActivities = [...(project.activities || []), newActivity];
-
     try {
-      const res = await api.put(`/projects/${id}`, {
-        activities: nextActivities,
+      const res = await api.post(`/projects/${id}/comments`, {
+        text: commentText.trim(),
       });
       setProject(res.data);
       setCommentText("");
+      if (activityFilter === "actions") {
+        setActivityFilter("all");
+      }
+      setTimeout(() => {
+        activityFeedRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      }, 50);
     } catch (error) {
       console.error("Error posting comment", error);
       toast.error("Error al enviar comentario");
@@ -260,19 +280,9 @@ const ProjectDetailPage = () => {
       return;
     }
 
-    const updatedActivities = (project.activities || []).map((act) =>
-      act.id === activityId || act._id === activityId
-        ? {
-            ...act,
-            text: editingCommentText.trim(),
-            editedAt: new Date().toISOString(),
-          }
-        : act,
-    );
-
     try {
-      const res = await api.put(`/projects/${id}`, {
-        activities: updatedActivities,
+      const res = await api.patch(`/projects/${id}/comments/${activityId}`, {
+        text: editingCommentText.trim(),
       });
       setProject(res.data);
       toast.success("Comentario actualizado");
@@ -1270,6 +1280,7 @@ const ProjectDetailPage = () => {
                       <Link
                         key={task._id}
                         to={`/note/${task._id}`}
+                        state={{ returnTo: `/projects/${project._id}` }}
                         className="flex items-center gap-3 p-3 rounded-xl border border-base-content/10 hover:border-primary/50 hover:bg-base-200/50 transition-colors group"
                       >
                         <div
@@ -1467,121 +1478,217 @@ const ProjectDetailPage = () => {
               className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm flex flex-col sticky top-[80px]"
               style={{ height: "calc(100vh - 120px)" }}
             >
-              <div className="p-4 border-b border-base-content/5 bg-base-200/30 flex items-center justify-between">
-                <h3 className="text-sm font-bold flex items-center gap-2">
-                  <MessageSquareIcon className="size-4" /> Log de Actividad
-                </h3>
+              <div className="p-3.5 border-b border-base-content/5 bg-base-200/30 space-y-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold flex items-center gap-2 truncate">
+                    <ActivityIcon className="size-4 text-primary shrink-0" />
+                    <span className="truncate">Log de Actividad</span>
+                  </h3>
+                  <span className="badge badge-xs font-semibold bg-primary/10 text-primary border-primary/20">
+                    {filteredActivities.length}
+                  </span>
+                </div>
+
+                {/* Activity Type Filter Tabs */}
+                <div className="grid grid-cols-3 gap-1 bg-base-200/80 p-0.5 rounded-lg border border-base-content/10">
+                  {[
+                    { key: "all", label: "Todo" },
+                    { key: "actions", label: "Acciones" },
+                    { key: "comments", label: "Notas" },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setActivityFilter(tab.key)}
+                      className={`btn btn-xs h-6 min-h-0 border-none px-1.5 rounded-md text-[11px] font-medium ${
+                        activityFilter === tab.key
+                          ? "bg-primary text-primary-content hover:bg-primary shadow-sm"
+                          : "btn-ghost text-base-content/60 hover:text-base-content"
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {!project.activities || project.activities.length === 0 ? (
-                  <p className="text-center text-sm text-base-content/40 py-10">
-                    No hay actividad registrada.
+              <div
+                ref={activityFeedRef}
+                className="flex-1 overflow-y-auto p-3 space-y-2.5"
+              >
+                {filteredActivities.length === 0 ? (
+                  <p className="text-center text-xs text-base-content/40 py-10 italic">
+                    No hay actividad registrada en esta vista.
                   </p>
                 ) : (
-                  project.activities.map((act) => {
+                  filteredActivities.map((act) => {
                     const actId = act.id || act._id;
                     const isEditing = editingCommentId === actId;
+                    const isComment =
+                      act.type === "comment" || act.type === "task_comment";
+                    const isDirectProjectComment =
+                      act.type === "comment" && !act.taskId;
+                    const userColor =
+                      accounts.find((a) => a.name === act.user)?.color ||
+                      (isComment ? "#3B82F6" : "#6B7280");
 
                     return (
-                      <div key={actId} className="flex gap-3 group/comment">
-                        <div className="avatar placeholder self-start">
-                          <div className="bg-primary/10 text-primary rounded-full w-8 h-8 flex items-center justify-center text-xs font-bold border border-primary/20">
-                            <span>{getInitials(act.user)}</span>
-                          </div>
-                        </div>
-                        <div className="flex-1 bg-base-200/50 rounded-2xl rounded-tl-sm p-3 border border-base-content/5 relative">
-                          <div className="flex items-baseline justify-between gap-2 mb-1">
-                            <div className="flex items-center gap-2">
-                              <span className="font-bold text-xs">
-                                {act.user}
+                      <div
+                        key={actId}
+                        className={`rounded-xl p-2.5 border relative group/comment transition-colors ${
+                          isComment
+                            ? "bg-base-200/60 border-primary/15"
+                            : "bg-base-100 border-base-content/10 hover:bg-base-200/30"
+                        }`}
+                      >
+                        {/* Top User & Date Row */}
+                        <div className="flex items-center justify-between gap-1.5 mb-1.5">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span
+                              className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0 shadow-sm"
+                              style={{ backgroundColor: userColor }}
+                            >
+                              {getInitials(act.user)}
+                            </span>
+                            <span className="font-semibold text-xs text-base-content truncate">
+                              {act.user || "Sistema"}
+                            </span>
+                            {act.editedAt && (
+                              <span className="text-[9px] text-base-content/40 italic shrink-0">
+                                (editado)
                               </span>
-                              {act.editedAt && (
-                                <span className="text-[9px] font-medium text-base-content/40 italic">
-                                  (editado)
-                                </span>
-                              )}
-                            </div>
-                            <span className="text-[10px] text-base-content/50">
-                              {formatDateActivity(act.createdAt)}
+                            )}
+                          </div>
+                          <span className="text-[9px] text-base-content/45 shrink-0">
+                            {formatDateActivity(act.createdAt)}
+                          </span>
+                        </div>
+
+                        {/* Task or Project Reference Badge */}
+                        {(act.taskKeyId || act.taskTitle) && (
+                          <div className="mb-1.5">
+                            {act.taskId ? (
+                              <Link
+                                to={`/note/${act.taskId}`}
+                                state={{ returnTo: `/projects/${project._id}` }}
+                                className="inline-flex items-center gap-1.5 max-w-full px-2 py-0.5 rounded-md bg-primary/10 hover:bg-primary/20 border border-primary/20 text-[10px] transition-colors"
+                                title={act.taskTitle || "Abrir tarea"}
+                              >
+                                {act.taskKeyId && (
+                                  <span className="font-mono font-bold text-primary shrink-0">
+                                    {act.taskKeyId}
+                                  </span>
+                                )}
+                                {act.taskTitle && (
+                                  <span className="text-base-content/80 font-medium truncate">
+                                    {act.taskTitle}
+                                  </span>
+                                )}
+                              </Link>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 max-w-full px-2 py-0.5 rounded-md bg-base-200 border border-base-content/10 text-[10px]">
+                                {act.taskKeyId && (
+                                  <span className="font-mono font-bold text-base-content/70 shrink-0">
+                                    {act.taskKeyId}
+                                  </span>
+                                )}
+                                {act.taskTitle && (
+                                  <span className="text-base-content/60 truncate">
+                                    {act.taskTitle}
+                                  </span>
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {act.type === "project_action" && (
+                          <div className="mb-1">
+                            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-secondary/10 text-secondary border border-secondary/20 text-[9px] font-semibold uppercase tracking-wide">
+                              Proyecto
                             </span>
                           </div>
+                        )}
 
-                          {isEditing ? (
-                            <div className="mt-2">
-                              <MarkdownEditor
-                                value={editingCommentText}
-                                onChange={setEditingCommentText}
-                                placeholder="Edita tu comentario..."
-                                minHeight="min-h-[60px]"
-                                hideFooter
-                                compactToolbar
-                                users={accountsList}
-                              />
-                              <div className="flex justify-end gap-2 mt-2">
-                                <button
-                                  className="btn btn-xs btn-ghost"
-                                  onClick={() => setEditingCommentId(null)}
-                                >
-                                  Cancelar
-                                </button>
-                                <button
-                                  className="btn btn-xs btn-primary"
-                                  onClick={() => handleEditComment(actId)}
-                                  disabled={!editingCommentText.trim()}
-                                >
-                                  Guardar
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="text-sm prose prose-sm max-w-none prose-p:my-1 prose-a:text-primary relative">
-                              <MarkdownRenderer content={act.text} />
-                            </div>
-                          )}
-
-                          {act.type === "comment" &&
-                            act.user === currentUser?.name &&
-                            !isEditing && (
+                        {/* Content Body */}
+                        {isEditing ? (
+                          <div className="mt-1.5">
+                            <MarkdownEditor
+                              value={editingCommentText}
+                              onChange={setEditingCommentText}
+                              placeholder="Edita tu comentario..."
+                              minHeight="min-h-[60px]"
+                              hideFooter
+                              compactToolbar
+                              users={accountsList}
+                            />
+                            <div className="flex justify-end gap-1.5 mt-2">
                               <button
-                                className="absolute top-2 right-2 btn btn-xs btn-ghost btn-square opacity-0 group-hover/comment:opacity-100 transition-opacity bg-base-100/50 hover:bg-base-200"
-                                onClick={() => {
-                                  setEditingCommentId(actId);
-                                  setEditingCommentText(act.text);
-                                }}
-                                title="Editar comentario"
+                                className="btn btn-xs btn-ghost"
+                                onClick={() => setEditingCommentId(null)}
                               >
-                                <PencilIcon className="size-3 text-base-content/60 hover:text-primary" />
+                                Cancelar
                               </button>
-                            )}
-                        </div>
+                              <button
+                                className="btn btn-xs btn-primary"
+                                onClick={() => handleEditComment(actId)}
+                                disabled={!editingCommentText.trim()}
+                              >
+                                Guardar
+                              </button>
+                            </div>
+                          </div>
+                        ) : isComment ? (
+                          <div className="text-xs prose prose-sm max-w-none break-words prose-p:my-0.5 prose-a:text-primary">
+                            <MarkdownRenderer content={act.text} />
+                          </div>
+                        ) : (
+                          <p className="text-xs text-base-content/75 leading-snug break-words">
+                            {act.text}
+                          </p>
+                        )}
+
+                        {isDirectProjectComment &&
+                          act.user === currentUser?.name &&
+                          !isEditing && (
+                            <button
+                              className="absolute top-2 right-2 btn btn-xs btn-ghost btn-square opacity-0 group-hover/comment:opacity-100 transition-opacity bg-base-100/80 hover:bg-base-200 h-6 w-6 min-h-0"
+                              onClick={() => {
+                                setEditingCommentId(actId);
+                                setEditingCommentText(act.text);
+                              }}
+                              title="Editar comentario"
+                            >
+                              <PencilIcon className="size-3 text-base-content/60 hover:text-primary" />
+                            </button>
+                          )}
                       </div>
                     );
                   })
                 )}
               </div>
 
-              <div className="p-4 border-t border-base-content/10 bg-base-200/20">
+              <div className="p-3 border-t border-base-content/10 bg-base-200/20">
                 <div className="flex flex-col gap-2">
                   <MarkdownEditor
                     value={commentText}
                     onChange={setCommentText}
-                    placeholder="Escribe un comentario o nota..."
-                    minHeight="min-h-[80px]"
+                    placeholder="Escribe un comentario del proyecto..."
+                    minHeight="min-h-[70px]"
                     hideFooter
                     compactToolbar
                     users={accountsList}
                   />
                   <div className="flex justify-end">
                     <button
-                      className="btn btn-primary btn-sm gap-2"
+                      className="btn btn-primary btn-xs sm:btn-sm gap-1.5"
                       onClick={handlePostComment}
                       disabled={postingComment || !commentText.trim()}
                     >
                       {postingComment ? (
-                        <LoaderIcon className="size-4 animate-spin" />
+                        <LoaderIcon className="size-3.5 animate-spin" />
                       ) : (
-                        <SendIcon className="size-4" />
+                        <SendIcon className="size-3.5" />
                       )}
                       <span>Comentar</span>
                     </button>
