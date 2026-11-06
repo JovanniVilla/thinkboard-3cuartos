@@ -358,9 +358,9 @@ const ProjectDetailPage = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-6 items-start">
           {/* COLUMN 1: Cards del proyecto */}
-          <div className="min-w-0 flex flex-col gap-6">
+          <div className="min-w-0 lg:col-span-2 flex flex-col gap-6">
             {/* Inline Properties Row */}
             <div className="flex flex-wrap items-center gap-4 p-4 bg-base-100 rounded-2xl border border-base-content/10 shadow-sm">
               {/* Status Dropdown */}
@@ -1186,7 +1186,7 @@ const ProjectDetailPage = () => {
           </div>
 
           {/* COLUMN 2: Tareas del Proyecto */}
-          <div className="min-w-0 flex flex-col">
+          <div className="min-w-0 lg:col-span-3 flex flex-col">
             <div className="bg-base-100 p-5 rounded-2xl border border-base-content/10 shadow-sm flex flex-col">
               <div className="flex items-center justify-between gap-2 flex-wrap mb-4">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1268,7 +1268,7 @@ const ProjectDetailPage = () => {
           </div>
 
           {/* COLUMN 3: Log de Actividad */}
-          <div className="min-w-0 flex flex-col">
+          <div className="min-w-0 lg:col-span-1 flex flex-col">
             <div
               className="bg-base-100 rounded-2xl border border-base-content/10 shadow-sm flex flex-col sticky top-[80px]"
               style={{ height: "calc(100vh - 120px)" }}
