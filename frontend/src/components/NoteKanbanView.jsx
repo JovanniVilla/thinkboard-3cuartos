@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, AtSignIcon, CalendarIcon, CheckIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -20,6 +20,7 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
   const [draggingNoteId, setDraggingNoteId] = useState(null);
   const [dragOverStatus, setDragOverStatus] = useState(null);
   const { user } = useAuth();
+  const location = useLocation();
 
   const getMentionCount = (note) => {
     if (!user?.name || !note.activities) return 0;
@@ -216,6 +217,7 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                               )}
                               <Link
                                 to={`/note/${note._id}`}
+                                state={{ returnTo: location.pathname + location.search }}
                                 className="font-semibold text-sm text-base-content hover:text-primary transition-colors break-words whitespace-normal block"
                               >
                                 {note.title}
@@ -224,6 +226,7 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                             <div className="flex items-center gap-0.5 opacity-60 hover:opacity-100 transition-opacity flex-shrink-0">
                               <Link
                                 to={`/note/${note._id}`}
+                                state={{ returnTo: location.pathname + location.search }}
                                 className="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-primary"
                                 title="Editar"
                               >

@@ -4,7 +4,7 @@ import { useAuth } from "../lib/AuthContext";
 import { useLabels } from "../lib/useLabels";
 import { useTaskSizes } from "../lib/useTaskSizes";
 import { useTimeTracking } from "../lib/TimeTrackingContext";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -34,6 +34,7 @@ const NoteListView = ({
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { labels: boardLabels } = useLabels();
   const { taskSizes } = useTaskSizes();
   const { activeNoteEntry } = useTimeTracking();
@@ -246,7 +247,7 @@ const NoteListView = ({
                       ? "bg-primary/20 ring-2 ring-primary ring-inset animate-pulse"
                       : ""
                   }`}
-                  onClick={() => navigate(`/note/${note._id}`)}
+                  onClick={() => navigate(`/note/${note._id}`, { state: { returnTo: location.pathname + location.search } })}
                 >
                   <td className="font-medium text-base-content/70">
                     {note.projectKeyId ? (
@@ -305,6 +306,7 @@ const NoteListView = ({
                         <>
                           <Link
                             to={`/note/${note._id}`}
+                            state={{ returnTo: location.pathname + location.search }}
                             className="hover:text-primary transition-colors block break-words whitespace-normal"
                             title={note.title}
                             onClick={(e) => e.stopPropagation()}
@@ -638,6 +640,7 @@ const NoteListView = ({
                     <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
                       <Link
                         to={`/note/${note._id}`}
+                        state={{ returnTo: location.pathname + location.search }}
                         className="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-primary"
                         title="Editar tarea"
                         onClick={(e) => e.stopPropagation()}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Outlet, useLocation } from "react-router";
+import { Outlet, useLocation, useNavigate } from "react-router";
 import Navbar from "../components/Navbar";
 import RateLimitedUI from "../components/RateLimitedUI";
 import api from "../lib/axios";
@@ -31,32 +31,136 @@ const HomePage = () => {
   const location = useLocation();
   const prevPathRef = useRef(location.pathname);
 
+  const navigate = useNavigate();
+
   // View Mode: "list" | "board"
-  const [viewMode, setViewMode] = useState("list");
+  const [viewMode, setViewMode] = useState(() => {
+    try {
+      return sessionStorage.getItem("tb_view_mode") || "list";
+    } catch {
+      return "list";
+    }
+  });
 
   // Filtering and Sorting state
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [selectedPriority, setSelectedPriority] = useState("");
-  const [selectedUser, setSelectedUser] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => {
+    try {
+      return sessionStorage.getItem("tb_filter_search") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [selectedStatus, setSelectedStatus] = useState(() => {
+    try {
+      return sessionStorage.getItem("tb_filter_status") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [selectedPriority, setSelectedPriority] = useState(() => {
+    try {
+      return sessionStorage.getItem("tb_filter_priority") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [selectedUser, setSelectedUser] = useState(() => {
+    try {
+      return sessionStorage.getItem("tb_filter_user") || "";
+    } catch {
+      return "";
+    }
+  });
   const [selectedProject, setSelectedProject] = useState(() => {
     const searchParams = new URLSearchParams(window.location.search);
-    return searchParams.get("projectId") || "";
+    const fromUrl = searchParams.get("projectId");
+    if (fromUrl) return fromUrl;
+    try {
+      return sessionStorage.getItem("tb_filter_project") || "";
+    } catch {
+      return "";
+    }
   });
-  const [showCompleted, setShowCompleted] = useState(false);
-  const [showMyTasks, setShowMyTasks] = useState(true);
-  const [sortBy, setSortBy] = useState("createdAt");
-  const [sortOrder, setSortOrder] = useState("desc");
+  const [showCompleted, setShowCompleted] = useState(() => {
+    try {
+      return sessionStorage.getItem("tb_filter_showCompleted") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [showMyTasks, setShowMyTasks] = useState(() => {
+    try {
+      const stored = sessionStorage.getItem("tb_filter_showMyTasks");
+      return stored !== null ? stored === "true" : true;
+    } catch {
+      return true;
+    }
+  });
+  const [sortBy, setSortBy] = useState(() => {
+    try {
+      return sessionStorage.getItem("tb_sort_by") || "createdAt";
+    } catch {
+      return "createdAt";
+    }
+  });
+  const [sortOrder, setSortOrder] = useState(() => {
+    try {
+      return sessionStorage.getItem("tb_sort_order") || "desc";
+    } catch {
+      return "desc";
+    }
+  });
 
+  // Persist filters across modal navigation and page reloads
+  useEffect(() => {
+    try {
+      sessionStorage.setItem("tb_filter_project", selectedProject || "");
+      sessionStorage.setItem("tb_filter_status", selectedStatus || "");
+      sessionStorage.setItem("tb_filter_priority", selectedPriority || "");
+      sessionStorage.setItem("tb_filter_user", selectedUser || "");
+      sessionStorage.setItem("tb_filter_showCompleted", String(showCompleted));
+      sessionStorage.setItem("tb_filter_showMyTasks", String(showMyTasks));
+      sessionStorage.setItem("tb_filter_search", searchQuery || "");
+      sessionStorage.setItem("tb_view_mode", viewMode);
+      sessionStorage.setItem("tb_sort_by", sortBy);
+      sessionStorage.setItem("tb_sort_order", sortOrder);
+    } catch (e) {
+      console.error("Failed to save filters to sessionStorage", e);
+    }
+  }, [
+    selectedProject,
+    selectedStatus,
+    selectedPriority,
+    selectedUser,
+    showCompleted,
+    showMyTasks,
+    searchQuery,
+    viewMode,
+    sortBy,
+    sortOrder,
+  ]);
+
+  // Sync project filter from URL search params if present
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const projectId = searchParams.get("projectId");
     if (projectId) {
       setSelectedProject(projectId);
-    } else if (location.pathname === "/") {
-      setSelectedProject("");
     }
-  }, [location.pathname, location.search]);
+  }, [location.search]);
+
+  const handleSetSelectedProject = useCallback(
+    (newProjectId) => {
+      setSelectedProject(newProjectId);
+      const searchParams = new URLSearchParams(location.search);
+      if (searchParams.has("projectId")) {
+        searchParams.delete("projectId");
+        const newSearch = searchParams.toString();
+        navigate(newSearch ? `${location.pathname}?${newSearch}` : location.pathname, { replace: true });
+      }
+    },
+    [location.pathname, location.search, navigate]
+  );
 
   const fetchNotes = useCallback(async () => {
     try {
@@ -84,10 +188,10 @@ const HomePage = () => {
     setSelectedStatus("");
     setSelectedPriority("");
     setSelectedUser("");
-    setSelectedProject("");
+    handleSetSelectedProject("");
     setShowCompleted(false);
-    setShowMyTasks(false);
-  }, []);
+    setShowMyTasks(true);
+  }, [handleSetSelectedProject]);
 
   const handleNoteCreated = useCallback((newNote) => {
     if (!newNote) return;
@@ -296,7 +400,7 @@ const HomePage = () => {
               selectedUser={selectedUser}
               setSelectedUser={setSelectedUser}
               selectedProject={selectedProject}
-              setSelectedProject={setSelectedProject}
+              setSelectedProject={handleSetSelectedProject}
               showCompleted={showCompleted}
               setShowCompleted={setShowCompleted}
               showMyTasks={showMyTasks}

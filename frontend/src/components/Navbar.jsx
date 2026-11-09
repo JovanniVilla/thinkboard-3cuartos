@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import { PlusIcon, SettingsIcon, UserRoundCogIcon, LogOutIcon, UserIcon, ShieldIcon, FolderKeyIcon } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
@@ -12,6 +12,7 @@ const Navbar = () => {
   const { user, isAdmin, logout } = useAuth();
   const { boardConfig } = useBoardConfig();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const handleLogout = async () => {
@@ -50,7 +51,12 @@ const Navbar = () => {
               <FolderKeyIcon className="size-4 sm:size-5" />
             </Link>
 
-            <Link to={"/create"} className="btn btn-primary btn-sm px-2.5 sm:px-3 gap-1.5" title="New Note">
+            <Link
+              to={"/create"}
+              state={{ returnTo: location.pathname + location.search }}
+              className="btn btn-primary btn-sm px-2.5 sm:px-3 gap-1.5"
+              title="New Note"
+            >
               <PlusIcon className="size-4 sm:size-5" />
               <span className="hidden sm:inline font-medium">New Note</span>
             </Link>
