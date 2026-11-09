@@ -43,7 +43,9 @@ const NoteFilters = ({
     if (sortBy !== "createdAt") setSortBy("createdAt");
   };
 
-  const hasActiveFilters = selectedStatus || selectedPriority || selectedUser || selectedProject || showCompleted || showMyTasks;
+  const hasActiveFilters = Boolean(
+    selectedStatus || selectedPriority || selectedUser || selectedProject || showCompleted
+  );
 
   const clearFilters = () => {
     setSelectedStatus("");
@@ -51,7 +53,6 @@ const NoteFilters = ({
     setSelectedUser("");
     setSelectedProject("");
     setShowCompleted(false);
-    setShowMyTasks(false);
   };
 
   return (
@@ -84,6 +85,24 @@ const NoteFilters = ({
         {/* Right Side: View Mode & Icons */}
         <div className="flex flex-1 items-center justify-end gap-1.5 sm:gap-2">
           
+          {/* Quick Filter: Mis tareas */}
+          <label 
+            className={`flex items-center gap-1.5 sm:gap-2 cursor-pointer select-none px-2 sm:px-2.5 h-8 rounded-lg border transition-all mr-0.5 sm:mr-1 ${
+              showMyTasks 
+                ? "bg-primary/10 border-primary/30 text-primary font-medium shadow-xs" 
+                : "bg-base-200/50 hover:bg-base-200 border-base-content/20 text-base-content/80 font-normal"
+            }`}
+            title="Filtrar por mis tareas asignadas o con comentarios"
+          >
+            <input
+              type="checkbox"
+              className="checkbox checkbox-xs sm:checkbox-sm checkbox-primary"
+              checked={showMyTasks}
+              onChange={(e) => setShowMyTasks(e.target.checked)}
+            />
+            <span className="text-xs sm:text-sm whitespace-nowrap">Mis tareas</span>
+          </label>
+
           {/* View Mode Toggle */}
           <div className="flex items-center gap-0.5 bg-base-200/80 p-1 rounded-lg border border-base-content/10 mr-0.5 sm:mr-2">
             <button

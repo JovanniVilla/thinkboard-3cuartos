@@ -44,7 +44,7 @@ const HomePage = () => {
     return searchParams.get("projectId") || "";
   });
   const [showCompleted, setShowCompleted] = useState(false);
-  const [showMyTasks, setShowMyTasks] = useState(false);
+  const [showMyTasks, setShowMyTasks] = useState(true);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
 
@@ -106,7 +106,11 @@ const HomePage = () => {
     if (selectedProject && selectedProject !== newNote.project) {
       setSelectedProject("");
     }
-    if (showMyTasks && currentUser?.name && newNote.user !== currentUser.name) {
+    if (
+      showMyTasks &&
+      currentUser?.name &&
+      (newNote.user || "").trim().toLowerCase() !== currentUser.name.trim().toLowerCase()
+    ) {
       setShowMyTasks(false);
     }
     if (newNote.status?.toLowerCase() === "completado") {
@@ -203,11 +207,15 @@ const HomePage = () => {
         return false;
       }
       if (showMyTasks && currentUser?.name) {
-        const isAssigned = note.user === currentUser.name;
+        const currentName = currentUser.name.trim().toLowerCase();
+        const isAssigned = (note.user || "").trim().toLowerCase() === currentName;
         const isMentioned = (note.activities || []).some(
-          (act) => act.mentions && act.mentions.includes(currentUser.name)
+          (act) => (act.mentions || []).some((m) => (m || "").trim().toLowerCase() === currentName)
         );
-        if (!isAssigned && !isMentioned) {
+        const hasCommented = (note.activities || []).some(
+          (act) => act.type === "comment" && (act.user || "").trim().toLowerCase() === currentName
+        );
+        if (!isAssigned && !isMentioned && !hasCommented) {
           return false;
         }
       }
