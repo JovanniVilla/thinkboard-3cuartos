@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { 
   ArrowLeftIcon, PlusIcon, FolderKeyIcon, XIcon,
-  LayoutGridIcon, ListIcon, ColumnsIcon
+  LayoutGridIcon, ListIcon, ColumnsIcon, LayersIcon
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
@@ -17,6 +17,7 @@ import { useAuth } from "../lib/AuthContext";
 import ProjectGridView from "../components/ProjectGridView";
 import ProjectListView from "../components/ProjectListView";
 import ProjectKanbanView from "../components/ProjectKanbanView";
+import ProjectFilters from "../components/ProjectFilters";
 
 const PRESET_COLORS = [
   "#6B7280", "#EF4444", "#F97316", "#EAB308",
@@ -359,11 +360,16 @@ const EditProjectModal = ({ project, onSave, onClose }) => {
 
 const ProjectsPage = () => {
   const { projects, setProjects, loading } = useProjects();
+  const { projectTypes } = useProjectTypes();
   const { statuses } = useStatuses();
   const { projectStatuses } = useProjectStatuses();
   const { accounts } = useAccounts();
   const { isAdmin, isTeam } = useAuth();
   
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedType = searchParams.get("type") || "all";
+  const [searchQuery, setSearchQuery] = useState("");
+
   const [editingProject, setEditingProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState(() => localStorage.getItem("project_view_mode") || "grid");
@@ -371,6 +377,26 @@ const ProjectsPage = () => {
   useEffect(() => {
     localStorage.setItem("project_view_mode", viewMode);
   }, [viewMode]);
+
+  const handleSelectType = (typeName) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (!typeName || typeName === "all") {
+        next.delete("type");
+      } else {
+        next.set("type", typeName);
+      }
+      return next;
+    }, { replace: true });
+  };
+
+  const handleToggleType = (typeName) => {
+    if (selectedType.toLowerCase() === (typeName || "").toLowerCase()) {
+      handleSelectType("all");
+    } else {
+      handleSelectType(typeName);
+    }
+  };
 
   // Derive "done" task statuses to calculate progress
   const doneStatuses = useMemo(() => {
@@ -383,6 +409,36 @@ const ProjectsPage = () => {
 
     return ["Completado", "Completada", "Terminado", "Terminada", "Finalizado", "Finalizada", "Listo", "Hecho", "Done"];
   }, [statuses]);
+
+  // Filter projects by Project Type and Search Query
+  const filteredProjects = useMemo(() => {
+    return projects.filter((project) => {
+      // 1. Filter by Project Type
+      if (selectedType && selectedType !== "all") {
+        const pType = (project.projectType || "General").trim().toLowerCase();
+        if (pType !== selectedType.trim().toLowerCase()) {
+          return false;
+        }
+      }
+
+      // 2. Filter by Search Query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchName = project.name?.toLowerCase().includes(q);
+        const matchKey = project.projectKey?.toLowerCase().includes(q);
+        const matchType = (project.projectType || "General").toLowerCase().includes(q);
+        const matchDesc = project.description?.toLowerCase().includes(q);
+        const matchObj = project.objective?.toLowerCase().includes(q);
+        const matchContact = project.contact?.name?.toLowerCase().includes(q);
+        const matchAssignee = project.assignedTo?.toLowerCase().includes(q);
+        if (!matchName && !matchKey && !matchType && !matchDesc && !matchObj && !matchContact && !matchAssignee) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [projects, selectedType, searchQuery]);
 
   const handleDelete = async (id) => {
     if (!window.confirm("¿Estás seguro de que deseas eliminar este proyecto? Las tareas vinculadas se quedarán sin proyecto.")) return;
@@ -417,14 +473,16 @@ const ProjectsPage = () => {
   const canManageProjects = isAdmin || isTeam;
 
   const viewProps = {
-    projects,
+    projects: filteredProjects,
     setProjects,
     projectStatuses,
     doneStatuses,
     accounts,
     canManageProjects,
     openEditModal,
-    handleDelete
+    handleDelete,
+    onFilterByType: handleToggleType,
+    selectedType
   };
 
   return (
@@ -504,6 +562,20 @@ const ProjectsPage = () => {
           </div>
         </div>
 
+        {/* Project Filters Toolbar */}
+        {!loading && projects.length > 0 && (
+          <ProjectFilters
+            projectTypes={projectTypes}
+            projects={projects}
+            selectedType={selectedType}
+            onSelectType={handleSelectType}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            totalProjects={projects.length}
+            filteredCount={filteredProjects.length}
+          />
+        )}
+
         {/* Content */}
         {loading ? (
           <div className="flex items-center justify-center py-20 text-base-content/50">
@@ -524,8 +596,34 @@ const ProjectsPage = () => {
               )}
             </div>
           </div>
+        ) : filteredProjects.length === 0 ? (
+          <div className="text-center py-16 px-4">
+            <div className="bg-base-100 inline-block p-8 rounded-3xl border border-base-content/10 shadow-sm max-w-md w-full">
+              <div className="p-3 bg-primary/10 text-primary rounded-2xl w-fit mx-auto mb-3">
+                <LayersIcon className="size-8" />
+              </div>
+              <h3 className="text-lg font-bold text-base-content mb-1">
+                No se encontraron proyectos
+              </h3>
+              <p className="text-sm text-base-content/60 mb-6">
+                {selectedType !== "all"
+                  ? `No hay proyectos asignados al tipo "${selectedType}".`
+                  : "No hay proyectos que coincidan con la búsqueda."}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  handleSelectType("all");
+                  setSearchQuery("");
+                }}
+                className="btn btn-sm btn-primary rounded-xl"
+              >
+                Mostrar todos los proyectos
+              </button>
+            </div>
+          </div>
         ) : (
-          <div className="mt-4">
+          <div className="mt-2">
             {viewMode === "grid" && <ProjectGridView {...viewProps} />}
             {viewMode === "list" && <ProjectListView {...viewProps} />}
             {viewMode === "kanban" && <ProjectKanbanView {...viewProps} />}

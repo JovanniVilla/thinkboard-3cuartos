@@ -9,7 +9,7 @@ const getInitials = (name = "") => {
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 };
 
-const ProjectListView = ({ projects, projectStatuses, doneStatuses, accounts = [], canManageProjects, openEditModal, handleDelete }) => {
+const ProjectListView = ({ projects, projectStatuses, doneStatuses, accounts = [], canManageProjects, openEditModal, handleDelete, onFilterByType }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
@@ -127,7 +127,17 @@ const ProjectListView = ({ projects, projectStatuses, doneStatuses, accounts = [
                   </td>
                   <td>
                     <div className="font-bold text-sm text-base-content">{project.name}</div>
-                    <div className="text-xs text-base-content/50 truncate max-w-xs">{project.projectType || "General"}</div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onFilterByType?.(project.projectType || "General");
+                      }}
+                      className="text-xs text-base-content/50 hover:text-primary hover:underline truncate max-w-xs text-left block transition-colors"
+                      title={`Filtrar por tipo: ${project.projectType || "General"}`}
+                    >
+                      {project.projectType || "General"}
+                    </button>
                   </td>
                   <td>
                     <div 

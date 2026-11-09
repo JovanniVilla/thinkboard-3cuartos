@@ -3,7 +3,7 @@ import { PenIcon, Trash2Icon, UserIcon, CalendarIcon, LayersIcon } from "lucide-
 import { isTaskCompleted } from "../lib/utils";
 import { useAuth } from "../lib/AuthContext";
 
-const ProjectGridView = ({ projects, projectStatuses, doneStatuses, accounts = [], canManageProjects, openEditModal, handleDelete }) => {
+const ProjectGridView = ({ projects, projectStatuses, doneStatuses, accounts = [], canManageProjects, openEditModal, handleDelete, onFilterByType }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
 
@@ -77,10 +77,18 @@ const ProjectGridView = ({ projects, projectStatuses, doneStatuses, accounts = [
             {/* Type & Objective */}
             <div className="flex-1">
               {project.projectType && (
-                <p className="text-xs font-semibold text-primary/70 mb-2 flex items-center gap-1.5 uppercase tracking-wide">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onFilterByType?.(project.projectType);
+                  }}
+                  className="text-xs font-semibold text-primary/70 hover:text-primary mb-2 flex items-center gap-1.5 uppercase tracking-wide hover:underline transition-colors text-left"
+                  title={`Filtrar por tipo: ${project.projectType}`}
+                >
                   <LayersIcon className="size-3.5" />
                   {project.projectType}
-                </p>
+                </button>
               )}
               
               {project.objective && (

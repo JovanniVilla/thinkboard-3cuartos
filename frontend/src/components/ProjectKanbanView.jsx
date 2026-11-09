@@ -11,7 +11,7 @@ const getInitials = (name = "") => {
   return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
 };
 
-const ProjectKanbanView = ({ projects, setProjects, projectStatuses, doneStatuses, accounts = [], canManageProjects }) => {
+const ProjectKanbanView = ({ projects, setProjects, projectStatuses, doneStatuses, accounts = [], canManageProjects, onFilterByType }) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const [draggedProject, setDraggedProject] = useState(null);
@@ -153,10 +153,18 @@ const ProjectKanbanView = ({ projects, setProjects, projectStatuses, doneStatuse
                     <div className="w-1.5 h-full self-stretch rounded-full flex-shrink-0" style={{ backgroundColor: project.color || "#3B82F6" }} />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-sm text-base-content leading-tight mb-1">{project.name}</h4>
-                      <p className="text-[10px] text-base-content/50 font-medium flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onFilterByType?.(project.projectType || "General");
+                        }}
+                        className="text-[10px] text-base-content/50 hover:text-primary font-medium flex items-center gap-1 hover:underline transition-colors text-left"
+                        title={`Filtrar por tipo: ${project.projectType || "General"}`}
+                      >
                         <LayersIcon className="size-3" />
                         <span className="truncate">{project.projectType || "General"}</span>
-                      </p>
+                      </button>
                     </div>
                   </div>
 
