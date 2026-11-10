@@ -18,8 +18,8 @@ export const COLUMNS_CONFIG = {
     id: "id",
     label: "ID",
     sortKey: "keyId",
-    defaultWidth: 95,
-    minWidth: 70,
+    defaultWidth: 110,
+    minWidth: 80,
     responsiveClass: "",
     align: "left",
     description: "Identificador único de la tarea o proyecto",
@@ -28,8 +28,8 @@ export const COLUMNS_CONFIG = {
     id: "title",
     label: "Nombre",
     sortKey: "title",
-    defaultWidth: 280,
-    minWidth: 160,
+    defaultWidth: 380,
+    minWidth: 200,
     responsiveClass: "",
     align: "left",
     description: "Título principal y enlaces de la tarea",
@@ -38,8 +38,8 @@ export const COLUMNS_CONFIG = {
     id: "checklist",
     label: "Checklist",
     sortKey: null,
-    defaultWidth: 105,
-    minWidth: 75,
+    defaultWidth: 120,
+    minWidth: 85,
     responsiveClass: "hidden md:table-cell",
     align: "left",
     description: "Progreso de subtareas completadas",
@@ -48,8 +48,8 @@ export const COLUMNS_CONFIG = {
     id: "labels",
     label: "Etiquetas",
     sortKey: null,
-    defaultWidth: 150,
-    minWidth: 90,
+    defaultWidth: 180,
+    minWidth: 110,
     responsiveClass: "hidden lg:table-cell",
     align: "left",
     description: "Etiquetas de categorización",
@@ -58,8 +58,8 @@ export const COLUMNS_CONFIG = {
     id: "project",
     label: "Proyecto",
     sortKey: "project",
-    defaultWidth: 140,
-    minWidth: 95,
+    defaultWidth: 170,
+    minWidth: 110,
     responsiveClass: "hidden sm:table-cell",
     align: "left",
     description: "Proyecto vinculado",
@@ -68,8 +68,8 @@ export const COLUMNS_CONFIG = {
     id: "size",
     label: "Talla",
     sortKey: "size",
-    defaultWidth: 105,
-    minWidth: 75,
+    defaultWidth: 120,
+    minWidth: 85,
     responsiveClass: "",
     align: "left",
     description: "Estimación de horas o esfuerzo",
@@ -78,8 +78,8 @@ export const COLUMNS_CONFIG = {
     id: "status",
     label: "Estado",
     sortKey: "status",
-    defaultWidth: 120,
-    minWidth: 85,
+    defaultWidth: 135,
+    minWidth: 95,
     responsiveClass: "",
     align: "left",
     description: "Estado del flujo de trabajo",
@@ -88,8 +88,8 @@ export const COLUMNS_CONFIG = {
     id: "priority",
     label: "Prioridad",
     sortKey: "priority",
-    defaultWidth: 115,
-    minWidth: 80,
+    defaultWidth: 130,
+    minWidth: 90,
     responsiveClass: "",
     align: "left",
     description: "Nivel de urgencia",
@@ -98,8 +98,8 @@ export const COLUMNS_CONFIG = {
     id: "dates",
     label: "Fechas",
     sortKey: null,
-    defaultWidth: 110,
-    minWidth: 75,
+    defaultWidth: 130,
+    minWidth: 85,
     responsiveClass: "hidden md:table-cell",
     align: "left",
     description: "Fecha de inicio o vencimiento",
@@ -108,8 +108,8 @@ export const COLUMNS_CONFIG = {
     id: "user",
     label: "Usuario",
     sortKey: "user",
-    defaultWidth: 140,
-    minWidth: 90,
+    defaultWidth: 170,
+    minWidth: 110,
     responsiveClass: "",
     align: "left",
     description: "Responsable asignado",
@@ -118,8 +118,8 @@ export const COLUMNS_CONFIG = {
     id: "createdAt",
     label: "Creación",
     sortKey: "createdAt",
-    defaultWidth: 110,
-    minWidth: 80,
+    defaultWidth: 125,
+    minWidth: 90,
     responsiveClass: "hidden sm:table-cell",
     align: "left",
     description: "Fecha en la que fue creada",
@@ -128,8 +128,8 @@ export const COLUMNS_CONFIG = {
     id: "actions",
     label: "Acciones",
     sortKey: null,
-    defaultWidth: 100,
-    minWidth: 85,
+    defaultWidth: 110,
+    minWidth: 90,
     responsiveClass: "",
     align: "right",
     description: "Editar o archivar tarea",
@@ -139,6 +139,39 @@ export const COLUMNS_CONFIG = {
 export const DEFAULT_COLUMN_WIDTHS = Object.fromEntries(
   Object.entries(COLUMNS_CONFIG).map(([k, v]) => [k, v.defaultWidth])
 );
+
+// Map of previous cramped defaults to auto-upgrade to generous defaults
+const OLD_CRAMPED_DEFAULTS = {
+  id: 95,
+  title: 280,
+  checklist: 105,
+  labels: 150,
+  project: 140,
+  size: 105,
+  status: 120,
+  priority: 115,
+  dates: 110,
+  user: 140,
+  createdAt: 110,
+  actions: 100,
+};
+
+const sanitizeAndUpgradeWidths = (savedWidths) => {
+  const result = { ...DEFAULT_COLUMN_WIDTHS };
+  if (!savedWidths || typeof savedWidths !== "object") return result;
+
+  for (const [key, val] of Object.entries(savedWidths)) {
+    if (!COLUMNS_CONFIG[key] || typeof val !== "number") continue;
+    // If it was the previous cramped default, upgrade it to the new spacious default
+    if (val === OLD_CRAMPED_DEFAULTS[key]) {
+      result[key] = COLUMNS_CONFIG[key].defaultWidth;
+    } else {
+      // Ensure it respects minimum width
+      result[key] = Math.max(COLUMNS_CONFIG[key].minWidth, val);
+    }
+  }
+  return result;
+};
 
 export const getSavedColumnOrder = (userId, userPrefs) => {
   try {
@@ -165,13 +198,13 @@ export const getSavedColumnOrder = (userId, userPrefs) => {
 export const getSavedColumnWidths = (userId, userPrefs) => {
   try {
     if (userPrefs?.taskListView?.columnWidths && typeof userPrefs.taskListView.columnWidths === "object") {
-      return { ...DEFAULT_COLUMN_WIDTHS, ...userPrefs.taskListView.columnWidths };
+      return sanitizeAndUpgradeWidths(userPrefs.taskListView.columnWidths);
     }
     const local = localStorage.getItem(`tb_task_list_columns_${userId || "guest"}`);
     if (local) {
       const parsed = JSON.parse(local);
       if (parsed?.widths && typeof parsed.widths === "object") {
-        return { ...DEFAULT_COLUMN_WIDTHS, ...parsed.widths };
+        return sanitizeAndUpgradeWidths(parsed.widths);
       }
     }
   } catch (e) {
@@ -199,4 +232,3 @@ export const persistColumnPreferences = (userId, newOrder, newWidths, updatePref
     }).catch((e) => console.error("Error saving preferences to server", e));
   }
 };
-

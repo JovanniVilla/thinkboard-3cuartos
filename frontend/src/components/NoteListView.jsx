@@ -86,7 +86,6 @@ const NoteListView = ({
   const [resizingColId, setResizingColId] = useState(null);
   const containerRef = useRef(null);
   const resizeGuideRef = useRef(null);
-  const resizeGuideLabelRef = useRef(null);
 
   // Sync state when backend user preferences are loaded/updated
   useEffect(() => {
@@ -192,7 +191,6 @@ const NoteListView = ({
 
     const container = containerRef.current;
     const guide = resizeGuideRef.current;
-    const guideLabel = resizeGuideLabelRef.current;
     const thEl = e.currentTarget.parentElement;
     if (!container || !guide || !thEl) return;
 
@@ -220,7 +218,6 @@ const NoteListView = ({
       // Guide is placed at the proposed right edge of the column inside the container
       const guideX = (colLeftInContainer - currentScrollOffset) + width;
       guide.style.transform = `translateX(${guideX}px)`;
-      if (guideLabel) guideLabel.textContent = `${width}px`;
     };
 
     // Position guide immediately at the column's right edge (directly under mouse)
@@ -916,12 +913,7 @@ const NoteListView = ({
         ref={resizeGuideRef}
         className="absolute top-0 bottom-0 left-0 w-[2px] -ml-[1px] bg-primary z-50 pointer-events-none shadow-[0_0_10px_rgba(99,102,241,0.8)] will-change-transform"
         style={{ display: "none" }}
-      >
-        <span
-          ref={resizeGuideLabelRef}
-          className="absolute top-10 left-2 badge badge-primary font-mono font-bold text-xs py-2 px-2.5 shadow-lg whitespace-nowrap"
-        />
-      </div>
+      />
       <div className="overflow-auto flex-1">
         <table
           className="table border-separate border-spacing-0 w-full"
