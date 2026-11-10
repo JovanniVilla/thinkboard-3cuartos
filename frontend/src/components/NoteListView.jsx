@@ -84,6 +84,9 @@ const NoteListView = ({
   // Column resizing state
   const [isResizing, setIsResizing] = useState(false);
   const [resizingColId, setResizingColId] = useState(null);
+  const containerRef = useRef(null);
+  const resizeGuideRef = useRef(null);
+  const resizeGuideLabelRef = useRef(null);
 
   // Sync state when backend user preferences are loaded/updated
   useEffect(() => {
@@ -181,42 +184,63 @@ const NoteListView = ({
   };
 
   // Column resizing handlers
+  // While dragging, only a lightweight guide line is moved (direct DOM updates, no React re-render).
+  // The real column width is applied once, when the mouse button is released.
   const handleResizeStart = (e, colId) => {
     e.preventDefault();
     e.stopPropagation();
+
+    const container = containerRef.current;
+    const guide = resizeGuideRef.current;
+    const guideLabel = resizeGuideLabelRef.current;
+    const thEl = e.currentTarget.parentElement;
+    if (!container || !guide || !thEl) return;
+
     setIsResizing(true);
     setResizingColId(colId);
 
     const startX = e.clientX;
     const startWidth = columnWidths[colId] || COLUMNS_CONFIG[colId]?.defaultWidth || 100;
+    const minW = COLUMNS_CONFIG[colId]?.minWidth || 60;
+    const containerRect = container.getBoundingClientRect();
+    const colLeft = thEl.getBoundingClientRect().left - containerRect.left;
     let finalWidth = startWidth;
+    let rafId = null;
+
+    const positionGuide = (width) => {
+      guide.style.transform = `translateX(${colLeft + width}px)`;
+      if (guideLabel) guideLabel.textContent = `${width}px`;
+    };
+
+    // Show guide at the current column edge
+    positionGuide(startWidth);
+    guide.style.display = "block";
 
     const onMouseMove = (moveEvent) => {
       moveEvent.preventDefault();
       const deltaX = moveEvent.clientX - startX;
-      const minW = COLUMNS_CONFIG[colId]?.minWidth || 60;
-      const newWidth = Math.max(minW, Math.min(800, Math.round(startWidth + deltaX)));
-      finalWidth = newWidth;
-
-      setColumnWidths((prev) => ({
-        ...prev,
-        [colId]: newWidth,
-      }));
+      finalWidth = Math.max(minW, Math.min(800, Math.round(startWidth + deltaX)));
+      if (rafId) return;
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        positionGuide(finalWidth);
+      });
     };
 
     const onMouseUp = () => {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup", onMouseUp);
+      if (rafId) cancelAnimationFrame(rafId);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
+      guide.style.display = "none";
       setIsResizing(false);
       setResizingColId(null);
 
-      setColumnWidths((prev) => {
-        const updated = { ...prev, [colId]: finalWidth };
-        savePreferences(columnOrder, updated);
-        return updated;
-      });
+      if (finalWidth === startWidth) return;
+      const updated = { ...columnWidths, [colId]: finalWidth };
+      setColumnWidths(updated);
+      savePreferences(columnOrder, updated);
     };
 
     document.body.style.cursor = "col-resize";
@@ -867,7 +891,21 @@ const NoteListView = ({
   };
 
   return (
-    <div className="bg-base-100 rounded-xl shadow-sm border border-base-content/10 overflow-hidden h-full flex flex-col">
+    <div
+      ref={containerRef}
+      className="bg-base-100 rounded-xl shadow-sm border border-base-content/10 overflow-hidden h-full flex flex-col relative"
+    >
+      {/* Resize guide line (moved via direct DOM updates while dragging) */}
+      <div
+        ref={resizeGuideRef}
+        className="absolute top-0 bottom-0 left-0 w-0.5 -ml-px bg-primary z-40 pointer-events-none shadow-[0_0_6px_rgba(99,102,241,0.6)] will-change-transform"
+        style={{ display: "none" }}
+      >
+        <span
+          ref={resizeGuideLabelRef}
+          className="absolute top-12 left-1.5 badge badge-primary badge-sm font-mono font-medium whitespace-nowrap shadow"
+        />
+      </div>
       <div className="overflow-auto flex-1">
         <table
           className="table border-separate border-spacing-0 w-full"
