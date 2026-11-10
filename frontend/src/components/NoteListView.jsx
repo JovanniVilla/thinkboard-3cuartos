@@ -184,7 +184,7 @@ const NoteListView = ({
   };
 
   // Column resizing handlers
-  // While dragging, only a lightweight guide line is moved (direct DOM updates, no React re-render).
+  // While dragging, a lightweight guide line is moved with 1:1 mouse synchronization (direct DOM updates, no React re-render).
   // The real column width is applied once, when the mouse button is released.
   const handleResizeStart = (e, colId) => {
     e.preventDefault();
@@ -199,31 +199,47 @@ const NoteListView = ({
     setIsResizing(true);
     setResizingColId(colId);
 
-    const startX = e.clientX;
-    const startWidth = columnWidths[colId] || COLUMNS_CONFIG[colId]?.defaultWidth || 100;
-    const minW = COLUMNS_CONFIG[colId]?.minWidth || 60;
+    const scrollContainer = container.querySelector(".overflow-auto");
+    const thRect = thEl.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
-    const colLeft = thEl.getBoundingClientRect().left - containerRect.left;
+
+    // The column's left edge on the screen and inside the container right now
+    const colLeftOnScreen = thRect.left;
+    const colLeftInContainer = thRect.left - containerRect.left;
+    const startScrollLeft = scrollContainer ? scrollContainer.scrollLeft : 0;
+
+    // Start width is the ACTUAL rendered width on screen
+    const startWidth = Math.round(thRect.width);
+    const minW = COLUMNS_CONFIG[colId]?.minWidth || 60;
+    const maxW = 800;
+
     let finalWidth = startWidth;
     let rafId = null;
 
-    const positionGuide = (width) => {
-      guide.style.transform = `translateX(${colLeft + width}px)`;
+    const positionGuide = (width, currentScrollOffset = 0) => {
+      // Guide is placed at the proposed right edge of the column inside the container
+      const guideX = (colLeftInContainer - currentScrollOffset) + width;
+      guide.style.transform = `translateX(${guideX}px)`;
       if (guideLabel) guideLabel.textContent = `${width}px`;
     };
 
-    // Show guide at the current column edge
-    positionGuide(startWidth);
+    // Position guide immediately at the column's right edge (directly under mouse)
+    positionGuide(startWidth, 0);
     guide.style.display = "block";
 
     const onMouseMove = (moveEvent) => {
       moveEvent.preventDefault();
-      const deltaX = moveEvent.clientX - startX;
-      finalWidth = Math.max(minW, Math.min(800, Math.round(startWidth + deltaX)));
+      const currentScroll = scrollContainer ? scrollContainer.scrollLeft : 0;
+      const scrollDelta = currentScroll - startScrollLeft;
+
+      // Mouse position determines the width from the column's left edge
+      const rawWidth = (moveEvent.clientX + scrollDelta) - colLeftOnScreen;
+      finalWidth = Math.max(minW, Math.min(maxW, Math.round(rawWidth)));
+
       if (rafId) return;
       rafId = requestAnimationFrame(() => {
         rafId = null;
-        positionGuide(finalWidth);
+        positionGuide(finalWidth, scrollDelta);
       });
     };
 
@@ -895,15 +911,15 @@ const NoteListView = ({
       ref={containerRef}
       className="bg-base-100 rounded-xl shadow-sm border border-base-content/10 overflow-hidden h-full flex flex-col relative"
     >
-      {/* Resize guide line (moved via direct DOM updates while dragging) */}
+      {/* Resize guide line (moved via direct DOM updates with 1:1 mouse tracking) */}
       <div
         ref={resizeGuideRef}
-        className="absolute top-0 bottom-0 left-0 w-0.5 -ml-px bg-primary z-40 pointer-events-none shadow-[0_0_6px_rgba(99,102,241,0.6)] will-change-transform"
+        className="absolute top-0 bottom-0 left-0 w-[2px] -ml-[1px] bg-primary z-50 pointer-events-none shadow-[0_0_10px_rgba(99,102,241,0.8)] will-change-transform"
         style={{ display: "none" }}
       >
         <span
           ref={resizeGuideLabelRef}
-          className="absolute top-12 left-1.5 badge badge-primary badge-sm font-mono font-medium whitespace-nowrap shadow"
+          className="absolute top-10 left-2 badge badge-primary font-mono font-bold text-xs py-2 px-2.5 shadow-lg whitespace-nowrap"
         />
       </div>
       <div className="overflow-auto flex-1">
@@ -1010,6 +1026,8 @@ const NoteListView = ({
                   </th>
                 );
               })}
+              {/* Trailing flexible column so exact column pixel widths are never distorted by table width */}
+              <th className="p-0 border-b border-base-content/10" style={{ width: "auto" }} />
             </tr>
           </thead>
 
@@ -1030,6 +1048,8 @@ const NoteListView = ({
                 }
               >
                 {columnOrder.map((colId) => renderCell(colId, note))}
+                {/* Trailing empty cell */}
+                <td className="p-0" />
               </tr>
             ))}
           </tbody>
