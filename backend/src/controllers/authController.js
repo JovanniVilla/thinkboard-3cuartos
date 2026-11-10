@@ -71,6 +71,7 @@ export async function register(req, res) {
       email: user.email,
       role: user.role,
       isApproved: user.isApproved,
+      preferences: user.preferences || {},
     });
   } catch (error) {
     console.error("Error in register controller", error);
@@ -117,6 +118,7 @@ export async function login(req, res) {
       email: user.email,
       role: user.role,
       isApproved: user.isApproved,
+      preferences: user.preferences || {},
     });
   } catch (error) {
     console.error("Error in login controller", error);
@@ -249,5 +251,32 @@ export async function changePassword(req, res) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+
+/**
+ * PUT /api/auth/preferences
+ * Update user preferences (e.g. column order, column widths for task list view).
+ */
+export async function updatePreferences(req, res) {
+  try {
+    const { preferences } = req.body;
+    if (!preferences || typeof preferences !== "object") {
+      return res.status(400).json({ message: "Preferencias inválidas" });
+    }
+
+    const user = req.user;
+    user.preferences = {
+      ...(user.preferences || {}),
+      ...preferences,
+    };
+    user.markModified("preferences");
+    await user.save();
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error in updatePreferences controller", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 
 

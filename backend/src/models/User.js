@@ -45,6 +45,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    preferences: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
   },
   { timestamps: true }
 );

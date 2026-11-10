@@ -1,5 +1,24 @@
-import { useState } from "react";
-import { PenSquareIcon, ArchiveIcon, ArrowUpIcon, ArrowDownIcon, ZapIcon, UserIcon, AtSignIcon, ListChecksIcon, CheckCircle2Icon, PlusIcon, CalendarIcon, CheckIcon, ClockIcon } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  PenSquareIcon,
+  ArchiveIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+  ZapIcon,
+  UserIcon,
+  AtSignIcon,
+  ListChecksIcon,
+  CheckCircle2Icon,
+  PlusIcon,
+  CalendarIcon,
+  CheckIcon,
+  ClockIcon,
+  GripVerticalIcon,
+  SlidersHorizontalIcon,
+  RotateCcwIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+} from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useLabels } from "../lib/useLabels";
 import { useTaskSizes } from "../lib/useTaskSizes";
@@ -19,6 +38,176 @@ const getInitials = (name = "") => {
     .toUpperCase();
 };
 
+const DEFAULT_COLUMNS = [
+  "id",
+  "title",
+  "checklist",
+  "labels",
+  "project",
+  "size",
+  "status",
+  "priority",
+  "dates",
+  "user",
+  "createdAt",
+  "actions",
+];
+
+const COLUMNS_CONFIG = {
+  id: {
+    id: "id",
+    label: "ID",
+    sortKey: "keyId",
+    defaultWidth: 95,
+    minWidth: 70,
+    responsiveClass: "",
+    align: "left",
+  },
+  title: {
+    id: "title",
+    label: "Nombre",
+    sortKey: "title",
+    defaultWidth: 280,
+    minWidth: 160,
+    responsiveClass: "",
+    align: "left",
+  },
+  checklist: {
+    id: "checklist",
+    label: "Checklist",
+    sortKey: null,
+    defaultWidth: 105,
+    minWidth: 75,
+    responsiveClass: "hidden md:table-cell",
+    align: "left",
+  },
+  labels: {
+    id: "labels",
+    label: "Etiquetas",
+    sortKey: null,
+    defaultWidth: 150,
+    minWidth: 90,
+    responsiveClass: "hidden lg:table-cell",
+    align: "left",
+  },
+  project: {
+    id: "project",
+    label: "Proyecto",
+    sortKey: "project",
+    defaultWidth: 140,
+    minWidth: 95,
+    responsiveClass: "hidden sm:table-cell",
+    align: "left",
+  },
+  size: {
+    id: "size",
+    label: "Talla",
+    sortKey: "size",
+    defaultWidth: 105,
+    minWidth: 75,
+    responsiveClass: "",
+    align: "left",
+  },
+  status: {
+    id: "status",
+    label: "Estado",
+    sortKey: "status",
+    defaultWidth: 120,
+    minWidth: 85,
+    responsiveClass: "",
+    align: "left",
+  },
+  priority: {
+    id: "priority",
+    label: "Prioridad",
+    sortKey: "priority",
+    defaultWidth: 115,
+    minWidth: 80,
+    responsiveClass: "",
+    align: "left",
+  },
+  dates: {
+    id: "dates",
+    label: "Fechas",
+    sortKey: null,
+    defaultWidth: 110,
+    minWidth: 75,
+    responsiveClass: "hidden md:table-cell",
+    align: "left",
+  },
+  user: {
+    id: "user",
+    label: "Usuario",
+    sortKey: "user",
+    defaultWidth: 140,
+    minWidth: 90,
+    responsiveClass: "",
+    align: "left",
+  },
+  createdAt: {
+    id: "createdAt",
+    label: "Creación",
+    sortKey: "createdAt",
+    defaultWidth: 110,
+    minWidth: 80,
+    responsiveClass: "hidden sm:table-cell",
+    align: "left",
+  },
+  actions: {
+    id: "actions",
+    label: "Acciones",
+    sortKey: null,
+    defaultWidth: 100,
+    minWidth: 85,
+    responsiveClass: "",
+    align: "right",
+  },
+};
+
+const DEFAULT_COLUMN_WIDTHS = Object.fromEntries(
+  Object.entries(COLUMNS_CONFIG).map(([k, v]) => [k, v.defaultWidth])
+);
+
+const getSavedColumnOrder = (userId, userPrefs) => {
+  try {
+    if (userPrefs?.taskListView?.columnOrder && Array.isArray(userPrefs.taskListView.columnOrder)) {
+      const saved = userPrefs.taskListView.columnOrder.filter((id) => COLUMNS_CONFIG[id]);
+      const missing = DEFAULT_COLUMNS.filter((id) => !saved.includes(id));
+      return [...saved, ...missing];
+    }
+    const local = localStorage.getItem(`tb_task_list_columns_${userId || "guest"}`);
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (Array.isArray(parsed?.order)) {
+        const saved = parsed.order.filter((id) => COLUMNS_CONFIG[id]);
+        const missing = DEFAULT_COLUMNS.filter((id) => !saved.includes(id));
+        return [...saved, ...missing];
+      }
+    }
+  } catch (e) {
+    console.error("Error reading saved column order", e);
+  }
+  return [...DEFAULT_COLUMNS];
+};
+
+const getSavedColumnWidths = (userId, userPrefs) => {
+  try {
+    if (userPrefs?.taskListView?.columnWidths && typeof userPrefs.taskListView.columnWidths === "object") {
+      return { ...DEFAULT_COLUMN_WIDTHS, ...userPrefs.taskListView.columnWidths };
+    }
+    const local = localStorage.getItem(`tb_task_list_columns_${userId || "guest"}`);
+    if (local) {
+      const parsed = JSON.parse(local);
+      if (parsed?.widths && typeof parsed.widths === "object") {
+        return { ...DEFAULT_COLUMN_WIDTHS, ...parsed.widths };
+      }
+    }
+  } catch (e) {
+    console.error("Error reading saved column widths", e);
+  }
+  return { ...DEFAULT_COLUMN_WIDTHS };
+};
+
 const NoteListView = ({
   notes = [],
   setNotes,
@@ -32,7 +221,7 @@ const NoteListView = ({
   setSortOrder,
   highlightedNoteId,
 }) => {
-  const { user } = useAuth();
+  const { user, updatePreferences } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { labels: boardLabels } = useLabels();
@@ -40,6 +229,207 @@ const NoteListView = ({
   const { activeNoteEntry } = useTimeTracking();
   const [editingTitleId, setEditingTitleId] = useState(null);
   const [editingTitleValue, setEditingTitleValue] = useState("");
+
+  // Column preferences state
+  const [columnOrder, setColumnOrder] = useState(() =>
+    getSavedColumnOrder(user?._id, user?.preferences)
+  );
+  const [columnWidths, setColumnWidths] = useState(() =>
+    getSavedColumnWidths(user?._id, user?.preferences)
+  );
+
+  // Drag and drop reordering state
+  const [draggedColId, setDraggedColId] = useState(null);
+  const [dropTarget, setDropTarget] = useState(null); // { colId: string, position: 'before' | 'after' }
+  const didDragRef = useRef(false);
+
+  // Column resizing state
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizingColId, setResizingColId] = useState(null);
+
+  // Sync state when backend user preferences are loaded/updated
+  useEffect(() => {
+    if (!user?._id) return;
+    const backendPrefs = user.preferences?.taskListView;
+    if (backendPrefs) {
+      if (backendPrefs.columnOrder && Array.isArray(backendPrefs.columnOrder)) {
+        const validSaved = backendPrefs.columnOrder.filter((id) => COLUMNS_CONFIG[id]);
+        const missing = DEFAULT_COLUMNS.filter((id) => !validSaved.includes(id));
+        setColumnOrder([...validSaved, ...missing]);
+      }
+      if (backendPrefs.columnWidths && typeof backendPrefs.columnWidths === "object") {
+        setColumnWidths((prev) => ({ ...prev, ...backendPrefs.columnWidths }));
+      }
+    }
+  }, [user?._id, user?.preferences?.taskListView]);
+
+  // Persist preferences handler
+  const savePreferences = useCallback(
+    (newOrder, newWidths) => {
+      const userId = user?._id || "guest";
+      // 1. Save to localStorage immediately
+      try {
+        localStorage.setItem(
+          `tb_task_list_columns_${userId}`,
+          JSON.stringify({ order: newOrder, widths: newWidths })
+        );
+      } catch (e) {
+        console.error("Error saving column preferences to localStorage", e);
+      }
+
+      // 2. Save to backend database if user is authenticated
+      if (user && updatePreferences) {
+        updatePreferences({
+          taskListView: {
+            columnOrder: newOrder,
+            columnWidths: newWidths,
+          },
+        }).catch((e) => console.error("Error saving preferences to server", e));
+      }
+    },
+    [user, updatePreferences]
+  );
+
+  // Reset to default column layout
+  const handleResetDefaults = () => {
+    const defaultOrder = [...DEFAULT_COLUMNS];
+    const defaultWidths = { ...DEFAULT_COLUMN_WIDTHS };
+    setColumnOrder(defaultOrder);
+    setColumnWidths(defaultWidths);
+    savePreferences(defaultOrder, defaultWidths);
+    toast.success("Columnas restablecidas a valores por defecto");
+  };
+
+  // Move column left or right (via menu buttons)
+  const moveColumn = (colId, direction) => {
+    const currentIndex = columnOrder.indexOf(colId);
+    if (currentIndex === -1) return;
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (targetIndex < 0 || targetIndex >= columnOrder.length) return;
+
+    const newOrder = [...columnOrder];
+    newOrder.splice(currentIndex, 1);
+    newOrder.splice(targetIndex, 0, colId);
+
+    setColumnOrder(newOrder);
+    savePreferences(newOrder, columnWidths);
+  };
+
+  // Drag and drop column reordering handlers
+  const handleDragStart = (e, colId) => {
+    if (isResizing) {
+      e.preventDefault();
+      return;
+    }
+    didDragRef.current = true;
+    setDraggedColId(colId);
+    e.dataTransfer.setData("text/plain", colId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e, colId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!draggedColId || draggedColId === colId) return;
+
+    e.dataTransfer.dropEffect = "move";
+    const rect = e.currentTarget.getBoundingClientRect();
+    const midX = rect.left + rect.width / 2;
+    const position = e.clientX < midX ? "before" : "after";
+
+    if (dropTarget?.colId !== colId || dropTarget?.position !== position) {
+      setDropTarget({ colId, position });
+    }
+  };
+
+  const handleDragLeave = (e) => {
+    if (e.currentTarget.contains(e.relatedTarget)) return;
+    setDropTarget(null);
+  };
+
+  const handleDrop = (e, targetColId) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!draggedColId || draggedColId === targetColId) {
+      setDraggedColId(null);
+      setDropTarget(null);
+      return;
+    }
+
+    const currentOrder = [...columnOrder];
+    const fromIndex = currentOrder.indexOf(draggedColId);
+    if (fromIndex === -1) return;
+
+    currentOrder.splice(fromIndex, 1);
+    let toIndex = currentOrder.indexOf(targetColId);
+    if (dropTarget?.position === "after") {
+      toIndex += 1;
+    }
+    currentOrder.splice(toIndex, 0, draggedColId);
+
+    setColumnOrder(currentOrder);
+    savePreferences(currentOrder, columnWidths);
+
+    setDraggedColId(null);
+    setDropTarget(null);
+    setTimeout(() => {
+      didDragRef.current = false;
+    }, 150);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedColId(null);
+    setDropTarget(null);
+    setTimeout(() => {
+      didDragRef.current = false;
+    }, 150);
+  };
+
+  // Column resizing handlers
+  const handleResizeStart = (e, colId) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizingColId(colId);
+
+    const startX = e.clientX;
+    const startWidth = columnWidths[colId] || COLUMNS_CONFIG[colId]?.defaultWidth || 100;
+    let finalWidth = startWidth;
+
+    const onMouseMove = (moveEvent) => {
+      moveEvent.preventDefault();
+      const deltaX = moveEvent.clientX - startX;
+      const minW = COLUMNS_CONFIG[colId]?.minWidth || 60;
+      const newWidth = Math.max(minW, Math.min(800, Math.round(startWidth + deltaX)));
+      finalWidth = newWidth;
+
+      setColumnWidths((prev) => ({
+        ...prev,
+        [colId]: newWidth,
+      }));
+    };
+
+    const onMouseUp = () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      setIsResizing(false);
+      setResizingColId(null);
+
+      setColumnWidths((prev) => {
+        const updated = { ...prev, [colId]: finalWidth };
+        savePreferences(columnOrder, updated);
+        return updated;
+      });
+    };
+
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
 
   const handleLabelToggle = (note, labelObj) => {
     const currentLabels = note.labels || [];
@@ -54,27 +444,27 @@ const NoteListView = ({
   };
 
   const handleInlineEdit = async (noteId, field, value) => {
-    const note = notes.find(n => n._id === noteId);
+    const note = notes.find((n) => n._id === noteId);
     if (!note || note[field] === value) return;
 
     const previousValue = note[field];
     // Optimistic update
-    setNotes(prev => prev.map(n => n._id === noteId ? { ...n, [field]: value } : n));
+    setNotes((prev) => prev.map((n) => (n._id === noteId ? { ...n, [field]: value } : n)));
 
     try {
       const res = await api.put(`/notes/${noteId}`, { ...note, [field]: value });
       if (res.data) {
-        setNotes(prev => prev.map(n => n._id === noteId ? res.data : n));
+        setNotes((prev) => prev.map((n) => (n._id === noteId ? res.data : n)));
       }
       toast.success("Tarea actualizada");
     } catch (error) {
       console.error("Error updating note", error);
       toast.error("Error al actualizar la tarea");
       // Revert on error
-      setNotes(prev => prev.map(n => n._id === noteId ? { ...n, [field]: previousValue } : n));
+      setNotes((prev) => prev.map((n) => (n._id === noteId ? { ...n, [field]: previousValue } : n)));
     }
   };
-  
+
   const getMentionCount = (note) => {
     if (!user?.name || !note.activities) return 0;
     return note.activities.reduce((acc, act) => {
@@ -84,6 +474,7 @@ const NoteListView = ({
       return acc;
     }, 0);
   };
+
   const handleArchive = async (e, id) => {
     e.preventDefault();
     e.stopPropagation();
@@ -100,6 +491,7 @@ const NoteListView = ({
   };
 
   const handleHeaderClick = (field) => {
+    if (!field) return;
     if (sortBy === field) {
       setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
@@ -111,11 +503,16 @@ const NoteListView = ({
   const renderSortIndicator = (field) => {
     if (sortBy !== field) return null;
     return sortOrder === "asc" ? (
-      <ArrowUpIcon className="size-3.5 text-primary inline ml-1" />
+      <ArrowUpIcon className="size-3.5 text-primary inline ml-1 shrink-0" />
     ) : (
-      <ArrowDownIcon className="size-3.5 text-primary inline ml-1" />
+      <ArrowDownIcon className="size-3.5 text-primary inline ml-1 shrink-0" />
     );
   };
+
+  const totalTableWidth = columnOrder.reduce((acc, colId) => {
+    const col = COLUMNS_CONFIG[colId];
+    return acc + (columnWidths[colId] || col?.defaultWidth || 100);
+  }, 0);
 
   if (notes.length === 0) {
     return (
@@ -125,541 +522,750 @@ const NoteListView = ({
     );
   }
 
+  // Render individual cell based on column ID
+  const renderCell = (colId, note) => {
+    const col = COLUMNS_CONFIG[colId];
+    if (!col) return null;
+    const width = columnWidths[colId] || col.defaultWidth;
+
+    const baseTdProps = {
+      key: colId,
+      className: `border-r border-base-content/5 p-3.5 align-middle ${col.responsiveClass || ""} ${
+        col.align === "right" ? "text-right" : ""
+      }`,
+      style: {
+        width: `${width}px`,
+        minWidth: `${width}px`,
+        maxWidth: `${width}px`,
+      },
+    };
+
+    switch (colId) {
+      case "id":
+        return (
+          <td {...baseTdProps} className={`${baseTdProps.className} font-medium text-base-content/70`}>
+            {note.projectKeyId ? (
+              <div className="flex flex-col items-start gap-0.5">
+                <span
+                  className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 whitespace-nowrap"
+                  title="ID de Proyecto"
+                >
+                  {note.projectKeyId}
+                </span>
+                {note.globalKeyId && (
+                  <span
+                    className="text-[10px] font-mono text-base-content/50 pl-0.5"
+                    title={`ID Global: ${note.globalKeyId}`}
+                  >
+                    #{note.globalKeyId}
+                  </span>
+                )}
+              </div>
+            ) : note.globalKeyId || note.keyId ? (
+              <span
+                className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 whitespace-nowrap"
+                title="ID Global de Tarea"
+              >
+                {note.globalKeyId || note.keyId}
+              </span>
+            ) : (
+              <span className="text-xs text-base-content/40">-</span>
+            )}
+          </td>
+        );
+
+      case "title":
+        return (
+          <td {...baseTdProps} className={`${baseTdProps.className} font-semibold text-base-content`}>
+            <div className="flex items-start gap-2 min-w-0 pt-0.5 group/title">
+              {editingTitleId === note._id ? (
+                <div className="flex items-center gap-1 w-full" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="text"
+                    className="input input-xs input-bordered w-full font-semibold"
+                    value={editingTitleValue}
+                    onChange={(e) => setEditingTitleValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleInlineEdit(note._id, "title", editingTitleValue);
+                        setEditingTitleId(null);
+                      } else if (e.key === "Escape") {
+                        setEditingTitleId(null);
+                      }
+                    }}
+                    autoFocus
+                    onBlur={() => {
+                      handleInlineEdit(note._id, "title", editingTitleValue);
+                      setEditingTitleId(null);
+                    }}
+                  />
+                </div>
+              ) : (
+                <>
+                  <Link
+                    to={`/note/${note._id}`}
+                    state={{ returnTo: location.pathname + location.search }}
+                    className="hover:text-primary transition-colors block break-words whitespace-normal flex-1"
+                    title={note.title}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {note.title}
+                  </Link>
+                  <button
+                    type="button"
+                    className="opacity-0 group-hover/title:opacity-100 transition-opacity p-0.5 text-base-content/50 hover:text-primary shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditingTitleId(note._id);
+                      setEditingTitleValue(note.title);
+                    }}
+                    title="Editar título"
+                  >
+                    <PenSquareIcon className="size-3.5" />
+                  </button>
+                </>
+              )}
+
+              {getMentionCount(note) > 0 && editingTitleId !== note._id && (
+                <div
+                  className="flex items-center gap-1 bg-primary text-primary-content text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm shrink-0"
+                  title={`Tienes ${getMentionCount(note)} mención(es)`}
+                >
+                  <AtSignIcon className="size-3" />
+                  {getMentionCount(note)}
+                </div>
+              )}
+
+              {activeNoteEntry &&
+                String(activeNoteEntry.noteId?._id || activeNoteEntry.noteId) === String(note._id) && (
+                  <span
+                    className="badge badge-xs font-semibold bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 gap-1 px-1.5 py-0.5 animate-pulse shrink-0"
+                    title="Esta tarea está registrando tiempo en este momento"
+                  >
+                    <ClockIcon className="size-3 text-emerald-500" />
+                    En curso
+                  </span>
+                )}
+            </div>
+          </td>
+        );
+
+      case "checklist":
+        return (
+          <td {...baseTdProps}>
+            {note.checklist?.length > 0 ? (
+              <div
+                className="flex items-center gap-1.5 text-xs font-medium text-base-content/70"
+                title={`${note.checklist.filter((i) => i.completed).length} de ${note.checklist.length} completados`}
+              >
+                <ListChecksIcon className="size-4 opacity-70 shrink-0" />
+                <span>
+                  {note.checklist.filter((i) => i.completed).length}/{note.checklist.length}
+                </span>
+              </div>
+            ) : (
+              <span className="text-xs text-base-content/40">-</span>
+            )}
+          </td>
+        );
+
+      case "labels":
+        return (
+          <td {...baseTdProps}>
+            <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+              <div
+                tabIndex={0}
+                role="button"
+                className="flex flex-wrap gap-1 min-h-[24px] items-center hover:bg-base-200 p-1 rounded transition-colors"
+                title="Editar etiquetas"
+              >
+                {note.labels?.length > 0 ? (
+                  note.labels.map((label, idx) => (
+                    <span
+                      key={idx}
+                      className="badge badge-xs font-semibold px-1.5 py-1.5 truncate max-w-[120px]"
+                      style={{
+                        backgroundColor: label.color + "20",
+                        color: label.color,
+                        borderColor: label.color + "40",
+                      }}
+                    >
+                      {label.name}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-base-content/40 hover:text-base-content/80 flex items-center gap-1 w-full">
+                    <PlusIcon className="size-3" /> Añadir
+                  </span>
+                )}
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-52 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10"
+              >
+                {boardLabels.length === 0 && (
+                  <li className="text-xs text-base-content/50 p-2 text-center">No hay etiquetas creadas</li>
+                )}
+                {boardLabels.map((defLabel) => {
+                  const isSelected = (note.labels || []).some(
+                    (l) => l.name.toLowerCase() === defLabel.name.toLowerCase()
+                  );
+                  return (
+                    <li key={defLabel._id || defLabel.name}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleLabelToggle(note, defLabel);
+                        }}
+                        className="text-xs py-2 px-2 flex items-center justify-between w-full hover:bg-base-200 rounded-lg text-left"
+                      >
+                        <span className="flex items-center gap-2 truncate">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: defLabel.color }}
+                          />
+                          <span className="truncate font-medium text-base-content">{defLabel.name}</span>
+                        </span>
+                        {isSelected && <CheckCircle2Icon className="size-4 text-primary" />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </td>
+        );
+
+      case "project": {
+        const projectItem = note.project ? projects.find((p) => p._id === note.project) : null;
+        return (
+          <td {...baseTdProps}>
+            <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+              <div
+                tabIndex={0}
+                role="button"
+                className="badge badge-sm font-medium whitespace-nowrap border truncate max-w-full"
+                style={{
+                  backgroundColor: projectItem ? (projectItem.color ? `${projectItem.color}20` : "#6B728020") : "#6B728020",
+                  color: projectItem ? (projectItem.color || "#6B7280") : "#6B7280",
+                  borderColor: projectItem ? (projectItem.color ? `${projectItem.color}50` : "#6B728050") : "#6B728050",
+                }}
+              >
+                {projectItem ? projectItem.name : "Sin asignar"}
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-48 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10"
+              >
+                <li>
+                  <a
+                    onClick={() => {
+                      handleInlineEdit(note._id, "project", null);
+                      document.activeElement.blur();
+                    }}
+                    className={`text-xs py-1.5 px-2 ${!note.project ? "bg-primary/10 text-primary font-bold" : ""}`}
+                  >
+                    <span className="truncate">Sin asignar</span>
+                  </a>
+                </li>
+                {projects.map((p) => (
+                  <li key={p._id}>
+                    <a
+                      onClick={() => {
+                        handleInlineEdit(note._id, "project", p._id);
+                        document.activeElement.blur();
+                      }}
+                      className={`text-xs py-1.5 px-2 ${note.project === p._id ? "bg-primary/10 text-primary font-bold" : ""}`}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full mr-1 flex-shrink-0"
+                        style={{ backgroundColor: p.color || "#6B7280" }}
+                      />
+                      <span className="truncate">{p.name}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </td>
+        );
+      }
+
+      case "size": {
+        const currentSizeId = typeof note.size === "object" ? note.size?._id : note.size;
+        const currentSize = (taskSizes || []).find((s) => s._id === currentSizeId);
+        return (
+          <td {...baseTdProps}>
+            <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+              <div
+                tabIndex={0}
+                role="button"
+                className="badge badge-sm font-medium whitespace-nowrap border truncate max-w-full"
+                style={{
+                  backgroundColor: currentSize?.color ? `${currentSize.color}20` : "#6B728020",
+                  color: currentSize?.color ? currentSize.color : "#6B7280",
+                  borderColor: currentSize?.color ? `${currentSize.color}50` : "#6B728050",
+                }}
+              >
+                {currentSize ? `${currentSize.value}h (${currentSize.name})` : "Sin talla"}
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10"
+              >
+                <li>
+                  <a
+                    onClick={() => {
+                      handleInlineEdit(note._id, "size", null);
+                      document.activeElement.blur();
+                    }}
+                    className={`text-xs py-1.5 px-2 ${!note.size ? "bg-primary/10 text-primary font-bold" : ""}`}
+                  >
+                    <span className="truncate">Sin talla</span>
+                  </a>
+                </li>
+                {(taskSizes || []).map((sz) => {
+                  const isSelected = (typeof note.size === "object" ? note.size?._id : note.size) === sz._id;
+                  return (
+                    <li key={sz._id}>
+                      <a
+                        onClick={() => {
+                          handleInlineEdit(note._id, "size", sz._id);
+                          document.activeElement.blur();
+                        }}
+                        className={`text-xs py-1.5 px-2 ${isSelected ? "bg-primary/10 text-primary font-bold" : ""}`}
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full mr-1 flex-shrink-0"
+                          style={{ backgroundColor: sz.color || "#6B7280" }}
+                        />
+                        <span className="truncate">
+                          {sz.name} ({sz.value}h)
+                        </span>
+                      </a>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </td>
+        );
+      }
+
+      case "status": {
+        const statusConfig = statuses.find((s) => s.name === note.status);
+        const statusColor = statusConfig?.color || "#6B7280";
+        return (
+          <td {...baseTdProps}>
+            <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+              <div
+                tabIndex={0}
+                role="button"
+                className="badge badge-sm font-medium whitespace-nowrap border truncate max-w-full"
+                style={{
+                  backgroundColor: statusColor + "20",
+                  color: statusColor,
+                  borderColor: statusColor + "50",
+                }}
+              >
+                {note.status || "Pendiente"}
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10"
+              >
+                {statuses.map((st) => (
+                  <li key={st._id}>
+                    <a
+                      onClick={() => {
+                        handleInlineEdit(note._id, "status", st.name);
+                        document.activeElement.blur();
+                      }}
+                      className={`text-xs py-1.5 px-2 ${note.status === st.name ? "bg-primary/10 text-primary font-bold" : ""}`}
+                    >
+                      <span
+                        className="w-2.5 h-2.5 rounded-full mr-1 flex-shrink-0"
+                        style={{ backgroundColor: st.color || "#6B7280" }}
+                      />
+                      <span className="truncate">{st.name}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </td>
+        );
+      }
+
+      case "priority": {
+        const priorityConfig = priorities.find((p) => p.name === note.priority);
+        const priorityColor = priorityConfig?.color || "#3B82F6";
+        return (
+          <td {...baseTdProps}>
+            <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+              <div
+                tabIndex={0}
+                role="button"
+                className="badge badge-xs font-bold gap-1 px-2 py-2 whitespace-nowrap border truncate max-w-full"
+                style={{
+                  backgroundColor: priorityColor + "15",
+                  color: priorityColor,
+                  borderColor: priorityColor + "40",
+                }}
+              >
+                <ZapIcon className="size-3" />
+                {note.priority || "Media"}
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-36 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10"
+              >
+                {priorities.map((p) => (
+                  <li key={p._id}>
+                    <a
+                      onClick={() => {
+                        handleInlineEdit(note._id, "priority", p.name);
+                        document.activeElement.blur();
+                      }}
+                      className={`text-xs py-1.5 px-2 ${note.priority === p.name ? "bg-primary/10 text-primary font-bold" : ""}`}
+                    >
+                      <ZapIcon className="size-3 shrink-0" style={{ color: p.color }} />
+                      <span className="truncate">{p.name}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </td>
+        );
+      }
+
+      case "dates":
+        return (
+          <td {...baseTdProps}>
+            {note.startDate || note.dueDate ? (
+              <div
+                className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-sm border inline-flex ${
+                  note.completedAt
+                    ? "bg-success/20 text-success border-success/30"
+                    : note.dueDate && new Date(note.dueDate) < new Date()
+                    ? "bg-error/20 text-error border-error/30"
+                    : "bg-base-200 text-base-content/70 border-base-content/10"
+                }`}
+                title={
+                  note.dueDate
+                    ? `Vence: ${new Date(note.dueDate).toLocaleString()}`
+                    : `Inicia: ${new Date(note.startDate).toLocaleString()}`
+                }
+              >
+                <CalendarIcon className="size-3 shrink-0" />
+                {note.dueDate ? (
+                  <span>
+                    {new Date(note.dueDate).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
+                  </span>
+                ) : (
+                  <span>
+                    {new Date(note.startDate).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
+                  </span>
+                )}
+                {note.completedAt && <CheckIcon className="size-3 shrink-0" />}
+              </div>
+            ) : (
+              <span className="text-xs text-base-content/40">-</span>
+            )}
+          </td>
+        );
+
+      case "user": {
+        const userConfig = users.find((u) => u.name === note.user);
+        const userColor = userConfig?.color || "#6B7280";
+        return (
+          <td {...baseTdProps}>
+            <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+              <div
+                tabIndex={0}
+                role="button"
+                className="flex items-center gap-2 max-w-full hover:bg-base-200 p-1 rounded transition-colors"
+                title={`${note.user || "Sin asignar"}${userConfig?.jobTitle ? ` - ${userConfig.jobTitle}` : ""}`}
+              >
+                {note.user && note.user !== "Sin asignar" ? (
+                  <span
+                    className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] shadow-sm shrink-0"
+                    style={{ backgroundColor: userColor }}
+                  >
+                    {getInitials(note.user)}
+                  </span>
+                ) : (
+                  <span className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 shrink-0">
+                    <UserIcon className="size-3.5" />
+                  </span>
+                )}
+                <span className="truncate text-xs font-medium text-base-content/80">
+                  {note.user || "Sin asignar"}
+                </span>
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-48 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10"
+              >
+                {users.map((u) => (
+                  <li key={u._id}>
+                    <a
+                      onClick={() => {
+                        handleInlineEdit(note._id, "user", u.name);
+                        document.activeElement.blur();
+                      }}
+                      className={`text-xs py-1.5 px-2 ${note.user === u.name ? "bg-primary/10 text-primary font-bold" : ""}`}
+                    >
+                      <span
+                        className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0"
+                        style={{ backgroundColor: u.color || "#3B82F6" }}
+                      >
+                        {getInitials(u.name)}
+                      </span>
+                      <span className="truncate">{u.name}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </td>
+        );
+      }
+
+      case "createdAt":
+        return (
+          <td {...baseTdProps} className={`${baseTdProps.className} text-xs text-base-content/60 whitespace-nowrap`}>
+            {formatDate(new Date(note.createdAt))}
+          </td>
+        );
+
+      case "actions":
+        return (
+          <td {...baseTdProps} className={`${baseTdProps.className} whitespace-nowrap`}>
+            <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+              <Link
+                to={`/note/${note._id}`}
+                state={{ returnTo: location.pathname + location.search }}
+                className="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-primary"
+                title="Editar tarea"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <PenSquareIcon className="size-4" />
+              </Link>
+              <button
+                type="button"
+                className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:bg-base-200"
+                onClick={(e) => handleArchive(e, note._id)}
+                title="Archivar tarea"
+              >
+                <ArchiveIcon className="size-4" />
+              </button>
+            </div>
+          </td>
+        );
+
+      default:
+        return <td {...baseTdProps} />;
+    }
+  };
+
   return (
     <div className="bg-base-100 rounded-xl shadow-sm border border-base-content/10 overflow-hidden h-full flex flex-col">
       <div className="overflow-auto flex-1">
-        <table className="table w-full">
+        <table
+          className="table border-separate border-spacing-0 w-full"
+          style={{
+            tableLayout: "fixed",
+            minWidth: `${totalTableWidth}px`,
+          }}
+        >
           {/* Table Header */}
-          <thead className="bg-base-200/95 backdrop-blur text-base-content/70 text-xs uppercase tracking-wider sticky top-0 z-10 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+          <thead className="bg-base-200/95 backdrop-blur text-base-content/70 text-xs uppercase tracking-wider sticky top-0 z-20 shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
             <tr>
-              <th className="p-0 align-top border-r border-base-content/10 w-24">
-                <div
-                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[60px] p-3.5 cursor-pointer hover:bg-base-300 transition-colors"
-                  onClick={() => handleHeaderClick("keyId")}
-                >
-                  <span>ID</span>
-                  {renderSortIndicator("keyId")}
-                </div>
-              </th>
-              <th className="p-0 align-top border-r border-base-content/10">
-                <div
-                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[150px] p-3.5 cursor-pointer hover:bg-base-300 transition-colors"
-                  onClick={() => handleHeaderClick("title")}
-                >
-                  <span>Nombre</span>
-                  {renderSortIndicator("title")}
-                </div>
-              </th>
-              <th className="p-0 align-top border-r border-base-content/10 hidden md:table-cell">
-                <div className="flex items-center gap-1 text-base-content/70 resize-x overflow-hidden w-full min-w-[100px] p-3.5">
-                  <span>Checklist</span>
-                </div>
-              </th>
-              <th className="p-0 align-top border-r border-base-content/10 hidden lg:table-cell">
-                <div className="flex items-center gap-1 text-base-content/70 resize-x overflow-hidden w-full min-w-[120px] p-3.5">
-                  <span>Etiquetas</span>
-                </div>
-              </th>
-              <th className="p-0 align-top border-r border-base-content/10 hidden sm:table-cell">
-                <div
-                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[100px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
-                  onClick={() => handleHeaderClick("project")}
-                >
-                  <span>Proyecto</span>
-                  {renderSortIndicator("project")}
-                </div>
-              </th>
+              {columnOrder.map((colId) => {
+                const col = COLUMNS_CONFIG[colId];
+                if (!col) return null;
+                const width = columnWidths[colId] || col.defaultWidth;
+                const isDragging = draggedColId === colId;
+                const isOver = dropTarget?.colId === colId;
 
-              <th className="p-0 align-top border-r border-base-content/10">
-                <div
-                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[80px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
-                  onClick={() => handleHeaderClick("size")}
-                >
-                  <span>Talla</span>
-                  {renderSortIndicator("size")}
-                </div>
-              </th>
+                return (
+                  <th
+                    key={colId}
+                    className={`p-0 align-top border-r border-b border-base-content/10 relative select-none group/th transition-colors ${
+                      col.responsiveClass || ""
+                    } ${isDragging ? "opacity-30 bg-base-300" : ""} ${
+                      isOver ? "bg-primary/10" : ""
+                    }`}
+                    style={{
+                      width: `${width}px`,
+                      minWidth: `${width}px`,
+                      maxWidth: `${width}px`,
+                    }}
+                    onDragOver={(e) => handleDragOver(e, colId)}
+                    onDragLeave={handleDragLeave}
+                    onDrop={(e) => handleDrop(e, colId)}
+                  >
+                    {/* Drop position indicator */}
+                    {isOver && dropTarget.position === "before" && (
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary z-30 shadow-[0_0_8px_rgba(99,102,241,0.8)] pointer-events-none" />
+                    )}
+                    {isOver && dropTarget.position === "after" && (
+                      <div className="absolute right-0 top-0 bottom-0 w-1 bg-primary z-30 shadow-[0_0_8px_rgba(99,102,241,0.8)] pointer-events-none" />
+                    )}
 
-              <th className="p-0 align-top border-r border-base-content/10">
-                <div
-                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[100px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
-                  onClick={() => handleHeaderClick("status")}
-                >
-                  <span>Estado</span>
-                  {renderSortIndicator("status")}
-                </div>
-              </th>
-              <th className="p-0 align-top border-r border-base-content/10">
-                <div
-                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[100px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
-                  onClick={() => handleHeaderClick("priority")}
-                >
-                  <span>Prioridad</span>
-                  {renderSortIndicator("priority")}
-                </div>
-              </th>
-              <th className="p-0 align-top border-r border-base-content/10 hidden md:table-cell">
-                <div className="flex items-center gap-1 text-base-content/70 resize-x overflow-hidden w-full min-w-[80px] p-3.5">
-                  <span>Fechas</span>
-                </div>
-              </th>
-              <th className="p-0 align-top border-r border-base-content/10">
-                <div
-                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[100px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
-                  onClick={() => handleHeaderClick("user")}
-                >
-                  <span>Usuario</span>
-                  {renderSortIndicator("user")}
-                </div>
-              </th>
-              <th className="p-0 align-top border-r border-base-content/10 hidden sm:table-cell">
-                <div
-                  className="flex items-center gap-1 resize-x overflow-hidden w-full min-w-[100px] p-3.5 cursor-pointer hover:bg-base-200 transition-colors"
-                  onClick={() => handleHeaderClick("createdAt")}
-                >
-                  <span>Creación</span>
-                  {renderSortIndicator("createdAt")}
-                </div>
-              </th>
-              <th className="p-3.5 text-right align-top w-24">
-                <span>Acciones</span>
-              </th>
+                    <div
+                      draggable={!isResizing}
+                      onDragStart={(e) => handleDragStart(e, colId)}
+                      onDragEnd={handleDragEnd}
+                      onClick={() => {
+                        if (didDragRef.current) return;
+                        if (col.sortKey) handleHeaderClick(col.sortKey);
+                      }}
+                      className={`flex items-center gap-1.5 w-full h-full p-3.5 transition-colors ${
+                        col.sortKey ? "cursor-pointer hover:bg-base-300" : ""
+                      } ${isOver ? "bg-primary/10" : ""}`}
+                    >
+                      {/* Drag grip icon */}
+                      <span
+                        className="cursor-grab active:cursor-grabbing text-base-content/30 group-hover/th:text-base-content/70 transition-colors p-0.5 -ml-1 rounded hover:bg-base-content/10 shrink-0"
+                        title="Arrastra para reordenar columna"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <GripVerticalIcon className="size-3.5" />
+                      </span>
+
+                      <span className="truncate font-semibold flex-1">
+                        {col.label}
+                      </span>
+
+                      {col.sortKey && renderSortIndicator(col.sortKey)}
+
+                      {/* If this is the actions column, show column configuration menu */}
+                      {colId === "actions" && (
+                        <div
+                          className="dropdown dropdown-end"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div
+                            tabIndex={0}
+                            role="button"
+                            className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-primary hover:bg-base-300 ml-1"
+                            title="Personalizar columnas"
+                          >
+                            <SlidersHorizontalIcon className="size-3.5" />
+                          </div>
+                          <div
+                            tabIndex={0}
+                            className="dropdown-content z-[70] menu p-3 shadow-2xl bg-base-100 rounded-xl w-80 border border-base-content/10 max-h-96 overflow-y-auto"
+                          >
+                            <div className="flex items-center justify-between pb-2 mb-2 border-b border-base-content/10">
+                              <span className="font-bold text-xs uppercase tracking-wider text-base-content">
+                                Personalizar Columnas
+                              </span>
+                              <button
+                                type="button"
+                                onClick={handleResetDefaults}
+                                className="btn btn-ghost btn-xs text-error gap-1 hover:bg-error/10 text-[11px]"
+                                title="Restablecer orden y anchos originales"
+                              >
+                                <RotateCcwIcon className="size-3" />
+                                Restablecer
+                              </button>
+                            </div>
+
+                            <p className="text-[11px] text-base-content/60 mb-2 normal-case font-normal">
+                              Arrastra los encabezados para reordenar o ajusta el orden y anchos aquí:
+                            </p>
+
+                            <div className="space-y-1">
+                              {columnOrder.map((cId, idx) => {
+                                const cConfig = COLUMNS_CONFIG[cId];
+                                if (!cConfig) return null;
+                                const w = columnWidths[cId] || cConfig.defaultWidth;
+                                return (
+                                  <div
+                                    key={cId}
+                                    className="flex items-center justify-between p-1.5 rounded-lg hover:bg-base-200/60 text-xs text-base-content normal-case font-normal"
+                                  >
+                                    <div className="flex items-center gap-1.5 min-w-0">
+                                      <div className="flex items-center gap-0.5">
+                                        <button
+                                          type="button"
+                                          disabled={idx === 0}
+                                          onClick={() => moveColumn(cId, "up")}
+                                          className="btn btn-ghost btn-xs h-5 min-h-0 w-5 p-0 disabled:opacity-20 hover:text-primary"
+                                          title="Mover a la izquierda"
+                                        >
+                                          <ArrowLeftIcon className="size-3" />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          disabled={idx === columnOrder.length - 1}
+                                          onClick={() => moveColumn(cId, "down")}
+                                          className="btn btn-ghost btn-xs h-5 min-h-0 w-5 p-0 disabled:opacity-20 hover:text-primary"
+                                          title="Mover a la derecha"
+                                        >
+                                          <ArrowRightIcon className="size-3" />
+                                        </button>
+                                      </div>
+                                      <span className="font-medium truncate">{cConfig.label}</span>
+                                    </div>
+                                    <span className="font-mono bg-base-200 px-1.5 py-0.5 rounded text-[10px] text-base-content/60">
+                                      {w}px
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Resizer Handle */}
+                    <div
+                      className="absolute right-0 top-0 bottom-0 w-3 -mr-1.5 cursor-col-resize z-20 group/resizer flex items-center justify-center select-none"
+                      onMouseDown={(e) => handleResizeStart(e, colId)}
+                      onClick={(e) => e.stopPropagation()}
+                      title="Arrastra para redimensionar columna"
+                    >
+                      <div
+                        className={`w-[2px] h-4 rounded-full transition-all ${
+                          resizingColId === colId
+                            ? "bg-primary w-[3px] h-full"
+                            : "bg-base-content/20 group-hover/resizer:bg-primary group-hover/resizer:h-full"
+                        }`}
+                      />
+                    </div>
+                  </th>
+                );
+              })}
             </tr>
           </thead>
 
           {/* Table Body */}
           <tbody className="divide-y divide-base-content/10">
-            {notes.map((note) => {
-              const statusConfig = statuses.find((s) => s.name === note.status);
-              const statusColor = statusConfig?.color || "#6B7280";
-
-              const priorityConfig = priorities.find((p) => p.name === note.priority);
-              const priorityColor = priorityConfig?.color || "#3B82F6";
-
-              const userConfig = users.find((u) => u.name === note.user);
-              const userColor = userConfig?.color || "#6B7280";
-
-              return (
-                <tr
-                  key={note._id}
-                  className={`hover:bg-base-200/50 transition-all duration-300 group cursor-pointer ${
-                    highlightedNoteId === note._id
-                      ? "bg-primary/20 ring-2 ring-primary ring-inset animate-pulse"
-                      : ""
-                  }`}
-                  onClick={() => navigate(`/note/${note._id}`, { state: { returnTo: location.pathname + location.search } })}
-                >
-                  <td className="font-medium text-base-content/70">
-                    {note.projectKeyId ? (
-                      <div className="flex flex-col items-start gap-0.5">
-                        <span
-                          className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 whitespace-nowrap"
-                          title="ID de Proyecto"
-                        >
-                          {note.projectKeyId}
-                        </span>
-                        {note.globalKeyId && (
-                          <span
-                            className="text-[10px] font-mono text-base-content/50 pl-0.5"
-                            title={`ID Global: ${note.globalKeyId}`}
-                          >
-                            #{note.globalKeyId}
-                          </span>
-                        )}
-                      </div>
-                    ) : (note.globalKeyId || note.keyId) ? (
-                      <span
-                        className="badge badge-sm font-mono font-bold bg-primary/15 text-primary border border-primary/30 whitespace-nowrap"
-                        title="ID Global de Tarea"
-                      >
-                        {note.globalKeyId || note.keyId}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-base-content/40">-</span>
-                    )}
-                  </td>
-                  <td className="font-semibold text-base-content max-w-xs">
-                    <div className="flex items-start gap-2 min-w-0 pt-0.5 group/title">
-                      {editingTitleId === note._id ? (
-                        <div className="flex items-center gap-1 w-full" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            type="text"
-                            className="input input-xs input-bordered w-full font-semibold"
-                            value={editingTitleValue}
-                            onChange={(e) => setEditingTitleValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                handleInlineEdit(note._id, "title", editingTitleValue);
-                                setEditingTitleId(null);
-                              } else if (e.key === "Escape") {
-                                setEditingTitleId(null);
-                              }
-                            }}
-                            autoFocus
-                            onBlur={() => {
-                              handleInlineEdit(note._id, "title", editingTitleValue);
-                              setEditingTitleId(null);
-                            }}
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <Link
-                            to={`/note/${note._id}`}
-                            state={{ returnTo: location.pathname + location.search }}
-                            className="hover:text-primary transition-colors block break-words whitespace-normal"
-                            title={note.title}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {note.title}
-                          </Link>
-                          <button
-                            type="button"
-                            className="opacity-0 group-hover/title:opacity-100 transition-opacity p-0.5 text-base-content/50 hover:text-primary"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingTitleId(note._id);
-                              setEditingTitleValue(note.title);
-                            }}
-                            title="Editar título"
-                          >
-                            <PenSquareIcon className="size-3.5" />
-                          </button>
-                        </>
-                      )}
-                      
-                      {getMentionCount(note) > 0 && editingTitleId !== note._id && (
-                        <div className="flex items-center gap-1 bg-primary text-primary-content text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm flex-shrink-0" title={`Tienes ${getMentionCount(note)} mención(es)`}>
-                          <AtSignIcon className="size-3" />
-                          {getMentionCount(note)}
-                        </div>
-                      )}
-
-                      {activeNoteEntry &&
-                        String(activeNoteEntry.noteId?._id || activeNoteEntry.noteId) === String(note._id) && (
-                          <span
-                            className="badge badge-xs font-semibold bg-emerald-500/15 text-emerald-600 border border-emerald-500/30 gap-1 px-1.5 py-0.5 animate-pulse shrink-0"
-                            title="Esta tarea está registrando tiempo en este momento"
-                          >
-                            <ClockIcon className="size-3 text-emerald-500" />
-                            En curso
-                          </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="hidden md:table-cell">
-                    {note.checklist?.length > 0 ? (
-                      <div className="flex items-center gap-1.5 text-xs font-medium text-base-content/70" title={`${note.checklist.filter(i => i.completed).length} de ${note.checklist.length} completados`}>
-                        <ListChecksIcon className="size-4 opacity-70" />
-                        <span>{note.checklist.filter(i => i.completed).length}/{note.checklist.length}</span>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-base-content/40">-</span>
-                    )}
-                  </td>
-                  <td className="hidden lg:table-cell max-w-[150px]">
-                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
-                      <div tabIndex={0} role="button" className="flex flex-wrap gap-1 min-h-[24px] items-center hover:bg-base-200 p-1 rounded transition-colors" title="Editar etiquetas">
-                        {note.labels?.length > 0 ? (
-                          note.labels.map((label, idx) => (
-                            <span
-                              key={idx}
-                              className="badge badge-xs font-semibold px-1.5 py-1.5 truncate max-w-[120px]"
-                              style={{
-                                backgroundColor: label.color + "20",
-                                color: label.color,
-                                borderColor: label.color + "40",
-                              }}
-                            >
-                              {label.name}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-base-content/40 hover:text-base-content/80 flex items-center gap-1 w-full"><PlusIcon className="size-3" /> Añadir</span>
-                        )}
-                      </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-52 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
-                        {boardLabels.length === 0 && (
-                          <li className="text-xs text-base-content/50 p-2 text-center">No hay etiquetas creadas</li>
-                        )}
-                        {boardLabels.map((defLabel) => {
-                          const isSelected = (note.labels || []).some(
-                            (l) => l.name.toLowerCase() === defLabel.name.toLowerCase()
-                          );
-                          return (
-                            <li key={defLabel._id || defLabel.name}>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  handleLabelToggle(note, defLabel);
-                                }}
-                                className="text-xs py-2 px-2 flex items-center justify-between w-full hover:bg-base-200 rounded-lg text-left"
-                              >
-                                <span className="flex items-center gap-2 truncate">
-                                  <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: defLabel.color }} />
-                                  <span className="truncate font-medium text-base-content">{defLabel.name}</span>
-                                </span>
-                                {isSelected && <CheckCircle2Icon className="size-4 text-primary" />}
-                              </button>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </td>
-                  <td className="hidden sm:table-cell">
-                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
-                      <div
-                        tabIndex={0}
-                        role="button"
-                        className="badge badge-sm font-medium whitespace-nowrap border"
-                        style={{
-                          backgroundColor: note.project ? (projects.find(p => p._id === note.project)?.color + "20" || "#6B728020") : "#6B728020",
-                          color: note.project ? (projects.find(p => p._id === note.project)?.color || "#6B7280") : "#6B7280",
-                          borderColor: note.project ? (projects.find(p => p._id === note.project)?.color + "50" || "#6B728050") : "#6B728050",
-                        }}
-                      >
-                        {note.project ? projects.find(p => p._id === note.project)?.name || "Sin asignar" : "Sin asignar"}
-                      </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-48 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
-                        <li>
-                          <a
-                            onClick={() => {
-                              handleInlineEdit(note._id, "project", null);
-                              document.activeElement.blur();
-                            }}
-                            className={`text-xs py-1.5 px-2 ${!note.project ? "bg-primary/10 text-primary font-bold" : ""}`}
-                          >
-                            <span className="truncate">Sin asignar</span>
-                          </a>
-                        </li>
-                        {projects.map((p) => (
-                          <li key={p._id}>
-                            <a
-                              onClick={() => {
-                                handleInlineEdit(note._id, "project", p._id);
-                                document.activeElement.blur();
-                              }}
-                              className={`text-xs py-1.5 px-2 ${note.project === p._id ? "bg-primary/10 text-primary font-bold" : ""}`}
-                            >
-                              <span className="w-2.5 h-2.5 rounded-full mr-1 flex-shrink-0" style={{ backgroundColor: p.color || "#6B7280" }} />
-                              <span className="truncate">{p.name}</span>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
-                      <div
-                        tabIndex={0}
-                        role="button"
-                        className="badge badge-sm font-medium whitespace-nowrap border"
-                        style={{
-                          backgroundColor: (note.size && taskSizes.find(s => s._id === (note.size?._id || note.size))?.color) ? taskSizes.find(s => s._id === (note.size?._id || note.size)).color + "20" : "#6B728020",
-                          color: (note.size && taskSizes.find(s => s._id === (note.size?._id || note.size))?.color) ? taskSizes.find(s => s._id === (note.size?._id || note.size)).color : "#6B7280",
-                          borderColor: (note.size && taskSizes.find(s => s._id === (note.size?._id || note.size))?.color) ? taskSizes.find(s => s._id === (note.size?._id || note.size)).color + "50" : "#6B728050",
-                        }}
-                      >
-                        {(() => {
-                          const currentSizeId = typeof note.size === "object" ? note.size?._id : note.size;
-                          const currentSize = (taskSizes || []).find(s => s._id === currentSizeId);
-                          return currentSize ? `${currentSize.value}h (${currentSize.name})` : "Sin talla";
-                        })()}
-                      </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
-                        <li>
-                          <a
-                            onClick={() => {
-                              handleInlineEdit(note._id, "size", null);
-                              document.activeElement.blur();
-                            }}
-                            className={`text-xs py-1.5 px-2 ${!note.size ? "bg-primary/10 text-primary font-bold" : ""}`}
-                          >
-                            <span className="truncate">Sin talla</span>
-                          </a>
-                        </li>
-                        {(taskSizes || []).map((sz) => {
-                          const isSelected = (typeof note.size === "object" ? note.size?._id : note.size) === sz._id;
-                          return (
-                            <li key={sz._id}>
-                              <a
-                                onClick={() => {
-                                  handleInlineEdit(note._id, "size", sz._id);
-                                  document.activeElement.blur();
-                                }}
-                                className={`text-xs py-1.5 px-2 ${isSelected ? "bg-primary/10 text-primary font-bold" : ""}`}
-                              >
-                                <span className="w-2.5 h-2.5 rounded-full mr-1 flex-shrink-0" style={{ backgroundColor: sz.color || "#6B7280" }} />
-                                <span className="truncate">{sz.name} ({sz.value}h)</span>
-                              </a>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
-                      <div
-                        tabIndex={0}
-                        role="button"
-                        className="badge badge-sm font-medium whitespace-nowrap border"
-                        style={{
-                          backgroundColor: statusColor + "20",
-                          color: statusColor,
-                          borderColor: statusColor + "50",
-                        }}
-                      >
-                        {note.status || "Pendiente"}
-                      </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-40 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
-                        {statuses.map((st) => (
-                          <li key={st._id}>
-                            <a
-                              onClick={() => {
-                                handleInlineEdit(note._id, "status", st.name);
-                                document.activeElement.blur();
-                              }}
-                              className={`text-xs py-1.5 px-2 ${note.status === st.name ? "bg-primary/10 text-primary font-bold" : ""}`}
-                            >
-                              <span className="w-2.5 h-2.5 rounded-full mr-1 flex-shrink-0" style={{ backgroundColor: st.color || "#6B7280" }} />
-                              <span className="truncate">{st.name}</span>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
-                      <div
-                        tabIndex={0}
-                        role="button"
-                        className="badge badge-xs font-bold gap-1 px-2 py-2 whitespace-nowrap border"
-                        style={{
-                          backgroundColor: priorityColor + "15",
-                          color: priorityColor,
-                          borderColor: priorityColor + "40",
-                        }}
-                      >
-                        <ZapIcon className="size-3" />
-                        {note.priority || "Media"}
-                      </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-36 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
-                        {priorities.map((p) => (
-                          <li key={p._id}>
-                            <a
-                              onClick={() => {
-                                handleInlineEdit(note._id, "priority", p.name);
-                                document.activeElement.blur();
-                              }}
-                              className={`text-xs py-1.5 px-2 ${note.priority === p.name ? "bg-primary/10 text-primary font-bold" : ""}`}
-                            >
-                              <ZapIcon className="size-3 flex-shrink-0" style={{ color: p.color }} />
-                              <span className="truncate">{p.name}</span>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </td>
-                  <td className="hidden md:table-cell">
-                    {(note.startDate || note.dueDate) ? (
-                      <div className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-sm border inline-flex ${
-                        note.completedAt ? "bg-success/20 text-success border-success/30" : 
-                        (note.dueDate && new Date(note.dueDate) < new Date()) ? "bg-error/20 text-error border-error/30" : "bg-base-200 text-base-content/70 border-base-content/10"
-                      }`} title={
-                        note.dueDate ? `Vence: ${new Date(note.dueDate).toLocaleString()}` : `Inicia: ${new Date(note.startDate).toLocaleString()}`
-                      }>
-                        <CalendarIcon className="size-3" />
-                        {note.dueDate ? (
-                          <span>
-                            {new Date(note.dueDate).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
-                          </span>
-                        ) : (
-                          <span>
-                            {new Date(note.startDate).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
-                          </span>
-                        )}
-                        {note.completedAt && <CheckIcon className="size-3" />}
-                      </div>
-                    ) : (
-                      <span className="text-xs text-base-content/40">-</span>
-                    )}
-                  </td>
-                  <td>
-                    <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
-                      <div tabIndex={0} role="button" className="flex items-center gap-2 max-w-[140px] hover:bg-base-200 p-1 rounded transition-colors" title={`${note.user || "Sin asignar"}${userConfig?.jobTitle ? ` - ${userConfig.jobTitle}` : ""}`}>
-                        {note.user && note.user !== "Sin asignar" ? (
-                          <span
-                            className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] shadow-sm flex-shrink-0"
-                            style={{ backgroundColor: userColor }}
-                          >
-                            {getInitials(note.user)}
-                          </span>
-                        ) : (
-                          <span className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 flex-shrink-0">
-                            <UserIcon className="size-3.5" />
-                          </span>
-                        )}
-                        <span className="truncate text-xs font-medium text-base-content/80">
-                          {note.user || "Sin asignar"}
-                        </span>
-                      </div>
-                      <ul tabIndex={0} className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-48 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10">
-                        {users.map((u) => (
-                          <li key={u._id}>
-                            <a
-                              onClick={() => {
-                                handleInlineEdit(note._id, "user", u.name);
-                                document.activeElement.blur();
-                              }}
-                              className={`text-xs py-1.5 px-2 ${note.user === u.name ? "bg-primary/10 text-primary font-bold" : ""}`}
-                            >
-                              <span
-                                className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0"
-                                style={{ backgroundColor: u.color || "#3B82F6" }}
-                              >
-                                {getInitials(u.name)}
-                              </span>
-                              <span className="truncate">{u.name}</span>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </td>
-                  <td className="text-xs text-base-content/60 whitespace-nowrap hidden sm:table-cell">
-                    {formatDate(new Date(note.createdAt))}
-                  </td>
-                  <td className="text-right whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                      <Link
-                        to={`/note/${note._id}`}
-                        state={{ returnTo: location.pathname + location.search }}
-                        className="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-primary"
-                        title="Editar tarea"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <PenSquareIcon className="size-4" />
-                      </Link>
-                      <button
-                        type="button"
-                        className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:bg-base-200"
-                        onClick={(e) => handleArchive(e, note._id)}
-                        title="Archivar tarea"
-                      >
-                        <ArchiveIcon className="size-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {notes.map((note) => (
+              <tr
+                key={note._id}
+                className={`hover:bg-base-200/50 transition-all duration-300 group cursor-pointer ${
+                  highlightedNoteId === note._id
+                    ? "bg-primary/20 ring-2 ring-primary ring-inset animate-pulse"
+                    : ""
+                }`}
+                onClick={() =>
+                  navigate(`/note/${note._id}`, {
+                    state: { returnTo: location.pathname + location.search },
+                  })
+                }
+              >
+                {columnOrder.map((colId) => renderCell(colId, note))}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

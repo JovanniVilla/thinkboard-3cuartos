@@ -65,6 +65,30 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
+  const updatePreferences = async (preferences) => {
+    // Optimistic update of local user state
+    setUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        preferences: {
+          ...(prev.preferences || {}),
+          ...preferences,
+        },
+      };
+    });
+
+    try {
+      const res = await api.put("/auth/preferences", { preferences });
+      if (res.data) {
+        setUser(res.data);
+      }
+      return res.data;
+    } catch (err) {
+      console.error("Error updating preferences:", err);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -77,6 +101,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateProfile,
         changePassword,
+        updatePreferences,
       }}
     >
       {children}
