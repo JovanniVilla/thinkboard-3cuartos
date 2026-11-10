@@ -4,6 +4,7 @@ import HomePage from "./pages/HomePage";
 import CreatePage from "./pages/CreatePage";
 import NoteDetailPage from "./pages/NoteDetailPage";
 import BoardSettingsPage from "./pages/BoardSettingsPage";
+import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import ProjectsPage from "./pages/ProjectsPage";
 import ProjectDetailPage from "./pages/ProjectDetailPage";
 import LoginPage from "./pages/LoginPage";
@@ -37,6 +38,7 @@ const App = () => {
         </Route>
         <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
         <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>} />
         <Route path="/board-settings" element={<ProtectedRoute adminOnly><BoardSettingsPage /></ProtectedRoute>} />
       </Routes>
       <IdleModal />

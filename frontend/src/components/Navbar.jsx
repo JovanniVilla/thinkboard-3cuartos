@@ -1,11 +1,9 @@
-import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router";
 import { PlusIcon, SettingsIcon, UserRoundCogIcon, LogOutIcon, UserIcon, ShieldIcon, FolderKeyIcon } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import { useAuth } from "../lib/AuthContext";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import toast from "react-hot-toast";
-import UserProfileModal from "./UserProfileModal";
 import GlobalTimerWidget from "./timetracking/GlobalTimerWidget";
 
 const Navbar = () => {
@@ -13,7 +11,6 @@ const Navbar = () => {
   const { boardConfig } = useBoardConfig();
   const navigate = useNavigate();
   const location = useLocation();
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -113,16 +110,14 @@ const Navbar = () => {
 
                   {/* Profile Config */}
                   <li>
-                    <button
-                      onClick={() => {
-                        setIsProfileModalOpen(true);
-                        document.activeElement?.blur();
-                      }}
+                    <Link
+                      to="/profile"
+                      onClick={() => document.activeElement?.blur()}
                       className="text-base-content hover:bg-base-200 font-medium gap-2"
                     >
                       <UserRoundCogIcon className="size-4" />
                       Configuración de perfil
-                    </button>
+                    </Link>
                   </li>
 
                   {/* Board Settings - Admin only */}
@@ -167,12 +162,6 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-      {user && (
-        <UserProfileModal 
-          isOpen={isProfileModalOpen} 
-          onClose={() => setIsProfileModalOpen(false)} 
-        />
-      )}
     </header>
   );
 };
