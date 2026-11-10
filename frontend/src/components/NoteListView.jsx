@@ -15,9 +15,6 @@ import {
   ClockIcon,
   GripVerticalIcon,
   SlidersHorizontalIcon,
-  RotateCcwIcon,
-  ArrowLeftIcon,
-  ArrowRightIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useLabels } from "../lib/useLabels";
@@ -27,6 +24,14 @@ import { Link, useNavigate, useLocation } from "react-router";
 import { formatDate } from "../lib/utils";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
+import {
+  COLUMNS_CONFIG,
+  DEFAULT_COLUMNS,
+  getSavedColumnOrder,
+  getSavedColumnWidths,
+  persistColumnPreferences,
+} from "../lib/columnPreferences";
+import ColumnSettingsModal from "./ColumnSettingsModal";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -36,176 +41,6 @@ const getInitials = (name = "") => {
     .slice(0, 2)
     .join("")
     .toUpperCase();
-};
-
-const DEFAULT_COLUMNS = [
-  "id",
-  "title",
-  "checklist",
-  "labels",
-  "project",
-  "size",
-  "status",
-  "priority",
-  "dates",
-  "user",
-  "createdAt",
-  "actions",
-];
-
-const COLUMNS_CONFIG = {
-  id: {
-    id: "id",
-    label: "ID",
-    sortKey: "keyId",
-    defaultWidth: 95,
-    minWidth: 70,
-    responsiveClass: "",
-    align: "left",
-  },
-  title: {
-    id: "title",
-    label: "Nombre",
-    sortKey: "title",
-    defaultWidth: 280,
-    minWidth: 160,
-    responsiveClass: "",
-    align: "left",
-  },
-  checklist: {
-    id: "checklist",
-    label: "Checklist",
-    sortKey: null,
-    defaultWidth: 105,
-    minWidth: 75,
-    responsiveClass: "hidden md:table-cell",
-    align: "left",
-  },
-  labels: {
-    id: "labels",
-    label: "Etiquetas",
-    sortKey: null,
-    defaultWidth: 150,
-    minWidth: 90,
-    responsiveClass: "hidden lg:table-cell",
-    align: "left",
-  },
-  project: {
-    id: "project",
-    label: "Proyecto",
-    sortKey: "project",
-    defaultWidth: 140,
-    minWidth: 95,
-    responsiveClass: "hidden sm:table-cell",
-    align: "left",
-  },
-  size: {
-    id: "size",
-    label: "Talla",
-    sortKey: "size",
-    defaultWidth: 105,
-    minWidth: 75,
-    responsiveClass: "",
-    align: "left",
-  },
-  status: {
-    id: "status",
-    label: "Estado",
-    sortKey: "status",
-    defaultWidth: 120,
-    minWidth: 85,
-    responsiveClass: "",
-    align: "left",
-  },
-  priority: {
-    id: "priority",
-    label: "Prioridad",
-    sortKey: "priority",
-    defaultWidth: 115,
-    minWidth: 80,
-    responsiveClass: "",
-    align: "left",
-  },
-  dates: {
-    id: "dates",
-    label: "Fechas",
-    sortKey: null,
-    defaultWidth: 110,
-    minWidth: 75,
-    responsiveClass: "hidden md:table-cell",
-    align: "left",
-  },
-  user: {
-    id: "user",
-    label: "Usuario",
-    sortKey: "user",
-    defaultWidth: 140,
-    minWidth: 90,
-    responsiveClass: "",
-    align: "left",
-  },
-  createdAt: {
-    id: "createdAt",
-    label: "Creación",
-    sortKey: "createdAt",
-    defaultWidth: 110,
-    minWidth: 80,
-    responsiveClass: "hidden sm:table-cell",
-    align: "left",
-  },
-  actions: {
-    id: "actions",
-    label: "Acciones",
-    sortKey: null,
-    defaultWidth: 100,
-    minWidth: 85,
-    responsiveClass: "",
-    align: "right",
-  },
-};
-
-const DEFAULT_COLUMN_WIDTHS = Object.fromEntries(
-  Object.entries(COLUMNS_CONFIG).map(([k, v]) => [k, v.defaultWidth])
-);
-
-const getSavedColumnOrder = (userId, userPrefs) => {
-  try {
-    if (userPrefs?.taskListView?.columnOrder && Array.isArray(userPrefs.taskListView.columnOrder)) {
-      const saved = userPrefs.taskListView.columnOrder.filter((id) => COLUMNS_CONFIG[id]);
-      const missing = DEFAULT_COLUMNS.filter((id) => !saved.includes(id));
-      return [...saved, ...missing];
-    }
-    const local = localStorage.getItem(`tb_task_list_columns_${userId || "guest"}`);
-    if (local) {
-      const parsed = JSON.parse(local);
-      if (Array.isArray(parsed?.order)) {
-        const saved = parsed.order.filter((id) => COLUMNS_CONFIG[id]);
-        const missing = DEFAULT_COLUMNS.filter((id) => !saved.includes(id));
-        return [...saved, ...missing];
-      }
-    }
-  } catch (e) {
-    console.error("Error reading saved column order", e);
-  }
-  return [...DEFAULT_COLUMNS];
-};
-
-const getSavedColumnWidths = (userId, userPrefs) => {
-  try {
-    if (userPrefs?.taskListView?.columnWidths && typeof userPrefs.taskListView.columnWidths === "object") {
-      return { ...DEFAULT_COLUMN_WIDTHS, ...userPrefs.taskListView.columnWidths };
-    }
-    const local = localStorage.getItem(`tb_task_list_columns_${userId || "guest"}`);
-    if (local) {
-      const parsed = JSON.parse(local);
-      if (parsed?.widths && typeof parsed.widths === "object") {
-        return { ...DEFAULT_COLUMN_WIDTHS, ...parsed.widths };
-      }
-    }
-  } catch (e) {
-    console.error("Error reading saved column widths", e);
-  }
-  return { ...DEFAULT_COLUMN_WIDTHS };
 };
 
 const NoteListView = ({
@@ -238,6 +73,9 @@ const NoteListView = ({
     getSavedColumnWidths(user?._id, user?.preferences)
   );
 
+  // Column customization modal state
+  const [isColumnModalOpen, setIsColumnModalOpen] = useState(false);
+
   // Drag and drop reordering state
   const [draggedColId, setDraggedColId] = useState(null);
   const [dropTarget, setDropTarget] = useState(null); // { colId: string, position: 'before' | 'after' }
@@ -266,54 +104,10 @@ const NoteListView = ({
   // Persist preferences handler
   const savePreferences = useCallback(
     (newOrder, newWidths) => {
-      const userId = user?._id || "guest";
-      // 1. Save to localStorage immediately
-      try {
-        localStorage.setItem(
-          `tb_task_list_columns_${userId}`,
-          JSON.stringify({ order: newOrder, widths: newWidths })
-        );
-      } catch (e) {
-        console.error("Error saving column preferences to localStorage", e);
-      }
-
-      // 2. Save to backend database if user is authenticated
-      if (user && updatePreferences) {
-        updatePreferences({
-          taskListView: {
-            columnOrder: newOrder,
-            columnWidths: newWidths,
-          },
-        }).catch((e) => console.error("Error saving preferences to server", e));
-      }
+      persistColumnPreferences(user?._id, newOrder, newWidths, updatePreferences);
     },
-    [user, updatePreferences]
+    [user?._id, updatePreferences]
   );
-
-  // Reset to default column layout
-  const handleResetDefaults = () => {
-    const defaultOrder = [...DEFAULT_COLUMNS];
-    const defaultWidths = { ...DEFAULT_COLUMN_WIDTHS };
-    setColumnOrder(defaultOrder);
-    setColumnWidths(defaultWidths);
-    savePreferences(defaultOrder, defaultWidths);
-    toast.success("Columnas restablecidas a valores por defecto");
-  };
-
-  // Move column left or right (via menu buttons)
-  const moveColumn = (colId, direction) => {
-    const currentIndex = columnOrder.indexOf(colId);
-    if (currentIndex === -1) return;
-    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
-    if (targetIndex < 0 || targetIndex >= columnOrder.length) return;
-
-    const newOrder = [...columnOrder];
-    newOrder.splice(currentIndex, 1);
-    newOrder.splice(targetIndex, 0, colId);
-
-    setColumnOrder(newOrder);
-    savePreferences(newOrder, columnWidths);
-  };
 
   // Drag and drop column reordering handlers
   const handleDragStart = (e, colId) => {
@@ -1144,85 +938,19 @@ const NoteListView = ({
 
                       {col.sortKey && renderSortIndicator(col.sortKey)}
 
-                      {/* If this is the actions column, show column configuration menu */}
+                      {/* If this is the actions column, show column configuration button */}
                       {colId === "actions" && (
-                        <div
-                          className="dropdown dropdown-end"
-                          onClick={(e) => e.stopPropagation()}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsColumnModalOpen(true);
+                          }}
+                          className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-primary hover:bg-base-300 ml-1 shrink-0"
+                          title="Personalizar columnas de tareas"
                         >
-                          <div
-                            tabIndex={0}
-                            role="button"
-                            className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:text-primary hover:bg-base-300 ml-1"
-                            title="Personalizar columnas"
-                          >
-                            <SlidersHorizontalIcon className="size-3.5" />
-                          </div>
-                          <div
-                            tabIndex={0}
-                            className="dropdown-content z-[70] menu p-3 shadow-2xl bg-base-100 rounded-xl w-80 border border-base-content/10 max-h-96 overflow-y-auto"
-                          >
-                            <div className="flex items-center justify-between pb-2 mb-2 border-b border-base-content/10">
-                              <span className="font-bold text-xs uppercase tracking-wider text-base-content">
-                                Personalizar Columnas
-                              </span>
-                              <button
-                                type="button"
-                                onClick={handleResetDefaults}
-                                className="btn btn-ghost btn-xs text-error gap-1 hover:bg-error/10 text-[11px]"
-                                title="Restablecer orden y anchos originales"
-                              >
-                                <RotateCcwIcon className="size-3" />
-                                Restablecer
-                              </button>
-                            </div>
-
-                            <p className="text-[11px] text-base-content/60 mb-2 normal-case font-normal">
-                              Arrastra los encabezados para reordenar o ajusta el orden y anchos aquí:
-                            </p>
-
-                            <div className="space-y-1">
-                              {columnOrder.map((cId, idx) => {
-                                const cConfig = COLUMNS_CONFIG[cId];
-                                if (!cConfig) return null;
-                                const w = columnWidths[cId] || cConfig.defaultWidth;
-                                return (
-                                  <div
-                                    key={cId}
-                                    className="flex items-center justify-between p-1.5 rounded-lg hover:bg-base-200/60 text-xs text-base-content normal-case font-normal"
-                                  >
-                                    <div className="flex items-center gap-1.5 min-w-0">
-                                      <div className="flex items-center gap-0.5">
-                                        <button
-                                          type="button"
-                                          disabled={idx === 0}
-                                          onClick={() => moveColumn(cId, "up")}
-                                          className="btn btn-ghost btn-xs h-5 min-h-0 w-5 p-0 disabled:opacity-20 hover:text-primary"
-                                          title="Mover a la izquierda"
-                                        >
-                                          <ArrowLeftIcon className="size-3" />
-                                        </button>
-                                        <button
-                                          type="button"
-                                          disabled={idx === columnOrder.length - 1}
-                                          onClick={() => moveColumn(cId, "down")}
-                                          className="btn btn-ghost btn-xs h-5 min-h-0 w-5 p-0 disabled:opacity-20 hover:text-primary"
-                                          title="Mover a la derecha"
-                                        >
-                                          <ArrowRightIcon className="size-3" />
-                                        </button>
-                                      </div>
-                                      <span className="font-medium truncate">{cConfig.label}</span>
-                                    </div>
-                                    <span className="font-mono bg-base-200 px-1.5 py-0.5 rounded text-[10px] text-base-content/60">
-                                      {w}px
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
+                          <SlidersHorizontalIcon className="size-3.5" />
+                        </button>
                       )}
                     </div>
 
@@ -1269,6 +997,16 @@ const NoteListView = ({
           </tbody>
         </table>
       </div>
+
+      {/* Modal for Personalizar Columnas */}
+      <ColumnSettingsModal
+        isOpen={isColumnModalOpen}
+        onClose={() => setIsColumnModalOpen(false)}
+        columnOrder={columnOrder}
+        columnWidths={columnWidths}
+        onOrderChange={setColumnOrder}
+        onWidthsChange={setColumnWidths}
+      />
     </div>
   );
 };
