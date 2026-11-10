@@ -105,6 +105,7 @@ export async function createNote(req, res) {
       content,
       status,
       priority,
+      value,
       user,
       project,
       labels,
@@ -171,6 +172,7 @@ export async function createNote(req, res) {
       content,
       ...(status && { status }),
       ...(priority && { priority }),
+      ...(value && { value }),
       ...(user && { user }),
       ...(project && { project }),
       createdBy: req.user?._id || null,
@@ -229,6 +231,7 @@ export async function updateNote(req, res) {
       content,
       status,
       priority,
+      value,
       user,
       project,
       labels,
@@ -450,6 +453,15 @@ export async function updateNote(req, res) {
       recordAction(
         `${actor} cambió la prioridad de "${prevPriority}" a "${priority}"`,
         `Cambió la prioridad de "${prevPriority}" a "${priority}"`
+      );
+    }
+
+    // 3.1 Value change
+    if (value !== undefined && value !== currentNote.value) {
+      const prevValue = currentNote.value || "Medio";
+      recordAction(
+        `${actor} cambió el valor de "${prevValue}" a "${value}"`,
+        `Cambió el valor de "${prevValue}" a "${value}"`
       );
     }
 
@@ -703,6 +715,7 @@ export async function updateNote(req, res) {
         ...(content !== undefined && { content }),
         ...(status !== undefined && { status }),
         ...(priority !== undefined && { priority }),
+        ...(value !== undefined && { value }),
         user: finalUser,
         project: finalProject,
         globalKeyId: finalGlobalKeyId,

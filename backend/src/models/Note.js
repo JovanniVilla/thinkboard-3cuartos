@@ -44,6 +44,10 @@ const noteSchema = new mongoose.Schema(
       type: String,
       default: "Media",
     },
+    value: {
+      type: String,
+      default: "Medio",
+    },
     user: {
       type: String,
       default: "Sin asignar",

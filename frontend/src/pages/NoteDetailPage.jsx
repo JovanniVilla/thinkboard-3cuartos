@@ -25,6 +25,7 @@ import {
   ArchiveIcon,
   MapPinIcon,
   VideoIcon,
+  TrendingUpIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useStatuses } from "../lib/useStatuses";
@@ -38,6 +39,7 @@ import { useLabels } from "../lib/useLabels";
 import { useProjects } from "../lib/useProjects";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import { useTaskSizes } from "../lib/useTaskSizes";
+import { useValues } from "../lib/useValues";
 import DatesPopover from "../components/DatesPopover";
 import VisualAnnotationsSection from "../components/annotations/VisualAnnotationsSection";
 import AnnotationCanvas from "../components/annotations/AnnotationCanvas";
@@ -143,6 +145,7 @@ const NoteDetailPage = () => {
   const { accounts } = useAccounts();
   const { projects } = useProjects();
   const { taskSizes } = useTaskSizes();
+  const { values } = useValues();
   const accountsList = accounts.map((acc) => acc.name);
   const { user: currentUser } = useAuth();
   const { activeNoteEntry, pauseNoteTimer } = useTimeTracking();
@@ -706,6 +709,51 @@ const NoteDetailPage = () => {
                       <span className="flex items-center gap-2">
                         <ZapIcon className="size-4" style={{ color: p.color }} />
                         {p.name}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Value Dropdown Pill */}
+            <div className={`dropdown popover-container ${activePopover === 'value' ? 'dropdown-open' : ''}`}>
+              <div
+                onClick={() => setActivePopover(activePopover === 'value' ? null : 'value')}
+                className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
+                title="Valor que agrega al proyecto"
+              >
+                {(() => {
+                  const currentValue = (values || []).find(v => v.name === (note.value || "Medio"));
+                  return (
+                    <>
+                      <TrendingUpIcon className="size-4 flex-shrink-0" style={{ color: currentValue?.color || "#3B82F6" }} />
+                      <span>{note.value || "Medio"}</span>
+                    </>
+                  );
+                })()}
+                <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
+              >
+                {(values || []).map((v) => (
+                  <li key={v._id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNote({ ...note, value: v.name });
+                        handleSaveNote({ value: v.name });
+                        setActivePopover(null);
+                      }}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${
+                        (note.value || "Medio") === v.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <TrendingUpIcon className="size-4" style={{ color: v.color }} />
+                        {v.name}
                       </span>
                     </button>
                   </li>

@@ -1,4 +1,4 @@
-import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, ClockIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, ClockIcon, TrendingUpIcon } from "lucide-react";
 import { Link } from "react-router";
 import { formatDate, stripMarkdown } from "../lib/utils";
 import api from "../lib/axios";
@@ -15,7 +15,7 @@ const getInitials = (name = "") => {
     .toUpperCase();
 };
 
-const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }) => {
+const NoteCard = ({ note, setNotes, statuses = [], priorities = [], values = [], users = [] }) => {
   const { activeNoteEntry } = useTimeTracking();
   const isRunning = Boolean(
     activeNoteEntry &&
@@ -27,6 +27,9 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
 
   const priorityConfig = priorities.find((p) => p.name === note.priority);
   const priorityColor = priorityConfig?.color || "#3B82F6";
+
+  const valueConfig = values.find((v) => v.name === (note.value || "Medio"));
+  const valueColor = valueConfig?.color || "#3B82F6";
 
   const userConfig = users.find((u) => u.name === note.user);
   const userColor = userConfig?.color || "#3B82F6";
@@ -114,6 +117,21 @@ const NoteCard = ({ note, setNotes, statuses = [], priorities = [], users = [] }
             >
               <ZapIcon className="size-3" />
               {note.priority}
+            </span>
+          )}
+
+          {note.value && (
+            <span
+              className="badge badge-xs font-bold gap-1 px-2 py-2"
+              style={{
+                backgroundColor: valueColor + "15",
+                color: valueColor,
+                borderColor: valueColor + "40",
+              }}
+              title={`Valor: ${note.value}`}
+            >
+              <TrendingUpIcon className="size-3" />
+              {note.value}
             </span>
           )}
 

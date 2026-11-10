@@ -3,6 +3,7 @@ import LabelConfig from "../models/LabelConfig.js";
 import Note from "../models/Note.js";
 import PriorityConfig from "../models/PriorityConfig.js";
 import StatusConfig from "../models/StatusConfig.js";
+import ValueConfig from "../models/ValueConfig.js";
 import User from "../models/User.js";
 
 const models = {
@@ -11,6 +12,7 @@ const models = {
   Note,
   PriorityConfig,
   StatusConfig,
+  ValueConfig,
   User,
 };
 

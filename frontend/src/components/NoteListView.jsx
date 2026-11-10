@@ -15,6 +15,7 @@ import {
   ClockIcon,
   GripVerticalIcon,
   SlidersHorizontalIcon,
+  TrendingUpIcon,
 } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { useLabels } from "../lib/useLabels";
@@ -48,6 +49,7 @@ const NoteListView = ({
   setNotes,
   statuses = [],
   priorities = [],
+  values = [],
   users = [],
   projects = [],
   sortBy,
@@ -773,6 +775,52 @@ const NoteListView = ({
         );
       }
 
+      case "value": {
+        const valueConfig = (values || []).find((v) => v.name === (note.value || "Medio"));
+        const valueColor = valueConfig?.color || "#3B82F6";
+        return (
+          <td {...baseTdProps}>
+            <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+              <div
+                tabIndex={0}
+                role="button"
+                className="badge badge-xs font-bold gap-1 px-2 py-2 whitespace-nowrap border truncate max-w-full cursor-pointer hover:opacity-80 transition-opacity"
+                style={{
+                  backgroundColor: valueColor + "15",
+                  color: valueColor,
+                  borderColor: valueColor + "40",
+                }}
+                title="Cambiar valor"
+              >
+                <TrendingUpIcon className="size-3" />
+                {note.value || "Medio"}
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-36 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10"
+              >
+                {(values || []).map((v) => (
+                  <li key={v._id}>
+                    <a
+                      onClick={() => {
+                        handleInlineEdit(note._id, "value", v.name);
+                        document.activeElement.blur();
+                      }}
+                      className={`text-xs py-1.5 px-2 ${
+                        (note.value || "Medio") === v.name ? "bg-primary/10 text-primary font-bold" : ""
+                      }`}
+                    >
+                      <TrendingUpIcon className="size-3 shrink-0" style={{ color: v.color }} />
+                      <span className="truncate">{v.name}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </td>
+        );
+      }
+
       case "dates":
         return (
           <td {...baseTdProps}>
@@ -857,6 +905,52 @@ const NoteListView = ({
                         {getInitials(u.name)}
                       </span>
                       <span className="truncate">{u.name}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </td>
+        );
+      }
+
+      case "value": {
+        const valueConfig = (values || []).find((v) => v.name === (note.value || "Medio"));
+        const valueColor = valueConfig?.color || "#3B82F6";
+        return (
+          <td {...baseTdProps}>
+            <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
+              <div
+                tabIndex={0}
+                role="button"
+                className="badge badge-xs font-bold gap-1 px-2 py-2 whitespace-nowrap border truncate max-w-full cursor-pointer hover:opacity-80 transition-opacity"
+                style={{
+                  backgroundColor: valueColor + "15",
+                  color: valueColor,
+                  borderColor: valueColor + "40",
+                }}
+                title="Cambiar valor"
+              >
+                <TrendingUpIcon className="size-3" />
+                {note.value || "Medio"}
+              </div>
+              <ul
+                tabIndex={0}
+                className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-36 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10"
+              >
+                {(values || []).map((v) => (
+                  <li key={v._id}>
+                    <a
+                      onClick={() => {
+                        handleInlineEdit(note._id, "value", v.name);
+                        document.activeElement.blur();
+                      }}
+                      className={`text-xs py-1.5 px-2 ${
+                        (note.value || "Medio") === v.name ? "bg-primary/10 text-primary font-bold" : ""
+                      }`}
+                    >
+                      <TrendingUpIcon className="size-3 shrink-0" style={{ color: v.color }} />
+                      <span className="truncate">{v.name}</span>
                     </a>
                   </li>
                 ))}

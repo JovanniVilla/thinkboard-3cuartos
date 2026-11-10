@@ -1326,6 +1326,14 @@ const ProjectDetailPage = () => {
                             {task.title}
                           </p>
                         </div>
+                        {task.value && (
+                          <span
+                            className="badge badge-xs font-semibold px-2 py-1 shrink-0 bg-base-200 border border-base-content/10 text-base-content/70"
+                            title={`Valor: ${task.value}`}
+                          >
+                            {task.value}
+                          </span>
+                        )}
                         {task.user && task.user !== "Sin asignar" && (
                           <div
                             className="rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0"

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, AtSignIcon, CalendarIcon, CheckIcon } from "lucide-react";
+import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, AtSignIcon, CalendarIcon, CheckIcon, TrendingUpIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { Link, useLocation } from "react-router";
 import { formatDate } from "../lib/utils";
@@ -16,7 +16,7 @@ const getInitials = (name = "") => {
     .toUpperCase();
 };
 
-const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], users = [], highlightedNoteId }) => {
+const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], values = [], users = [], highlightedNoteId }) => {
   const [draggingNoteId, setDraggingNoteId] = useState(null);
   const [dragOverStatus, setDragOverStatus] = useState(null);
   const { user } = useAuth();
@@ -166,6 +166,9 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                     const priorityConfig = priorities.find((p) => p.name === note.priority);
                     const priorityColor = priorityConfig?.color || "#3B82F6";
 
+                    const valueConfig = values.find((v) => v.name === (note.value || "Medio"));
+                    const valueColor = valueConfig?.color || "#3B82F6";
+
                     const userConfig = users.find((u) => u.name === note.user);
                     const userColor = userConfig?.color || "#6B7280";
 
@@ -186,7 +189,7 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                         <div className="card-body p-3.5 space-y-2">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0 flex-1">
-                              {(note.keyId || note.priority) && (
+                              {(note.keyId || note.priority || note.value) && (
                                 <div className="flex flex-wrap items-center gap-2 mb-1">
                                   {(note.projectKeyId || note.keyId) && (
                                     <span
@@ -211,6 +214,20 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                                     >
                                       <ZapIcon className="size-3" />
                                       {note.priority}
+                                    </span>
+                                  )}
+                                  {note.value && (
+                                    <span
+                                      className="badge badge-xs font-bold gap-1 px-2 py-2"
+                                      style={{
+                                        backgroundColor: valueColor + "15",
+                                        color: valueColor,
+                                        borderColor: valueColor + "40",
+                                      }}
+                                      title={`Valor: ${note.value}`}
+                                    >
+                                      <TrendingUpIcon className="size-3" />
+                                      {note.value}
                                     </span>
                                   )}
                                 </div>

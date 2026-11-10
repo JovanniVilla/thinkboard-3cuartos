@@ -13,6 +13,7 @@ import NoteListView from "../components/NoteListView";
 import NoteKanbanView from "../components/NoteKanbanView";
 import NoteFilters from "../components/NoteFilters";
 import { useTaskSizes } from "../lib/useTaskSizes";
+import { useValues } from "../lib/useValues";
 import { ListIcon, Columns3Icon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 
@@ -27,6 +28,7 @@ const HomePage = () => {
   const { accounts } = useAccounts();
   const { projects } = useProjects();
   const { taskSizes } = useTaskSizes();
+  const { values } = useValues();
   const { user: currentUser } = useAuth();
   const location = useLocation();
   const prevPathRef = useRef(location.pathname);
@@ -60,6 +62,13 @@ const HomePage = () => {
   const [selectedPriority, setSelectedPriority] = useState(() => {
     try {
       return sessionStorage.getItem("tb_filter_priority") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [selectedValue, setSelectedValue] = useState(() => {
+    try {
+      return sessionStorage.getItem("tb_filter_value") || "";
     } catch {
       return "";
     }
@@ -117,6 +126,7 @@ const HomePage = () => {
       sessionStorage.setItem("tb_filter_project", selectedProject || "");
       sessionStorage.setItem("tb_filter_status", selectedStatus || "");
       sessionStorage.setItem("tb_filter_priority", selectedPriority || "");
+      sessionStorage.setItem("tb_filter_value", selectedValue || "");
       sessionStorage.setItem("tb_filter_user", selectedUser || "");
       sessionStorage.setItem("tb_filter_showCompleted", String(showCompleted));
       sessionStorage.setItem("tb_filter_showMyTasks", String(showMyTasks));
@@ -131,6 +141,7 @@ const HomePage = () => {
     selectedProject,
     selectedStatus,
     selectedPriority,
+    selectedValue,
     selectedUser,
     showCompleted,
     showMyTasks,
@@ -187,6 +198,7 @@ const HomePage = () => {
     setSearchQuery("");
     setSelectedStatus("");
     setSelectedPriority("");
+    setSelectedValue("");
     setSelectedUser("");
     handleSetSelectedProject("");
     setShowCompleted(false);
@@ -203,6 +215,9 @@ const HomePage = () => {
     }
     if (selectedPriority && selectedPriority !== newNote.priority) {
       setSelectedPriority("");
+    }
+    if (selectedValue && selectedValue !== newNote.value) {
+      setSelectedValue("");
     }
     if (selectedUser && selectedUser !== newNote.user) {
       setSelectedUser("");
@@ -238,7 +253,7 @@ const HomePage = () => {
 
     // Fetch full dataset from backend in background to ensure all relations are synced
     fetchNotes();
-  }, [selectedStatus, selectedPriority, selectedUser, selectedProject, showMyTasks, currentUser?.name, fetchNotes]);
+  }, [selectedStatus, selectedPriority, selectedValue, selectedUser, selectedProject, showMyTasks, currentUser?.name, fetchNotes]);
 
   const handleNoteUpdated = useCallback((updatedNote) => {
     if (!updatedNote) return;
@@ -304,6 +319,9 @@ const HomePage = () => {
       if (selectedPriority && note.priority !== selectedPriority) {
         return false;
       }
+      if (selectedValue && (note.value || "Medio") !== selectedValue) {
+        return false;
+      }
       if (selectedUser && note.user !== selectedUser) {
         return false;
       }
@@ -355,6 +373,14 @@ const HomePage = () => {
         } else {
           comparison = (a.priority || "").localeCompare(b.priority || "");
         }
+      } else if (sortBy === "value") {
+        const orderA = values.find((v) => v.name === (a.value || "Medio"))?.order ?? 999;
+        const orderB = values.find((v) => v.name === (b.value || "Medio"))?.order ?? 999;
+        if (orderA !== orderB) {
+          comparison = orderA - orderB;
+        } else {
+          comparison = (a.value || "Medio").localeCompare(b.value || "Medio");
+        }
       } else if (sortBy === "user") {
         comparison = (a.user || "").localeCompare(b.user || "");
       } else if (sortBy === "project") {
@@ -397,6 +423,8 @@ const HomePage = () => {
               setSelectedStatus={setSelectedStatus}
               selectedPriority={selectedPriority}
               setSelectedPriority={setSelectedPriority}
+              selectedValue={selectedValue}
+              setSelectedValue={setSelectedValue}
               selectedUser={selectedUser}
               setSelectedUser={setSelectedUser}
               selectedProject={selectedProject}
@@ -411,6 +439,7 @@ const HomePage = () => {
               setSortOrder={setSortOrder}
               statuses={statuses}
               priorities={priorities}
+              values={values}
               users={accounts}
               projects={projects}
               totalNotes={notes.length}
@@ -425,6 +454,7 @@ const HomePage = () => {
                   setNotes={setNotes}
                   statuses={statuses}
                   priorities={priorities}
+                  values={values}
                   users={accounts}
                   projects={projects}
                   sortBy={sortBy}
@@ -441,6 +471,7 @@ const HomePage = () => {
                   setNotes={setNotes}
                   statuses={statuses}
                   priorities={priorities}
+                  values={values}
                   users={accounts}
                   highlightedNoteId={highlightedNoteId}
                 />

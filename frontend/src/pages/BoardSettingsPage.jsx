@@ -24,6 +24,7 @@ import {
   DownloadIcon,
   HardDriveIcon,
   TimerIcon,
+  TrendingUpIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import api from "../lib/axios";
@@ -36,6 +37,7 @@ import { useProjectTypes } from "../lib/useProjectTypes";
 import { useProjectStatuses } from "../lib/useProjectStatuses";
 import { useBoardConfig } from "../lib/useBoardConfig";
 import { useTaskSizes } from "../lib/useTaskSizes";
+import { useValues } from "../lib/useValues";
 import { useAuth } from "../lib/AuthContext";
 import ThemeToggle from "../components/ThemeToggle";
 import StorageManagementView from "../components/storage/StorageManagementView";
@@ -243,6 +245,7 @@ const BoardSettingsPage = () => {
   const { projectStatuses, setProjectStatuses, loading: loadingProjectStatuses } = useProjectStatuses();
   const { boardConfig, setBoardConfig, loading: loadingConfig } = useBoardConfig();
   const { taskSizes, setTaskSizes, loading: loadingTaskSizes } = useTaskSizes();
+  const { values, setValues, loading: loadingValues } = useValues();
   const { user: currentUser } = useAuth();
 
   // Create state
@@ -351,6 +354,10 @@ const BoardSettingsPage = () => {
         const res = await api.post("/priorities", { name: newName.trim(), color: newColor });
         setPriorities((prev) => [...prev, res.data]);
         toast.success("Prioridad creada");
+      } else if (activeTab === "values") {
+        const res = await api.post("/values", { name: newName.trim(), color: newColor });
+        setValues((prev) => [...prev, res.data]);
+        toast.success("Valor creado");
       } else if (activeTab === "labels") {
         const res = await api.post("/labels", { name: newName.trim(), color: newColor });
         setLabels((prev) => [...prev, res.data]);
@@ -546,6 +553,17 @@ const BoardSettingsPage = () => {
               >
                 <ZapIcon className="w-5 h-5" />
                 <span>Prioridades ({priorities.length})</span>
+              </button>
+
+              <button
+                type="button"
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg font-semibold transition-all whitespace-nowrap ${
+                  activeTab === "values" ? "bg-primary text-primary-content shadow-md" : "hover:bg-base-200 text-base-content/70"
+                }`}
+                onClick={() => switchTab("values")}
+              >
+                <TrendingUpIcon className="w-5 h-5" />
+                <span>Valor ({values.length})</span>
               </button>
 
               <button
@@ -1037,6 +1055,122 @@ const BoardSettingsPage = () => {
                       <button className="btn btn-primary gap-2" onClick={handleCreate} disabled={creating || !newName.trim()}>
                         <PlusIcon className="h-4 w-4" />
                         {creating ? "Creando…" : "Crear Prioridad"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: VALOR */}
+          {activeTab === "values" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 overflow-y-auto pr-1 pb-4 flex-1">
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body">
+                  <div className="flex items-center justify-between mb-2">
+                    <h2 className="card-title text-lg">Valores de proyecto actuales</h2>
+                    <span className="text-xs text-base-content/40 flex items-center gap-1">
+                      <GripVerticalIcon className="h-3 w-3" />
+                      Arrastra para reordenar
+                    </span>
+                  </div>
+
+                  {loadingValues ? (
+                    <div className="text-center py-6 text-base-content/50">Cargando valores…</div>
+                  ) : values.length === 0 ? (
+                    <div className="text-center py-6 text-base-content/50">No hay valores configurados</div>
+                  ) : (
+                    <ul className="space-y-2 mt-2">
+                      {values.map((val, index) => (
+                        <li
+                          key={val._id}
+                          draggable={editingId !== val._id}
+                          onDragStart={(e) => handleDragStart(e, index, val._id)}
+                          onDragOver={(e) => handleDragOver(e, index)}
+                          onDrop={() => handleDrop(values, setValues, "/values")}
+                          onDragEnd={handleDragEnd}
+                          className={`transition-all duration-150 ${
+                            draggingId === val._id ? "opacity-40 scale-95" : ""
+                          }`}
+                        >
+                          {editingId === val._id ? (
+                            <EditRow
+                              item={val}
+                              onSave={(updated) => {
+                                setValues((prev) => prev.map((v) => (v._id === updated._id ? updated : v)));
+                                setEditingId(null);
+                              }}
+                              onCancel={() => setEditingId(null)}
+                              endpoint="/values"
+                              typeName="Valor"
+                            />
+                          ) : (
+                            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-base-200 transition-colors group border border-transparent hover:border-base-content/10">
+                              <GripVerticalIcon className="h-4 w-4 text-base-content/25 cursor-grab active:cursor-grabbing flex-shrink-0" />
+                              <TrendingUpIcon className="w-4 h-4 flex-shrink-0" style={{ color: val.color }} />
+                              <span
+                                className="px-2.5 py-0.5 rounded-full text-xs font-semibold border flex-shrink-0"
+                                style={{
+                                  backgroundColor: val.color + "20",
+                                  color: val.color,
+                                  borderColor: val.color + "50",
+                                }}
+                              >
+                                {val.name}
+                              </span>
+                              <span className="flex-1" />
+                              <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button className="btn btn-ghost btn-xs gap-1" onClick={() => setEditingId(val._id)}>
+                                  Editar
+                                </button>
+                                <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete(val._id, "/values", "valor", setValues)}>
+                                  <Trash2Icon className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              {/* Create value */}
+              <div className="card bg-base-100 shadow-sm border border-base-content/10">
+                <div className="card-body">
+                  <h2 className="card-title text-lg mb-4">Agregar nuevo valor</h2>
+                  <div className="flex flex-col gap-4">
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Nombre del valor</span></label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Crítico, Esencial, Deseable…"
+                        className="input input-bordered"
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+                      />
+                    </div>
+                    <div className="form-control">
+                      <label className="label"><span className="label-text">Color</span></label>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {PRESET_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            type="button"
+                            onClick={() => setNewColor(color)}
+                            className="w-8 h-8 rounded-full transition-transform hover:scale-110"
+                            style={{ backgroundColor: color, outline: newColor === color ? `3px solid ${color}` : "none", outlineOffset: "2px" }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="card-actions justify-end">
+                      <button className="btn btn-primary gap-2" onClick={handleCreate} disabled={creating || !newName.trim()}>
+                        <PlusIcon className="h-4 w-4" />
+                        {creating ? "Creando…" : "Crear Valor"}
                       </button>
                     </div>
                   </div>

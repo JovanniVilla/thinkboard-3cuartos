@@ -16,12 +16,14 @@ import {
   Trash2Icon,
   PencilIcon,
   AlertTriangleIcon,
-  ArrowLeftIcon
+  ArrowLeftIcon,
+  TrendingUpIcon,
 } from "lucide-react";
 import { useStatuses } from "../lib/useStatuses";
 import { usePriorities } from "../lib/usePriorities";
 import { useAccounts } from "../lib/useAccounts";
 import { useProjects } from "../lib/useProjects";
+import { useValues } from "../lib/useValues";
 import MarkdownEditor from "../components/MarkdownEditor";
 import MembersModal from "../components/MembersModal";
 
@@ -35,6 +37,7 @@ const CreatePage = () => {
   const { priorities } = usePriorities();
   const { accounts } = useAccounts();
   const { projects } = useProjects();
+  const { values } = useValues();
   const navigate = useNavigate();
   const location = useLocation();
   const outletContext = useOutletContext();
@@ -43,6 +46,7 @@ const CreatePage = () => {
   const [content, setContent] = useState("");
   const [status, setStatus] = useState("");
   const [priority, setPriority] = useState("Media");
+  const [value, setValue] = useState("Medio");
   const [user, setUser] = useState("Sin asignar");
   const [project, setProject] = useState("");
   const [loading, setLoading] = useState(false);
@@ -196,6 +200,7 @@ const CreatePage = () => {
         content,
         status: status || statuses[0]?.name || "Pendiente",
         priority: priority || "Media",
+        value: value || "Medio",
         user: user || "Sin asignar",
         project: project || null,
         checklist,
@@ -234,6 +239,7 @@ const CreatePage = () => {
   const currentStatus = status || statuses[0]?.name || "Pendiente";
   const statusColor = statuses.find(s => s.name === currentStatus)?.color || "#6B7280";
   const priorityColor = priorities.find(p => p.name === priority)?.color || "#6B7280";
+  const valueColor = values.find(v => v.name === value)?.color || "#3B82F6";
   const currentProject = projects.find(p => p._id === project);
 
   return (
@@ -299,6 +305,34 @@ const CreatePage = () => {
                       <span className="flex items-center gap-2">
                         <ZapIcon className="size-4" style={{ color: p.color }} />
                         {p.name}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Value Dropdown */}
+            <div className="dropdown">
+              <label tabIndex={0} className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap" title="Valor que agrega al proyecto">
+                <TrendingUpIcon className="size-4 flex-shrink-0" style={{ color: valueColor }} />
+                <span>{value}</span>
+                <ChevronDownIcon className="size-4 text-base-content/60 flex-shrink-0" />
+              </label>
+              <ul tabIndex={0} className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-48 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1">
+                {values.map((v) => (
+                  <li key={v._id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setValue(v.name);
+                        setHasModifiedMetadata(true);
+                      }}
+                      className={`text-sm py-2 rounded-lg font-medium flex items-center justify-between ${value === v.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"}`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <TrendingUpIcon className="size-4" style={{ color: v.color }} />
+                        {v.name}
                       </span>
                     </button>
                   </li>

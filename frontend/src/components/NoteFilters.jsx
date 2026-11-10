@@ -17,6 +17,8 @@ const NoteFilters = ({
   setSelectedStatus,
   selectedPriority,
   setSelectedPriority,
+  selectedValue,
+  setSelectedValue,
   selectedUser,
   setSelectedUser,
   selectedProject,
@@ -31,6 +33,7 @@ const NoteFilters = ({
   setSortOrder,
   statuses = [],
   priorities = [],
+  values = [],
   users = [],
   projects = [],
   totalNotes = 0,
@@ -44,12 +47,13 @@ const NoteFilters = ({
   };
 
   const hasActiveFilters = Boolean(
-    selectedStatus || selectedPriority || selectedUser || selectedProject || showCompleted
+    selectedStatus || selectedPriority || selectedValue || selectedUser || selectedProject || showCompleted
   );
 
   const clearFilters = () => {
     setSelectedStatus("");
     setSelectedPriority("");
+    if (setSelectedValue) setSelectedValue("");
     setSelectedUser("");
     setSelectedProject("");
     setShowCompleted(false);
@@ -187,6 +191,22 @@ const NoteFilters = ({
                   {priorities.map((p) => (
                     <option key={p._id} value={p.name}>
                       {p.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-medium text-base-content/70 ml-1">Valor</label>
+                <select
+                  className="select select-bordered select-sm w-full bg-base-200/50 font-normal"
+                  value={selectedValue || ""}
+                  onChange={(e) => setSelectedValue && setSelectedValue(e.target.value)}
+                >
+                  <option value="">Todos los valores</option>
+                  {values.map((v) => (
+                    <option key={v._id} value={v.name}>
+                      {v.name}
                     </option>
                   ))}
                 </select>

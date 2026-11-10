@@ -16,6 +16,7 @@ import projectRoutes from "./routes/projectRoutes.js";
 import projectTypeRoutes from "./routes/projectTypeRoutes.js";
 import projectStatusRoutes from "./routes/projectStatusRoutes.js";
 import taskSizeRoutes from "./routes/taskSizeRoutes.js";
+import valueRoutes from "./routes/valueRoutes.js";
 import fileRoutes from "./routes/fileRoutes.js";
 import subtaskRoutes from "./routes/subtaskRoutes.js";
 import videoNoteRoutes from "./routes/videoNoteRoutes.js";
@@ -84,6 +85,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/project-types", projectTypeRoutes);
 app.use("/api/project-statuses", projectStatusRoutes);
 app.use("/api/task-sizes", taskSizeRoutes);
+app.use("/api/values", valueRoutes);
 app.use("/api/tasks", fileRoutes); // /api/tasks/:taskId/files
 app.use("/api/notes", fileRoutes); // alias /api/notes/:taskId/files
 app.use("/api/files", fileRoutes); // /api/files/:fileId, /api/files/:fileId/subtasks
