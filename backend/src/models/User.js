@@ -61,6 +61,33 @@ userSchema.pre("save", async function (next) {
   next();
 });
 
+// Capture previous name so assignments can be migrated after a rename
+userSchema.pre("save", async function (next) {
+  if (!this.isNew && this.isModified("name")) {
+    const previous = await this.constructor.findById(this._id).select("name").lean();
+    this._previousName = previous?.name;
+  }
+  next();
+});
+
+// Propagate renames to tasks/projects that reference the user by name
+userSchema.post("save", async function (doc) {
+  const oldName = doc._previousName;
+  if (!oldName || oldName === doc.name) return;
+  doc._previousName = undefined;
+  try {
+    await Promise.all([
+      mongoose.model("Note").updateMany({ user: oldName }, { $set: { user: doc.name } }),
+      mongoose.model("Project").updateMany(
+        { defaultAssignee: oldName },
+        { $set: { defaultAssignee: doc.name } }
+      ),
+    ]);
+  } catch (error) {
+    console.error("Error propagating user rename", error);
+  }
+});
+
 // Compare password method
 userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
