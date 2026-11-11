@@ -36,8 +36,8 @@ const App = () => {
           <Route path="note/:id" element={<NoteDetailPage />} />
           <Route path="create" element={<CreatePage />} />
         </Route>
-        <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
-        <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetailPage /></ProtectedRoute>} />
+        <Route path="/projects" element={<ProtectedRoute noClient><ProjectsPage /></ProtectedRoute>} />
+        <Route path="/projects/:id" element={<ProtectedRoute noClient><ProjectDetailPage /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>} />
         <Route path="/board-settings" element={<ProtectedRoute adminOnly><BoardSettingsPage /></ProtectedRoute>} />
       </Routes>

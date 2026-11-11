@@ -3,7 +3,7 @@ import { useAuth } from "../lib/AuthContext";
 import { LoaderIcon } from "lucide-react";
 import ForcePasswordChange from "./ForcePasswordChange";
 
-const ProtectedRoute = ({ children, adminOnly = false }) => {
+const ProtectedRoute = ({ children, adminOnly = false, noClient = false }) => {
   const { user, loading, isAdmin } = useAuth();
 
   if (loading) {
@@ -25,6 +25,10 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
         <ForcePasswordChange />
       </>
     );
+  }
+
+  if (noClient && user.role === "client") {
+    return <Navigate to="/" replace />;
   }
 
   if (adminOnly && !isAdmin) {

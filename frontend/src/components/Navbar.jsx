@@ -44,9 +44,11 @@ const Navbar = () => {
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <ThemeToggle />
 
-            <Link to={"/projects"} className="btn btn-ghost btn-circle btn-sm" title="Proyectos">
-              <FolderKeyIcon className="size-4 sm:size-5" />
-            </Link>
+            {user?.role !== "client" && (
+              <Link to={"/projects"} className="btn btn-ghost btn-circle btn-sm" title="Proyectos">
+                <FolderKeyIcon className="size-4 sm:size-5" />
+              </Link>
+            )}
 
             <Link
               to={"/create"}
@@ -135,7 +137,7 @@ const Navbar = () => {
                   )}
 
                   {/* Proyectos link on mobile dropdown */}
-                  <li className="sm:hidden">
+                  <li className={`sm:hidden ${user?.role === "client" ? "hidden" : ""}`}>
                     <Link
                       to="/projects"
                       onClick={() => document.activeElement?.blur()}

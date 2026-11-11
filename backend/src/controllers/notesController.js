@@ -45,6 +45,8 @@ export async function getAllNotes(req, res) {
       } else {
         filter.project = { $in: [] };
       }
+      // Clients only see tasks assigned to them (within authorized projects)
+      filter.user = req.user.name;
     }
 
     const notes = await Note.find(filter).populate("size").sort({ createdAt: -1 });
@@ -59,6 +61,13 @@ export async function getNoteById(req, res) {
   try {
     const note = await Note.findById(req.params.id).populate("size");
     if (!note) return res.status(404).json({ message: "Note not found!" });
+    if (req.user?.role === "client") {
+      const assigned = (req.user.assignedProjects || []).map((id) => id.toString());
+      const inProject = note.project && assigned.includes(note.project.toString());
+      if (!inProject || note.user !== req.user.name) {
+        return res.status(403).json({ message: "Acceso denegado a esta tarea" });
+      }
+    }
     res.json(note);
   } catch (error) {
     console.error("Error in getNoteById controller", error);
