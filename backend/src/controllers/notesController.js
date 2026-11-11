@@ -40,13 +40,13 @@ export async function getAllNotes(req, res) {
     const filter = { archived: { $ne: true } };
 
     if (req.user && req.user.role === "client") {
-      if (req.user.assignedProjects && req.user.assignedProjects.length > 0) {
-        filter.project = { $in: req.user.assignedProjects };
-      } else {
-        filter.project = { $in: [] };
-      }
-      // Clients only see tasks assigned to them (within authorized projects)
+      // Clients only see tasks assigned to them that are either in an
+      // authorized project or have no project at all
       filter.user = req.user.name;
+      filter.$or = [
+        { project: { $in: req.user.assignedProjects || [] } },
+        { project: null },
+      ];
     }
 
     const notes = await Note.find(filter).populate("size").sort({ createdAt: -1 });
@@ -63,7 +63,7 @@ export async function getNoteById(req, res) {
     if (!note) return res.status(404).json({ message: "Note not found!" });
     if (req.user?.role === "client") {
       const assigned = (req.user.assignedProjects || []).map((id) => id.toString());
-      const inProject = note.project && assigned.includes(note.project.toString());
+      const inProject = !note.project || assigned.includes(note.project.toString());
       if (!inProject || note.user !== req.user.name) {
         return res.status(403).json({ message: "Acceso denegado a esta tarea" });
       }
