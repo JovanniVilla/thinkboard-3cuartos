@@ -2058,7 +2058,10 @@ const BoardSettingsPage = () => {
           {/* TAB 8: ALMACENAMIENTO Y ARCHIVOS */}
           {activeTab === "storage" && (
             <div className="space-y-6 overflow-y-auto pr-1 pb-4 flex-1">
-              <StorageManagementView />
+              <StorageManagementView
+                boardConfig={boardConfig}
+                setBoardConfig={setBoardConfig}
+              />
             </div>
           )}
 

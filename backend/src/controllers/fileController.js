@@ -2,6 +2,7 @@ import fs from "fs";
 import File from "../models/File.js";
 import Note from "../models/Note.js";
 import Subtask from "../models/Subtask.js";
+import BoardConfig from "../models/BoardConfig.js";
 import {
   generateActivityId,
   buildProjectTaskActivity,
@@ -14,6 +15,16 @@ import {
  */
 export const uploadTaskFile = async (req, res) => {
   try {
+    const boardConfig = await BoardConfig.findOne().lean();
+    if (boardConfig && boardConfig.enableFileUploads === false) {
+      if (req.file?.path) {
+        fs.unlink(req.file.path, () => {});
+      }
+      return res.status(403).json({
+        message: "La carga de archivos está desactivada por el administrador.",
+      });
+    }
+
     const { taskId } = req.params;
 
     // Verify parent task (Note) exists

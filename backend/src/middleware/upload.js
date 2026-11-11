@@ -2,6 +2,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import BoardConfig from "../models/BoardConfig.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -89,7 +90,19 @@ const upload = multer({
  * Middleware wrapper for single file upload on field "file".
  * Captures MulterError LIMIT_FILE_SIZE and returns HTTP 413.
  */
-export const uploadSingleFile = (req, res, next) => {
+export const uploadSingleFile = async (req, res, next) => {
+  try {
+    const boardConfig = await BoardConfig.findOne().lean();
+    if (boardConfig && boardConfig.enableFileUploads === false) {
+      return res.status(403).json({
+        error: "Feature Disabled",
+        message: "La carga de archivos está desactivada por el administrador.",
+      });
+    }
+  } catch (err) {
+    console.error("Error checking boardConfig in uploadSingleFile:", err);
+  }
+
   const singleUpload = upload.single("file");
 
   singleUpload(req, res, (err) => {
@@ -181,7 +194,19 @@ const uploadVideo = multer({
  * Middleware wrapper for video note upload on field "video" or "file".
  * Captures MulterError LIMIT_FILE_SIZE and returns HTTP 413.
  */
-export const uploadSingleVideo = (req, res, next) => {
+export const uploadSingleVideo = async (req, res, next) => {
+  try {
+    const boardConfig = await BoardConfig.findOne().lean();
+    if (boardConfig && boardConfig.enableVideoNotes === false) {
+      return res.status(403).json({
+        error: "Feature Disabled",
+        message: "La creación de videonotas está desactivada por el administrador.",
+      });
+    }
+  } catch (err) {
+    console.error("Error checking boardConfig in uploadSingleVideo:", err);
+  }
+
   const videoUpload = uploadVideo.fields([
     { name: "video", maxCount: 1 },
     { name: "file", maxCount: 1 },

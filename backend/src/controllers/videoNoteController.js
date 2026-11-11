@@ -3,6 +3,7 @@ import path from "path";
 import VideoNote from "../models/VideoNote.js";
 import Note from "../models/Note.js";
 import Subtask from "../models/Subtask.js";
+import BoardConfig from "../models/BoardConfig.js";
 import { UPLOADS_DIR, VIDEOS_UPLOADS_DIR } from "../middleware/upload.js";
 import {
   generateActivityId,
@@ -16,6 +17,16 @@ import {
  */
 export const uploadVideoNote = async (req, res) => {
   try {
+    const boardConfig = await BoardConfig.findOne().lean();
+    if (boardConfig && boardConfig.enableVideoNotes === false) {
+      if (req.file?.path) {
+        fs.unlink(req.file.path, () => {});
+      }
+      return res.status(403).json({
+        message: "La creación de videonotas está desactivada por el administrador.",
+      });
+    }
+
     const { taskId } = req.params;
     const { title, durationSeconds, subtaskId } = req.body;
 

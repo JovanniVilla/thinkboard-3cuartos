@@ -19,6 +19,8 @@ export default function VisualAnnotationsSection({
   accounts = [],
   onSubtasksCountChange,
   onNoteRefresh,
+  enableFileUploads = true,
+  enableVideoNotes = true,
 }) {
   const [files, setFiles] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,6 +88,10 @@ export default function VisualAnnotationsSection({
     }
   };
 
+  if (!enableFileUploads && !isLoading && files.length === 0) {
+    return null;
+  }
+
   return (
     <div id="visual-annotations-section" className="space-y-3 pt-2">
       {/* Section Header */}
@@ -100,14 +106,20 @@ export default function VisualAnnotationsSection({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsUploaderOpen(true)}
-          className="btn btn-xs btn-outline btn-primary gap-1 rounded-lg font-medium"
-        >
-          <PlusIcon className="size-3" />
-          <span>Adjuntar Archivo</span>
-        </button>
+        {enableFileUploads ? (
+          <button
+            type="button"
+            onClick={() => setIsUploaderOpen(true)}
+            className="btn btn-xs btn-outline btn-primary gap-1 rounded-lg font-medium"
+          >
+            <PlusIcon className="size-3" />
+            <span>Adjuntar Archivo</span>
+          </button>
+        ) : (
+          <span className="badge badge-xs badge-ghost text-base-content/50">
+            Carga desactivada
+          </span>
+        )}
       </div>
 
       {/* Files Grid / List */}
@@ -210,7 +222,8 @@ export default function VisualAnnotationsSection({
       )}
 
       {/* Upload Modal */}
-      {isUploaderOpen &&
+      {enableFileUploads &&
+        isUploaderOpen &&
         typeof document !== "undefined" &&
         createPortal(
           <div
@@ -237,6 +250,7 @@ export default function VisualAnnotationsSection({
           file={activeFileForCanvas}
           parentTaskId={taskId}
           accounts={accounts}
+          enableVideoNotes={enableVideoNotes}
           onClose={() => {
             setActiveFileForCanvas(null);
             fetchFiles(); // Refresh counts upon closing canvas

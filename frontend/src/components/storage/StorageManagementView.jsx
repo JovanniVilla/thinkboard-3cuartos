@@ -18,6 +18,8 @@ import {
   FolderArchiveIcon,
   ClockIcon,
   XIcon,
+  PaperclipIcon,
+  SlidersHorizontalIcon,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { Link } from "react-router";
@@ -129,10 +131,54 @@ function StorageDonutChart({ breakdown, totalBytes }) {
   );
 }
 
-export default function StorageManagementView() {
+export default function StorageManagementView({
+  boardConfig: externalBoardConfig,
+  setBoardConfig: setExternalBoardConfig,
+}) {
   // Stats state
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(true);
+
+  // Feature toggles state (Carga de Archivos & Videonotas)
+  const [localBoardConfig, setLocalBoardConfig] = useState({
+    enableFileUploads: true,
+    enableVideoNotes: true,
+  });
+  const [togglingFeature, setTogglingFeature] = useState(null); // 'enableFileUploads' | 'enableVideoNotes' | null
+
+  const activeBoardConfig = externalBoardConfig || localBoardConfig;
+  const enableFileUploads = activeBoardConfig?.enableFileUploads !== false;
+  const enableVideoNotes = activeBoardConfig?.enableVideoNotes !== false;
+
+  useEffect(() => {
+    if (!externalBoardConfig) {
+      api
+        .get("/board-config")
+        .then((res) => setLocalBoardConfig(res.data))
+        .catch((err) => console.error("Error fetching board config:", err));
+    }
+  }, [externalBoardConfig]);
+
+  const handleToggleFeature = async (field, currentValue, label) => {
+    const nextValue = !currentValue;
+    setTogglingFeature(field);
+    try {
+      const res = await api.put("/board-config", { [field]: nextValue });
+      if (setExternalBoardConfig) {
+        setExternalBoardConfig(res.data);
+      } else {
+        setLocalBoardConfig(res.data);
+      }
+      toast.success(
+        `${label} ${nextValue ? "activada" : "desactivada"} correctamente`
+      );
+    } catch (err) {
+      console.error(`Error al actualizar ${field}:`, err);
+      toast.error(`No se pudo actualizar la configuración de ${label}.`);
+    } finally {
+      setTogglingFeature(null);
+    }
+  };
 
   // Files state
   const [files, setFiles] = useState([]);
@@ -287,6 +333,143 @@ export default function StorageManagementView() {
             />
             <span>Actualizar</span>
           </button>
+        </div>
+      </div>
+
+      {/* ── Section 0: Control de Funcionalidades (Carga de Archivos y Videonotas) ── */}
+      <div className="card bg-base-100 border border-base-content/10 shadow-sm">
+        <div className="card-body p-5 sm:p-6 space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                <SlidersHorizontalIcon className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-base-content">
+                  Control de Funcionalidades Multimedia
+                </h3>
+                <p className="text-xs text-base-content/60">
+                  Activa o desactiva la subida de archivos y la grabación de videonotas en todas las tareas del tablero.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            {/* Toggle 1: Carga de Archivos */}
+            <div
+              className={`flex items-center justify-between gap-4 p-4 rounded-xl border transition-all ${
+                enableFileUploads
+                  ? "bg-base-200/40 border-primary/30"
+                  : "bg-base-200/20 border-base-content/10 opacity-75"
+              }`}
+            >
+              <div className="flex items-start gap-3 min-w-0">
+                <div
+                  className={`p-2.5 rounded-xl shrink-0 ${
+                    enableFileUploads
+                      ? "bg-primary/15 text-primary"
+                      : "bg-base-300 text-base-content/50"
+                  }`}
+                >
+                  <PaperclipIcon className="w-5 h-5" />
+                </div>
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm text-base-content">
+                      Carga de Archivos
+                    </span>
+                    <span
+                      className={`badge badge-xs font-medium py-2 px-2 ${
+                        enableFileUploads
+                          ? "badge-success text-success-content"
+                          : "badge-ghost text-base-content/60"
+                      }`}
+                    >
+                      {enableFileUploads ? "Activado" : "Desactivado"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-base-content/60 leading-relaxed">
+                    Permite adjuntar imágenes y documentos PDF en las tareas para realizar anotaciones visuales y subtareas.
+                  </p>
+                </div>
+              </div>
+
+              <div className="shrink-0 flex items-center">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={enableFileUploads}
+                  disabled={togglingFeature === "enableFileUploads"}
+                  onChange={() =>
+                    handleToggleFeature(
+                      "enableFileUploads",
+                      enableFileUploads,
+                      "Carga de archivos"
+                    )
+                  }
+                  aria-label="Activar o desactivar carga de archivos"
+                />
+              </div>
+            </div>
+
+            {/* Toggle 2: Creación de Videonotas */}
+            <div
+              className={`flex items-center justify-between gap-4 p-4 rounded-xl border transition-all ${
+                enableVideoNotes
+                  ? "bg-base-200/40 border-error/30"
+                  : "bg-base-200/20 border-base-content/10 opacity-75"
+              }`}
+            >
+              <div className="flex items-start gap-3 min-w-0">
+                <div
+                  className={`p-2.5 rounded-xl shrink-0 ${
+                    enableVideoNotes
+                      ? "bg-error/15 text-error"
+                      : "bg-base-300 text-base-content/50"
+                  }`}
+                >
+                  <VideoIcon className="w-5 h-5" />
+                </div>
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-sm text-base-content">
+                      Creación de Videonotas
+                    </span>
+                    <span
+                      className={`badge badge-xs font-medium py-2 px-2 ${
+                        enableVideoNotes
+                          ? "badge-success text-success-content"
+                          : "badge-ghost text-base-content/60"
+                      }`}
+                    >
+                      {enableVideoNotes ? "Activado" : "Desactivado"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-base-content/60 leading-relaxed">
+                    Permite grabar pantalla y micrófono para adjuntar notas de video explicativas en tareas y subtareas.
+                  </p>
+                </div>
+              </div>
+
+              <div className="shrink-0 flex items-center">
+                <input
+                  type="checkbox"
+                  className="toggle toggle-primary"
+                  checked={enableVideoNotes}
+                  disabled={togglingFeature === "enableVideoNotes"}
+                  onChange={() =>
+                    handleToggleFeature(
+                      "enableVideoNotes",
+                      enableVideoNotes,
+                      "Creación de videonotas"
+                    )
+                  }
+                  aria-label="Activar o desactivar creación de videonotas"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

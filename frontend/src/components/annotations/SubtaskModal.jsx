@@ -33,6 +33,7 @@ export default function SubtaskModal({
   markerData = null, // { fileId, pageNumber, xPercent, yPercent } if creating new
   accounts = [], // List of users to assign
   initialTab = "details", // 'details' | 'comments'
+  enableVideoNotes = true,
   onSaved, // Callback (savedSubtask, isNew) => void
   onDeleted, // Callback (subtaskId) => void
 }) {
@@ -508,14 +509,16 @@ export default function SubtaskModal({
                 placeholder="Escribe una duda o solicita información..."
                 className="input input-sm input-bordered flex-1 rounded-xl text-xs focus:input-primary"
               />
-              <button
-                type="button"
-                onClick={() => setIsVideoRecorderOpen(true)}
-                className="btn btn-sm btn-ghost text-error hover:bg-error/10 rounded-xl px-2.5"
-                title="Grabar video nota explicativa para esta subtarea"
-              >
-                <VideoIcon className="size-4" />
-              </button>
+              {enableVideoNotes && (
+                <button
+                  type="button"
+                  onClick={() => setIsVideoRecorderOpen(true)}
+                  className="btn btn-sm btn-ghost text-error hover:bg-error/10 rounded-xl px-2.5"
+                  title="Grabar video nota explicativa para esta subtarea"
+                >
+                  <VideoIcon className="size-4" />
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={isSendingComment || !newCommentText.trim()}
@@ -535,7 +538,7 @@ export default function SubtaskModal({
       </div>
 
       {/* Modal de Grabación de Video Nota vinculado a esta subtarea */}
-      {isVideoRecorderOpen && (
+      {enableVideoNotes && isVideoRecorderOpen && (
         <VideoNoteRecorderModal
           taskId={parentTaskId}
           subtaskId={subtask?._id}

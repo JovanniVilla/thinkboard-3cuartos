@@ -6,7 +6,25 @@ export async function getBoardConfig(req, res) {
   try {
     let boardConfig = await BoardConfig.findOne();
     if (!boardConfig) {
-      boardConfig = await BoardConfig.create({ projectKey: "", taskCounter: 1 });
+      boardConfig = await BoardConfig.create({
+        projectKey: "",
+        taskCounter: 1,
+        enableFileUploads: true,
+        enableVideoNotes: true,
+      });
+    } else {
+      let modified = false;
+      if (boardConfig.enableFileUploads === undefined) {
+        boardConfig.enableFileUploads = true;
+        modified = true;
+      }
+      if (boardConfig.enableVideoNotes === undefined) {
+        boardConfig.enableVideoNotes = true;
+        modified = true;
+      }
+      if (modified) {
+        await boardConfig.save();
+      }
     }
     res.status(200).json(boardConfig);
   } catch (error) {
@@ -17,7 +35,14 @@ export async function getBoardConfig(req, res) {
 
 export async function updateBoardConfig(req, res) {
   try {
-    const { projectKey, taskCounter, driveFolderLink, projectName } = req.body;
+    const {
+      projectKey,
+      taskCounter,
+      driveFolderLink,
+      projectName,
+      enableFileUploads,
+      enableVideoNotes,
+    } = req.body;
     let boardConfig = await BoardConfig.findOne();
     if (!boardConfig) {
       boardConfig = new BoardConfig();
@@ -41,6 +66,12 @@ export async function updateBoardConfig(req, res) {
     if (projectName !== undefined) {
       boardConfig.projectName = projectName.trim().substring(0, 25);
     }
+    if (enableFileUploads !== undefined) {
+      boardConfig.enableFileUploads = Boolean(enableFileUploads);
+    }
+    if (enableVideoNotes !== undefined) {
+      boardConfig.enableVideoNotes = Boolean(enableVideoNotes);
+    }
 
     const newProjectKey = (boardConfig.projectKey || "").trim().toUpperCase();
     let newPrefix = "";
@@ -48,8 +79,8 @@ export async function updateBoardConfig(req, res) {
       newPrefix = newProjectKey.endsWith("-") ? newProjectKey : `${newProjectKey}-`;
     }
 
-    // Si hay una nueva clave global de tablero, actualizamos el globalKeyId de las notas
-    if (newProjectKey) {
+    // Si hay una nueva clave global de tablero y se está actualizando clave/contador, actualizamos el globalKeyId de las notas
+    if (newProjectKey && (projectKey !== undefined || taskCounter !== undefined)) {
       const allNotes = await Note.find().sort({ createdAt: 1 });
       let currentCounter = boardConfig.taskCounter || 1;
       let isModifiedCounter = false;

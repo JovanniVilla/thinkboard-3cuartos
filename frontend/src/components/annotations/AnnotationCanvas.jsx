@@ -29,6 +29,7 @@ export default function AnnotationCanvas({
   accounts = [],
   initialSubtaskId = null,
   initialPage = 1,
+  enableVideoNotes = true,
   onClose,
 }) {
   const [subtasks, setSubtasks] = useState([]);
@@ -668,6 +669,7 @@ export default function AnnotationCanvas({
         markerData={pendingPin}
         accounts={accounts}
         initialTab={modalInitialTab}
+        enableVideoNotes={enableVideoNotes}
         onSaved={handleSubtaskSaved}
         onDeleted={handleSubtaskDeleted}
       />

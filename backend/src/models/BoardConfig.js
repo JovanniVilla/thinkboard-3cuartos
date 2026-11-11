@@ -22,6 +22,14 @@ const boardConfigSchema = new mongoose.Schema(
       trim: true,
       default: "",
     },
+    enableFileUploads: {
+      type: Boolean,
+      default: true,
+    },
+    enableVideoNotes: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );

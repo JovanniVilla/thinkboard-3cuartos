@@ -23,6 +23,7 @@ export default function VideoNotesSection({
   setIsRecorderOpen,
   activeVideoForPlayer: externalActiveVideo,
   setActiveVideoForPlayer: setExternalActiveVideo,
+  enableVideoNotes = true,
 }) {
   const [videoNotes, setVideoNotes] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -180,6 +181,10 @@ export default function VideoNotesSection({
       ? resolvedNotes
       : videoNotes;
 
+  if (!enableVideoNotes && !isLoading && videoNotes.length === 0 && !activeVideo) {
+    return null;
+  }
+
   return (
     <div id="video-notes-section" className="space-y-3 pt-2">
       {/* Encabezado de la sección */}
@@ -235,15 +240,21 @@ export default function VideoNotesSection({
             </div>
           )}
 
-          <button
-            type="button"
-            onClick={() => setModalOpen(true)}
-            className="btn btn-xs btn-outline btn-error gap-1 rounded-lg font-medium shadow-2xs"
-            title="Iniciar grabación de pantalla y micrófono"
-          >
-            <PlusIcon className="size-3" />
-            <span>Grabar Video Nota</span>
-          </button>
+          {enableVideoNotes ? (
+            <button
+              type="button"
+              onClick={() => setModalOpen(true)}
+              className="btn btn-xs btn-outline btn-error gap-1 rounded-lg font-medium shadow-2xs"
+              title="Iniciar grabación de pantalla y micrófono"
+            >
+              <PlusIcon className="size-3" />
+              <span>Grabar Video Nota</span>
+            </button>
+          ) : (
+            <span className="badge badge-xs badge-ghost text-base-content/50">
+              Grabación desactivada
+            </span>
+          )}
         </div>
       </div>
 
@@ -421,7 +432,7 @@ export default function VideoNotesSection({
       )}
 
       {/* Modal de Grabación Nativa de Pantalla y Audio */}
-      {isModalOpen && (
+      {enableVideoNotes && isModalOpen && (
         <VideoNoteRecorderModal
           taskId={taskId}
           onUploadSuccess={handleUploadSuccess}

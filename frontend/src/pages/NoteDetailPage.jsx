@@ -87,6 +87,8 @@ const NoteDetailPage = () => {
   }, [note?.title]);
 
   const { boardConfig } = useBoardConfig();
+  const isFileUploadsEnabled = boardConfig?.enableFileUploads !== false;
+  const isVideoNotesEnabled = boardConfig?.enableVideoNotes !== false;
 
   // Comments and Activity state
   const [commentText, setCommentText] = useState("");
@@ -1028,28 +1030,32 @@ const NoteDetailPage = () => {
                   </ul>
                 </div>
 
-                <button
-                  type="button"
-                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
-                  onClick={() => {
-                    const el = document.getElementById("visual-annotations-section");
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  title="Ver y subir archivos de anotaciones visuales"
-                >
-                  <PaperclipIcon className="size-4" />
-                  <span>Adjuntos {visualFilesCount > 0 ? `(${visualFilesCount})` : ""}</span>
-                </button>
+                {(isFileUploadsEnabled || visualFilesCount > 0) && (
+                  <button
+                    type="button"
+                    className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
+                    onClick={() => {
+                      const el = document.getElementById("visual-annotations-section");
+                      if (el) el.scrollIntoView({ behavior: "smooth" });
+                    }}
+                    title="Ver y subir archivos de anotaciones visuales"
+                  >
+                    <PaperclipIcon className="size-4" />
+                    <span>Adjuntos {visualFilesCount > 0 ? `(${visualFilesCount})` : ""}</span>
+                  </button>
+                )}
 
-                <button
-                  type="button"
-                  className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
-                  onClick={() => setIsVideoRecorderOpen(true)}
-                  title="Grabar pantalla y audio para crear una Video Nota"
-                >
-                  <VideoIcon className="size-4 text-error" />
-                  <span>Video Nota {videoNotesCount > 0 ? `(${videoNotesCount})` : ""}</span>
-                </button>
+                {isVideoNotesEnabled && (
+                  <button
+                    type="button"
+                    className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg"
+                    onClick={() => setIsVideoRecorderOpen(true)}
+                    title="Grabar pantalla y audio para crear una Video Nota"
+                  >
+                    <VideoIcon className="size-4 text-error" />
+                    <span>Video Nota {videoNotesCount > 0 ? `(${videoNotesCount})` : ""}</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1481,6 +1487,8 @@ const NoteDetailPage = () => {
               accounts={accounts}
               onSubtasksCountChange={handleSubtasksCountChange}
               onNoteRefresh={fetchNote}
+              enableFileUploads={isFileUploadsEnabled}
+              enableVideoNotes={isVideoNotesEnabled}
             />
 
             {/* Video Notes (Screen & Audio Recording) Section */}
@@ -1492,6 +1500,7 @@ const NoteDetailPage = () => {
               setIsRecorderOpen={setIsVideoRecorderOpen}
               activeVideoForPlayer={activeVideoForPlayer}
               setActiveVideoForPlayer={setActiveVideoForPlayer}
+              enableVideoNotes={isVideoNotesEnabled}
             />
 
             {/* Bottom Actions: Save & Delete */}
@@ -1848,6 +1857,7 @@ const NoteDetailPage = () => {
           accounts={accounts}
           initialSubtaskId={canvasTarget.subtaskId}
           initialPage={canvasTarget.pageNumber}
+          enableVideoNotes={isVideoNotesEnabled}
           onClose={() => {
             setCanvasTarget(null);
             fetchNote();
