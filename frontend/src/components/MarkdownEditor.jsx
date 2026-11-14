@@ -55,9 +55,9 @@ const Toolbar = ({ editor, compact }) => {
       >
         <StrikethroughIcon className="size-3.5" />
       </button>
-      
+
       <span className="w-px h-4 bg-base-content/15 mx-1" />
-      
+
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
@@ -66,7 +66,7 @@ const Toolbar = ({ editor, compact }) => {
       >
         <HeadingIcon className="size-3.5" />
       </button>
-      
+
       <span className="w-px h-4 bg-base-content/15 mx-1" />
 
       <button
@@ -117,7 +117,7 @@ const Toolbar = ({ editor, compact }) => {
         onClick={() => {
           const previousUrl = editor.getAttributes('link').href;
           const url = window.prompt('URL del enlace:', previousUrl);
-          
+
           if (url === null) return;
           if (url === '') {
             editor.chain().focus().extendMarkRange('link').unsetLink().run();
@@ -134,14 +134,15 @@ const Toolbar = ({ editor, compact }) => {
   );
 };
 
-const MarkdownEditor = ({ 
-  value = "", 
-  onChange, 
-  placeholder = "Escribe aquí...", 
-  minHeight = "min-h-[200px]", 
-  hideFooter = false, 
+const MarkdownEditor = ({
+  value = "",
+  onChange,
+  placeholder = "Escribe aquí...",
+  minHeight = "min-h-[200px]",
+  hideFooter = false,
   compactToolbar = false,
-  users = []
+  users = [],
+  className = ""
 }) => {
   const usersRef = useRef(users);
   useEffect(() => {
@@ -177,7 +178,7 @@ const MarkdownEditor = ({
     content: value,
     editorProps: {
       attributes: {
-        class: `prose prose-sm prose-base break-words max-w-none focus:outline-none ${minHeight} p-3 bg-base-100`,
+        class: `prose prose-sm prose-base break-words max-w-none focus:outline-none ${minHeight} p-3 sm:p-3.5 bg-base-100`,
       },
     },
     onUpdate: ({ editor }) => {
@@ -193,16 +194,16 @@ const MarkdownEditor = ({
       // We only update if the external value differs from the editor's markdown,
       // avoiding cursor jumps when typing.
       if (value !== undefined) {
-          editor.commands.setContent(value);
+        editor.commands.setContent(value);
       }
     }
   }, [value, editor]);
 
   return (
-    <div className="border border-base-content/20 rounded-xl overflow-hidden bg-base-100 shadow-sm transition-all focus-within:border-primary/60">
+    <div className={`border border-base-content/20 rounded-xl overflow-hidden bg-base-100 shadow-2xs transition-all focus-within:border-primary/60 ${className}`}>
       <Toolbar editor={editor} compact={compactToolbar} />
       <EditorContent editor={editor} />
-      
+
       {/* Footer hint */}
       {!hideFooter && (
         <div className="bg-base-200/40 px-3 py-1.5 border-t border-base-content/10 flex items-center justify-between text-[11px] text-base-content/50">
