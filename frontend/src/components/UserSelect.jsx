@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from "react";
-import { ChevronDownIcon, UserIcon, SearchIcon, XIcon, CheckIcon } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { ChevronDownIcon, UserIcon, UsersIcon, SearchIcon, XIcon, CheckIcon } from "lucide-react";
 
 const getInitials = (name = "") => {
   if (!name || name === "Sin asignar") return "?";
@@ -19,25 +19,61 @@ const normalizeText = (text = "") =>
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
 
-const UserSelect = ({ users = [], value, onChange, placeholder = "— Seleccionar usuario —" }) => {
-  const [open, setOpen] = useState(false);
+const UserSelect = ({
+  users = [],
+  value,
+  onChange,
+  placeholder = "— Seleccionar usuario —",
+  variant = "select", // "select" | "button"
+  isOpen,
+  onToggle,
+  onClose,
+}) => {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef(null);
   const searchInputRef = useRef(null);
 
-  const selected = users.find((u) => u.name === value);
+  const isControlled = isOpen !== undefined;
+  const open = isControlled ? isOpen : internalOpen;
+
+  const handleToggle = useCallback(() => {
+    if (isControlled) {
+      onToggle?.();
+    } else {
+      setInternalOpen((o) => !o);
+    }
+  }, [isControlled, onToggle]);
+
+  const handleClose = useCallback(() => {
+    if (isControlled) {
+      onClose?.();
+    } else {
+      setInternalOpen(false);
+    }
+    setSearch("");
+  }, [isControlled, onClose]);
+
+  const selected = users.find(
+    (u) =>
+      (typeof u === "string" ? u : u.name)?.trim().toLowerCase() ===
+      (value || "").trim().toLowerCase()
+  );
+
+  const hasAssigned = Boolean(value && value !== "Sin asignar");
+  const displayName = typeof selected === "string" ? selected : (selected?.name || (hasAssigned ? value : ""));
+  const displayColor = typeof selected === "object" ? selected?.color : "#0284c7";
 
   // Close on outside click and reset search
   useEffect(() => {
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false);
-        setSearch("");
+        handleClose();
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  }, [handleClose]);
 
   // Handle escape key and auto-focus search input when opened
   useEffect(() => {
@@ -48,8 +84,7 @@ const UserSelect = ({ users = [], value, onChange, placeholder = "— Selecciona
 
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
-        setOpen(false);
-        setSearch("");
+        handleClose();
       }
     };
 
@@ -62,12 +97,11 @@ const UserSelect = ({ users = [], value, onChange, placeholder = "— Selecciona
       document.removeEventListener("keydown", handleKeyDown);
       clearTimeout(timer);
     };
-  }, [open]);
+  }, [open, handleClose]);
 
   const handleSelect = (name) => {
     onChange(name);
-    setOpen(false);
-    setSearch("");
+    handleClose();
   };
 
   const query = normalizeText(search);
@@ -80,7 +114,7 @@ const UserSelect = ({ users = [], value, onChange, placeholder = "— Selecciona
   const filteredUsers = users.filter((u) => {
     if (!query) return true;
     const name = typeof u === "string" ? u : (u.name || "");
-    const role = typeof u === "object" && u.role ? u.role : "";
+    const role = typeof u === "object" && (u.role || u.jobTitle) ? (u.role || u.jobTitle) : "";
     const email = typeof u === "object" && u.email ? u.email : "";
 
     return (
@@ -91,42 +125,87 @@ const UserSelect = ({ users = [], value, onChange, placeholder = "— Selecciona
   });
 
   return (
-    <div ref={ref} className="relative w-full">
-      <button
-        type="button"
-        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border border-base-content/20 bg-base-100 hover:border-base-content/40 transition-colors text-sm cursor-pointer"
-        onClick={() => setOpen((o) => !o)}
-      >
-        {selected ? (
-          <div className="flex items-center gap-2 truncate">
-            <span
-              className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-              style={{ backgroundColor: selected.color || "#3B82F6" }}
-            >
-              {getInitials(selected.name)}
-            </span>
-            <span className="font-semibold text-base-content truncate">{selected.name}</span>
-            {selected.role && (
-              <span className="text-xs text-base-content/50 truncate hidden sm:inline">
-                ({selected.role})
+    <div ref={ref} className={`relative popover-container ${variant === "button" ? "inline-block" : "w-full"}`}>
+      {variant === "button" ? (
+        <button
+          type="button"
+          className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg cursor-pointer"
+          onClick={handleToggle}
+          title={hasAssigned ? `Asignado a: ${displayName}` : "Asignar Miembro"}
+        >
+          {hasAssigned ? (
+            <>
+              <span
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm flex-shrink-0"
+                style={{ backgroundColor: displayColor || "#0284c7" }}
+              >
+                {getInitials(displayName)}
               </span>
-            )}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-base-content/60">
-            <span className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center text-xs text-base-content/60">
-              <UserIcon className="w-3.5 h-3.5" />
-            </span>
-            <span>{value || placeholder}</span>
-          </div>
-        )}
-        <ChevronDownIcon
-          className={`h-4 w-4 text-base-content/40 ml-auto transition-transform duration-200 ${open ? "rotate-180" : ""}`}
-        />
-      </button>
+              <span className="truncate max-w-[140px] sm:max-w-[200px]">{displayName}</span>
+            </>
+          ) : (
+            <>
+              <UsersIcon className="size-4" />
+              <span>Miembros</span>
+            </>
+          )}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg border border-base-content/20 bg-base-100 hover:border-base-content/40 transition-colors text-sm cursor-pointer"
+          onClick={handleToggle}
+        >
+          {hasAssigned ? (
+            <div className="flex items-center gap-2 truncate">
+              <span
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+                style={{ backgroundColor: displayColor || "#0284c7" }}
+              >
+                {getInitials(displayName)}
+              </span>
+              <span className="font-semibold text-base-content truncate">{displayName}</span>
+              {typeof selected === "object" && (selected.role || selected.jobTitle) && (
+                <span className="text-xs text-base-content/50 truncate hidden sm:inline">
+                  ({selected.role || selected.jobTitle})
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 text-base-content/60">
+              <span className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center text-xs text-base-content/60">
+                <UserIcon className="w-3.5 h-3.5" />
+              </span>
+              <span>{value || placeholder}</span>
+            </div>
+          )}
+          <ChevronDownIcon
+            className={`h-4 w-4 text-base-content/40 ml-auto transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+          />
+        </button>
+      )}
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full min-w-[220px] bg-base-100 border border-base-content/15 rounded-lg shadow-xl overflow-hidden flex flex-col">
+        <div
+          className={`absolute z-50 mt-1 bg-base-100 border border-base-content/15 rounded-xl shadow-2xl overflow-hidden flex flex-col popover-container ${
+            variant === "button" ? "left-0 w-60 sm:w-64" : "w-full min-w-[220px]"
+          }`}
+        >
+          {/* Header (when variant is button) */}
+          {variant === "button" && (
+            <div className="px-3 py-2 border-b border-base-content/10 flex items-center justify-between bg-base-200/40">
+              <span className="text-xs font-bold text-base-content/70">Asignar Miembro</span>
+              <button
+                type="button"
+                onClick={handleClose}
+                className="text-base-content/40 hover:text-base-content p-0.5 rounded-md cursor-pointer transition-colors"
+                title="Cerrar"
+              >
+                <XIcon className="size-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Search bar */}
           <div className="p-2 border-b border-base-content/10 bg-base-100 sticky top-0 z-10">
             <div className="relative flex items-center">
@@ -169,22 +248,22 @@ const UserSelect = ({ users = [], value, onChange, placeholder = "— Selecciona
           </div>
 
           {/* Users List */}
-          <ul className="max-h-60 overflow-y-auto divide-y divide-base-content/5">
+          <ul className="max-h-60 overflow-y-auto divide-y divide-base-content/5 p-1">
             {showUnassigned && (
               <li>
                 <button
                   type="button"
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-base-200 transition-colors ${
-                    value === "Sin asignar" ? "bg-base-200 font-semibold" : ""
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg hover:bg-base-200 transition-colors cursor-pointer ${
+                    !hasAssigned ? "bg-primary/20 text-primary font-bold" : "text-base-content"
                   }`}
                   onClick={() => handleSelect("Sin asignar")}
                 >
-                  <span className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center text-xs text-base-content/60 flex-shrink-0">
-                    <UserIcon className="w-3.5 h-3.5" />
+                  <span className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-xs text-base-content/60 flex-shrink-0">
+                    <UserIcon className="size-3" />
                   </span>
                   <span className="text-base-content/70">Sin asignar</span>
-                  {value === "Sin asignar" && (
-                    <CheckIcon className="ml-auto w-4 h-4 text-primary flex-shrink-0" />
+                  {!hasAssigned && (
+                    <CheckIcon className="ml-auto size-4 text-primary flex-shrink-0" />
                   )}
                 </button>
               </li>
@@ -192,32 +271,32 @@ const UserSelect = ({ users = [], value, onChange, placeholder = "— Selecciona
 
             {filteredUsers.map((u) => {
               const name = typeof u === "string" ? u : u.name;
-              const role = typeof u === "object" ? u.role : "";
+              const role = typeof u === "object" ? (u.role || u.jobTitle) : "";
               const color = typeof u === "object" ? u.color : null;
               const key = typeof u === "object" ? (u._id || u.name) : u;
-              const isSelected = value === name;
+              const isSelected = (value || "").trim().toLowerCase() === name.trim().toLowerCase();
 
               return (
                 <li key={key}>
                   <button
                     type="button"
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-base-200 transition-colors ${
-                      isSelected ? "bg-base-200 font-semibold" : ""
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg hover:bg-base-200 transition-colors cursor-pointer ${
+                      isSelected ? "bg-primary/20 text-primary font-bold" : "text-base-content"
                     }`}
                     onClick={() => handleSelect(name)}
                   >
                     <span
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
-                      style={{ backgroundColor: color || "#3B82F6" }}
+                      className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm flex-shrink-0"
+                      style={{ backgroundColor: color || "#0284c7" }}
                     >
                       {getInitials(name)}
                     </span>
                     <div className="flex flex-col text-left truncate min-w-0">
-                      <span className="font-semibold text-base-content text-xs truncate">{name}</span>
-                      {role && <span className="text-[10px] text-base-content/50 truncate">{role}</span>}
+                      <span className="font-semibold text-xs truncate">{name}</span>
+                      {role && <span className="text-[10px] opacity-60 truncate">{role}</span>}
                     </div>
                     {isSelected && (
-                      <CheckIcon className="ml-auto w-4 h-4 text-primary flex-shrink-0" />
+                      <CheckIcon className="ml-auto size-4 text-primary flex-shrink-0" />
                     )}
                   </button>
                 </li>

@@ -9,7 +9,6 @@ import {
   PlusIcon,
   CalendarIcon,
   CheckSquareIcon,
-  UsersIcon,
   PaperclipIcon,
   CheckCircle2Icon,
   Edit3Icon,
@@ -39,6 +38,7 @@ import { useBoardConfig } from "../lib/useBoardConfig";
 import { useTaskSizes } from "../lib/useTaskSizes";
 import { useValues } from "../lib/useValues";
 import DatesPopover from "../components/DatesPopover";
+import UserSelect from "../components/UserSelect";
 import VisualAnnotationsSection from "../components/annotations/VisualAnnotationsSection";
 import AnnotationCanvas from "../components/annotations/AnnotationCanvas";
 import VideoNotesSection from "../components/videonotes/VideoNotesSection";
@@ -46,16 +46,6 @@ import NoteTimerWidget from "../components/timetracking/NoteTimerWidget";
 import NoteCommentsSection from "../components/NoteCommentsSection";
 import { useTimeTracking } from "../lib/TimeTrackingContext";
 import { FolderKeyIcon, ClockIcon } from "lucide-react";
-
-const getInitials = (name = "") => {
-  if (!name || name === "Sin asignar") return "?";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-};
 
 const NoteDetailPage = () => {
   const [note, setNote] = useState(null);
@@ -828,45 +818,19 @@ const NoteDetailPage = () => {
                 </button>
 
                 {/* Assign member dropdown button */}
-                <div className={`dropdown dropdown-bottom popover-container ${activePopover === 'members' ? 'dropdown-open' : ''}`}>
-                  <div
-                    onClick={() => setActivePopover(activePopover === 'members' ? null : 'members')}
-                    className="btn btn-xs sm:btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content gap-1.5 rounded-lg cursor-pointer"
-                  >
-                    <UsersIcon className="size-4" />
-                    <span>Members</span>
-                  </div>
-                  <ul
-                    tabIndex={0}
-                    className="dropdown-content menu p-2 shadow-xl bg-base-100 rounded-xl w-52 max-h-64 overflow-y-auto flex-nowrap border border-base-content/10 z-50 mt-1"
-                  >
-                    <li className="menu-title text-xs text-base-content/50">Asignar Miembro</li>
-                    {accounts.map((u) => (
-                      <li key={u._id}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setNote({ ...note, user: u.name });
-                            handleSaveNote({ user: u.name });
-                            setActivePopover(null);
-                          }}
-                          className={`text-sm py-2 rounded-lg flex items-center justify-between ${note.user === u.name ? "bg-primary/20 text-primary font-bold" : "text-base-content"
-                            }`}
-                        >
-                          <span className="flex items-center gap-2">
-                            <span
-                              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm"
-                              style={{ backgroundColor: u.color || "#3B82F6" }}
-                            >
-                              {getInitials(u.name)}
-                            </span>
-                            {u.name}
-                          </span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                <UserSelect
+                  variant="button"
+                  users={accounts}
+                  value={note.user}
+                  isOpen={activePopover === 'members'}
+                  onToggle={() => setActivePopover(activePopover === 'members' ? null : 'members')}
+                  onClose={() => setActivePopover(null)}
+                  onChange={(userName) => {
+                    setNote({ ...note, user: userName });
+                    handleSaveNote({ user: userName });
+                    setActivePopover(null);
+                  }}
+                />
 
                 {(isFileUploadsEnabled || visualFilesCount > 0) && (
                   <button
