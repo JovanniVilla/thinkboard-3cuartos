@@ -141,7 +141,8 @@ const MarkdownEditor = ({
   minHeight = "min-h-[200px]", 
   hideFooter = false, 
   compactToolbar = false,
-  users = []
+  users = [],
+  className = ""
 }) => {
   const usersRef = useRef(users);
   useEffect(() => {
@@ -177,7 +178,7 @@ const MarkdownEditor = ({
     content: value,
     editorProps: {
       attributes: {
-        class: `prose prose-sm prose-base break-words max-w-none focus:outline-none ${minHeight} p-3 bg-base-100`,
+        class: `prose prose-sm prose-base break-words max-w-none focus:outline-none ${minHeight} p-3 sm:p-3.5 bg-base-100`,
       },
     },
     onUpdate: ({ editor }) => {
@@ -199,7 +200,7 @@ const MarkdownEditor = ({
   }, [value, editor]);
 
   return (
-    <div className="border border-base-content/20 rounded-xl overflow-hidden bg-base-100 shadow-sm transition-all focus-within:border-primary/60">
+    <div className={`border border-base-content/20 rounded-xl overflow-hidden bg-base-100 shadow-2xs transition-all focus-within:border-primary/60 ${className}`}>
       <Toolbar editor={editor} compact={compactToolbar} />
       <EditorContent editor={editor} />
       
