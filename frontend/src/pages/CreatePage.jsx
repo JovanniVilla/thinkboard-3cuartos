@@ -25,12 +25,7 @@ import { useAccounts } from "../lib/useAccounts";
 import { useProjects } from "../lib/useProjects";
 import { useValues } from "../lib/useValues";
 import MarkdownEditor from "../components/MarkdownEditor";
-import MembersModal from "../components/MembersModal";
-
-const getInitials = (name = "") => {
-  if (!name || name === "Sin asignar") return "?";
-  return name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
-};
+import UserSelect from "../components/UserSelect";
 
 const CreatePage = () => {
   const { statuses } = useStatuses();
@@ -55,7 +50,6 @@ const CreatePage = () => {
   const [expandChecklist, setExpandChecklist] = useState(false);
   const [editingChecklistId, setEditingChecklistId] = useState(null);
   const [editingChecklistTitle, setEditingChecklistTitle] = useState("");
-  const [showMembersModal, setShowMembersModal] = useState(false);
   const [hasModifiedMetadata, setHasModifiedMetadata] = useState(false);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
@@ -167,12 +161,12 @@ const CreatePage = () => {
         setShowDiscardConfirm(false);
         return;
       }
-      if (showMembersModal || editingChecklistId) return;
+      if (editingChecklistId) return;
       handleRequestClose();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [showDiscardConfirm, showMembersModal, editingChecklistId, handleRequestClose]);
+  }, [showDiscardConfirm, editingChecklistId, handleRequestClose]);
 
   // Warn before unloading browser tab if there are unsaved changes
   useEffect(() => {
@@ -381,25 +375,16 @@ const CreatePage = () => {
               </ul>
             </div>
 
-            {/* Member Assignee Pill Button (Opens Member Search Popup) */}
-            <button
-              type="button"
-              onClick={() => setShowMembersModal(true)}
-              className="btn btn-sm bg-base-200 hover:bg-base-300 border border-base-content/10 text-base-content font-medium gap-1.5 rounded-lg cursor-pointer px-2.5 flex-nowrap whitespace-nowrap"
-              title="Asignar miembro"
-            >
-              {user !== "Sin asignar" ? (
-                <div className="avatar placeholder flex-shrink-0">
-                  <div className="bg-primary text-primary-content rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-bold">
-                    <span>{getInitials(user)}</span>
-                  </div>
-                </div>
-              ) : (
-                <UserIcon className="size-4 flex-shrink-0 text-base-content/60" />
-              )}
-              <span className="truncate max-w-[130px]">{user === "Sin asignar" ? "Asignar" : user}</span>
-              <ChevronDownIcon className="size-3.5 text-base-content/60 flex-shrink-0" />
-            </button>
+            {/* Member Assignee Button */}
+            <UserSelect
+              variant="button"
+              users={accounts}
+              value={user}
+              onChange={(selected) => {
+                setUser(selected);
+                setHasModifiedMetadata(true);
+              }}
+            />
 
             <span className="badge bg-base-200 text-base-content/50 border border-base-content/10 font-mono font-bold text-xs px-2 py-1 whitespace-nowrap italic">
               Nueva Tarea
@@ -611,25 +596,15 @@ const CreatePage = () => {
               <h3 className="font-bold text-sm flex items-center gap-2 mb-3">
                 <UserIcon className="size-4" /> Asignar a
               </h3>
-              <button
-                type="button"
-                onClick={() => setShowMembersModal(true)}
-                className="btn btn-sm btn-ghost gap-2 w-full justify-start border border-base-content/10 hover:border-base-content/30 rounded-xl bg-base-100"
-              >
-                {user !== "Sin asignar" ? (
-                  <div className="avatar placeholder flex-shrink-0">
-                    <div className="bg-primary text-primary-content rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold">
-                      <span>{getInitials(user)}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="w-5 h-5 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 flex-shrink-0">
-                    <UserIcon className="size-3" />
-                  </div>
-                )}
-                <span className="truncate">{user}</span>
-                <ChevronDownIcon className="size-4 ml-auto opacity-50 flex-shrink-0" />
-              </button>
+              <UserSelect
+                variant="select"
+                users={accounts}
+                value={user}
+                onChange={(selected) => {
+                  setUser(selected);
+                  setHasModifiedMetadata(true);
+                }}
+              />
             </div>
 
             <div className="p-4 border-b border-base-content/10 flex items-center justify-between bg-base-200/80">
@@ -646,18 +621,6 @@ const CreatePage = () => {
           </div>
         </div>
       </div>
-
-      {/* Members Popup Modal */}
-      <MembersModal
-        isOpen={showMembersModal}
-        onClose={() => setShowMembersModal(false)}
-        selectedUser={user}
-        onSelectUser={(selected) => {
-          setUser(selected);
-          setHasModifiedMetadata(true);
-        }}
-        accounts={accounts}
-      />
 
       {/* Confirmation Alert Modal for Unsaved Information */}
       {showDiscardConfirm && (

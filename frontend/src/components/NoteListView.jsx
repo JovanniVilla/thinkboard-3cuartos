@@ -33,16 +33,7 @@ import {
   persistColumnPreferences,
 } from "../lib/columnPreferences";
 import ColumnSettingsModal from "./ColumnSettingsModal";
-
-const getInitials = (name = "") => {
-  if (!name || name === "Sin asignar") return "?";
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-};
+import UserSelect from "./UserSelect";
 
 const NoteListView = ({
   notes = [],
@@ -858,58 +849,14 @@ const NoteListView = ({
         );
 
       case "user": {
-        const userConfig = users.find((u) => u.name === note.user);
-        const userColor = userConfig?.color || "#6B7280";
         return (
-          <td {...baseTdProps}>
-            <div className="dropdown dropdown-bottom dropdown-end" onClick={(e) => e.stopPropagation()}>
-              <div
-                tabIndex={0}
-                role="button"
-                className="flex items-center gap-2 max-w-full hover:bg-base-200 p-1 rounded transition-colors"
-                title={`${note.user || "Sin asignar"}${userConfig?.jobTitle ? ` - ${userConfig.jobTitle}` : ""}`}
-              >
-                {note.user && note.user !== "Sin asignar" ? (
-                  <span
-                    className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] shadow-sm shrink-0"
-                    style={{ backgroundColor: userColor }}
-                  >
-                    {getInitials(note.user)}
-                  </span>
-                ) : (
-                  <span className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 shrink-0">
-                    <UserIcon className="size-3.5" />
-                  </span>
-                )}
-                <span className="truncate text-xs font-medium text-base-content/80">
-                  {note.user || "Sin asignar"}
-                </span>
-              </div>
-              <ul
-                tabIndex={0}
-                className="dropdown-content z-[60] menu p-1.5 shadow-xl bg-base-100 rounded-box w-48 max-h-60 overflow-y-auto flex-nowrap border border-base-content/10"
-              >
-                {users.map((u) => (
-                  <li key={u._id}>
-                    <a
-                      onClick={() => {
-                        handleInlineEdit(note._id, "user", u.name);
-                        document.activeElement.blur();
-                      }}
-                      className={`text-xs py-1.5 px-2 ${note.user === u.name ? "bg-primary/10 text-primary font-bold" : ""}`}
-                    >
-                      <span
-                        className="w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0"
-                        style={{ backgroundColor: u.color || "#3B82F6" }}
-                      >
-                        {getInitials(u.name)}
-                      </span>
-                      <span className="truncate">{u.name}</span>
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <td {...baseTdProps} onClick={(e) => e.stopPropagation()}>
+            <UserSelect
+              variant="table"
+              users={users}
+              value={note.user}
+              onChange={(newUserName) => handleInlineEdit(note._id, "user", newUserName)}
+            />
           </td>
         );
       }

@@ -24,10 +24,11 @@ const UserSelect = ({
   value,
   onChange,
   placeholder = "— Seleccionar usuario —",
-  variant = "select", // "select" | "button"
+  variant = "select", // "select" | "button" | "table"
   isOpen,
   onToggle,
   onClose,
+  align = "start", // "start" (left-0) | "end" (right-0)
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -84,6 +85,7 @@ const UserSelect = ({
 
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
+        e.stopPropagation();
         handleClose();
       }
     };
@@ -125,7 +127,16 @@ const UserSelect = ({
   });
 
   return (
-    <div ref={ref} className={`relative popover-container ${variant === "button" ? "inline-block" : "w-full"}`}>
+    <div
+      ref={ref}
+      className={`relative popover-container ${
+        variant === "button"
+          ? "inline-block"
+          : variant === "table"
+          ? "inline-block max-w-full"
+          : "w-full"
+      }`}
+    >
       {variant === "button" ? (
         <button
           type="button"
@@ -149,6 +160,29 @@ const UserSelect = ({
               <span>Miembros</span>
             </>
           )}
+        </button>
+      ) : variant === "table" ? (
+        <button
+          type="button"
+          className="flex items-center gap-2 max-w-full hover:bg-base-200/80 px-1.5 py-1 rounded-lg transition-colors cursor-pointer text-left"
+          onClick={handleToggle}
+          title={hasAssigned ? `Asignado a: ${displayName}` : "Sin asignar"}
+        >
+          {hasAssigned ? (
+            <span
+              className="w-6 h-6 rounded-full flex items-center justify-center font-bold text-white text-[10px] shadow-sm shrink-0"
+              style={{ backgroundColor: displayColor || "#0284c7" }}
+            >
+              {getInitials(displayName)}
+            </span>
+          ) : (
+            <span className="w-6 h-6 rounded-full bg-base-300 flex items-center justify-center text-base-content/40 shrink-0">
+              <UserIcon className="size-3.5" />
+            </span>
+          )}
+          <span className="truncate text-xs font-medium text-base-content/80 max-w-[120px]">
+            {hasAssigned ? displayName : "Sin asignar"}
+          </span>
         </button>
       ) : (
         <button
@@ -187,12 +221,16 @@ const UserSelect = ({
 
       {open && (
         <div
-          className={`absolute z-50 mt-1 bg-base-100 border border-base-content/15 rounded-xl shadow-2xl overflow-hidden flex flex-col popover-container ${
-            variant === "button" ? "left-0 w-60 sm:w-64" : "w-full min-w-[220px]"
+          className={`absolute z-[70] mt-1 bg-base-100 border border-base-content/15 rounded-xl shadow-2xl overflow-hidden flex flex-col popover-container ${
+            variant === "button"
+              ? "left-0 w-60 sm:w-64"
+              : variant === "table"
+              ? (align === "end" ? "right-0 w-56 sm:w-60" : "left-0 w-56 sm:w-60")
+              : "w-full min-w-[220px]"
           }`}
         >
-          {/* Header (when variant is button) */}
-          {variant === "button" && (
+          {/* Header (when variant is button or table) */}
+          {(variant === "button" || variant === "table") && (
             <div className="px-3 py-2 border-b border-base-content/10 flex items-center justify-between bg-base-200/40">
               <span className="text-xs font-bold text-base-content/70">Asignar Miembro</span>
               <button
