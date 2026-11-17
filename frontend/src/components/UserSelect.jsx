@@ -65,8 +65,10 @@ const UserSelect = ({
   const displayName = typeof selected === "string" ? selected : (selected?.name || (hasAssigned ? value : ""));
   const displayColor = typeof selected === "object" ? selected?.color : "#0284c7";
 
-  // Close on outside click and reset search
+  // Close on outside click and reset search (only while open to avoid interfering with other popovers)
   useEffect(() => {
+    if (!open) return;
+
     const handler = (e) => {
       if (ref.current && !ref.current.contains(e.target)) {
         handleClose();
@@ -74,7 +76,7 @@ const UserSelect = ({
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [handleClose]);
+  }, [open, handleClose]);
 
   // Handle escape key and auto-focus search input when opened
   useEffect(() => {

@@ -482,7 +482,8 @@ const NoteDetailPage = () => {
                   <li key={st._id}>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.currentTarget.blur();
                         setNote({ ...note, status: st.name });
                         handleSaveNote({ status: st.name });
                         setActivePopover(null);
@@ -528,7 +529,8 @@ const NoteDetailPage = () => {
                   <li key={p._id}>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.currentTarget.blur();
                         setNote({ ...note, priority: p.name });
                         handleSaveNote({ priority: p.name });
                         setActivePopover(null);
@@ -572,7 +574,8 @@ const NoteDetailPage = () => {
                   <li key={v._id}>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.currentTarget.blur();
                         setNote({ ...note, value: v.name });
                         handleSaveNote({ value: v.name });
                         setActivePopover(null);
@@ -615,7 +618,8 @@ const NoteDetailPage = () => {
                 <li>
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.currentTarget.blur();
                       setNote({ ...note, project: "" });
                       handleSaveNote({ project: "" });
                       setActivePopover(null);
@@ -631,7 +635,8 @@ const NoteDetailPage = () => {
                   <li key={p._id}>
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.currentTarget.blur();
                         setNote({ ...note, project: p._id });
                         handleSaveNote({ project: p._id });
                         setActivePopover(null);
@@ -798,7 +803,7 @@ const NoteDetailPage = () => {
                   dueDate={note.dueDate}
                   isOpen={activePopover === 'dates'}
                   onToggle={() => setActivePopover(activePopover === 'dates' ? null : 'dates')}
-                  onClose={() => setActivePopover(null)}
+                  onClose={() => setActivePopover((prev) => (prev === 'dates' ? null : prev))}
                   onSave={(dates) => {
                     setNote({ ...note, ...dates });
                     handleSaveNote(dates);
@@ -824,7 +829,7 @@ const NoteDetailPage = () => {
                   value={note.user}
                   isOpen={activePopover === 'members'}
                   onToggle={() => setActivePopover(activePopover === 'members' ? null : 'members')}
-                  onClose={() => setActivePopover(null)}
+                  onClose={() => setActivePopover((prev) => (prev === 'members' ? null : prev))}
                   onChange={(userName) => {
                     setNote({ ...note, user: userName });
                     handleSaveNote({ user: userName });
@@ -992,7 +997,8 @@ const NoteDetailPage = () => {
                     <li>
                       <button
                         type="button"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.currentTarget.blur();
                           setNote({ ...note, size: null });
                           handleSaveNote({ size: "" });
                           setActivePopover(null);
@@ -1010,7 +1016,8 @@ const NoteDetailPage = () => {
                         <li key={s._id}>
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.currentTarget.blur();
                               setNote({ ...note, size: s });
                               handleSaveNote({ size: s._id });
                               setActivePopover(null);
