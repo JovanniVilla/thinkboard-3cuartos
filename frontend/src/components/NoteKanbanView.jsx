@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PenSquareIcon, Trash2Icon, ZapIcon, UserIcon, AtSignIcon, CalendarIcon, CheckIcon, TrendingUpIcon } from "lucide-react";
+import { PenSquareIcon, ArchiveIcon, ZapIcon, UserIcon, AtSignIcon, CalendarIcon, CheckIcon, TrendingUpIcon } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
 import { Link, useLocation } from "react-router";
 import { formatDate } from "../lib/utils";
@@ -16,7 +16,18 @@ const getInitials = (name = "") => {
     .toUpperCase();
 };
 
-const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], values = [], users = [], highlightedNoteId }) => {
+const NoteKanbanView = ({
+  notes = [],
+  setNotes,
+  statuses = [],
+  priorities = [],
+  values = [],
+  users = [],
+  projects = [],
+  selectedProject = "",
+  onSelectProject,
+  highlightedNoteId,
+}) => {
   const [draggingNoteId, setDraggingNoteId] = useState(null);
   const [dragOverStatus, setDragOverStatus] = useState(null);
   const { user } = useAuth();
@@ -32,18 +43,18 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
     }, 0);
   };
 
-  const handleDelete = async (e, id) => {
+  const handleArchive = async (e, id) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!window.confirm("¿Estás seguro de que quieres eliminar esta tarea?")) return;
+    if (!window.confirm("¿Estás seguro de que quieres archivar esta tarea?")) return;
 
     try {
       await api.delete(`/notes/${id}`);
       setNotes((prev) => prev.filter((n) => n._id !== id));
-      toast.success("Tarea eliminada exitosamente");
+      toast.success("Tarea archivada exitosamente");
     } catch (error) {
-      console.error("Error in handleDelete", error);
-      toast.error("Error al eliminar la tarea");
+      console.error("Error in handleArchive", error);
+      toast.error("Error al archivar la tarea");
     }
   };
 
@@ -172,6 +183,50 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                     const userConfig = users.find((u) => u.name === note.user);
                     const userColor = userConfig?.color || "#6B7280";
 
+                    const projectId = typeof note.project === "object" ? note.project?._id : note.project;
+                    const projectItem = projectId ? projects.find((p) => p._id === projectId) : null;
+                    const isProjectFiltered = Boolean(projectItem && selectedProject === projectItem._id);
+
+                    const mentionCount = getMentionCount(note);
+                    const hasTopBadges = Boolean(note.projectKeyId || note.keyId || note.priority || note.value);
+                    const hasSecondaryBadges = Boolean(
+                      (note.labels && note.labels.length > 0) ||
+                        mentionCount > 0 ||
+                        note.startDate ||
+                        note.dueDate
+                    );
+
+                    const actionButtons = (
+                      <div className="flex items-center gap-0.5 opacity-60 hover:opacity-100 transition-opacity flex-shrink-0">
+                        <Link
+                          to={`/note/${note._id}`}
+                          state={{ returnTo: location.pathname + location.search }}
+                          className="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-primary"
+                          title="Editar"
+                        >
+                          <PenSquareIcon className="size-3.5" />
+                        </Link>
+                        <button
+                          type="button"
+                          className="btn btn-ghost btn-xs btn-square text-base-content/50 hover:bg-base-300/60 hover:text-base-content"
+                          onClick={(e) => handleArchive(e, note._id)}
+                          title="Archivar tarea"
+                        >
+                          <ArchiveIcon className="size-3.5" />
+                        </button>
+                      </div>
+                    );
+
+                    const titleLink = (
+                      <Link
+                        to={`/note/${note._id}`}
+                        state={{ returnTo: location.pathname + location.search }}
+                        className="font-semibold text-sm text-base-content hover:text-primary transition-colors break-words whitespace-normal block leading-snug"
+                      >
+                        {note.title}
+                      </Link>
+                    );
+
                     return (
                       <div
                         key={note._id}
@@ -186,14 +241,14 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                           draggingNoteId === note._id ? "opacity-40 scale-95" : ""
                         }`}
                       >
-                        <div className="card-body p-3.5 space-y-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0 flex-1">
-                              {(note.keyId || note.priority || note.value) && (
-                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <div className="card-body p-3.5 gap-2.5">
+                          {hasTopBadges ? (
+                            <>
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
                                   {(note.projectKeyId || note.keyId) && (
                                     <span
-                                      className="badge badge-xs font-mono font-bold bg-primary/15 text-primary border border-primary/30"
+                                      className="badge badge-xs h-auto px-2 py-0.5 leading-tight font-mono font-bold bg-primary/15 text-primary border border-primary/30 whitespace-nowrap"
                                       title={
                                         note.projectKeyId && note.globalKeyId
                                           ? `ID Proyecto: ${note.projectKeyId} | Global: ${note.globalKeyId}`
@@ -205,20 +260,20 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                                   )}
                                   {note.priority && (
                                     <span
-                                      className="badge badge-xs font-bold gap-1 px-2 py-2"
+                                      className="badge badge-xs h-auto font-bold gap-1 px-2 py-0.5 leading-tight whitespace-nowrap"
                                       style={{
                                         backgroundColor: priorityColor + "15",
                                         color: priorityColor,
                                         borderColor: priorityColor + "40",
                                       }}
                                     >
-                                      <ZapIcon className="size-3" />
+                                      <ZapIcon className="size-3 flex-shrink-0" />
                                       {note.priority}
                                     </span>
                                   )}
                                   {note.value && (
                                     <span
-                                      className="badge badge-xs font-bold gap-1 px-2 py-2"
+                                      className="badge badge-xs h-auto font-bold gap-1 px-2 py-0.5 leading-tight whitespace-nowrap"
                                       style={{
                                         backgroundColor: valueColor + "15",
                                         color: valueColor,
@@ -226,94 +281,97 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                                       }}
                                       title={`Valor: ${note.value}`}
                                     >
-                                      <TrendingUpIcon className="size-3" />
+                                      <TrendingUpIcon className="size-3 flex-shrink-0" />
                                       {note.value}
                                     </span>
                                   )}
                                 </div>
-                              )}
-                              <Link
-                                to={`/note/${note._id}`}
-                                state={{ returnTo: location.pathname + location.search }}
-                                className="font-semibold text-sm text-base-content hover:text-primary transition-colors break-words whitespace-normal block"
-                              >
-                                {note.title}
-                              </Link>
+                                {actionButtons}
+                              </div>
+                              {titleLink}
+                            </>
+                          ) : (
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0 flex-1">{titleLink}</div>
+                              {actionButtons}
                             </div>
-                            <div className="flex items-center gap-0.5 opacity-60 hover:opacity-100 transition-opacity flex-shrink-0">
-                              <Link
-                                to={`/note/${note._id}`}
-                                state={{ returnTo: location.pathname + location.search }}
-                                className="btn btn-ghost btn-xs btn-square text-base-content/70 hover:text-primary"
-                                title="Editar"
-                              >
-                                <PenSquareIcon className="size-3.5" />
-                              </Link>
-                              <button
-                                type="button"
-                                className="btn btn-ghost btn-xs btn-square text-error hover:bg-error/10"
-                                onClick={(e) => handleDelete(e, note._id)}
-                                title="Eliminar"
-                              >
-                                <Trash2Icon className="size-3.5" />
-                              </button>
-                            </div>
-                          </div>
+                          )}
 
                           {/* Badges Row */}
-                          <div className="flex flex-wrap items-center gap-2">
-                            {/* Labels */}
-                            {note.labels?.map((label, idx) => (
-                              <span
-                                key={idx}
-                                className="badge badge-xs font-semibold px-2 py-2"
-                                style={{
-                                  backgroundColor: label.color + "20",
-                                  color: label.color,
-                                  borderColor: label.color + "40",
-                                }}
-                                title={label.name}
-                              >
-                                {label.name}
-                              </span>
-                            ))}
+                          {hasSecondaryBadges && (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {/* Labels */}
+                              {note.labels?.map((label, idx) => (
+                                <span
+                                  key={idx}
+                                  className="badge badge-xs h-auto font-semibold px-2 py-0.5 leading-tight max-w-full truncate"
+                                  style={{
+                                    backgroundColor: label.color + "20",
+                                    color: label.color,
+                                    borderColor: label.color + "40",
+                                  }}
+                                  title={label.name}
+                                >
+                                  {label.name}
+                                </span>
+                              ))}
 
+                              {/* Mentions badge */}
+                              {mentionCount > 0 && (
+                                <div
+                                  className="flex items-center gap-1 bg-primary text-primary-content text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm"
+                                  title={`Tienes ${mentionCount} mención(es)`}
+                                >
+                                  <AtSignIcon className="size-3" />
+                                  {mentionCount}
+                                </div>
+                              )}
 
-                            {/* Mentions badge */}
-                            {getMentionCount(note) > 0 && (
-                              <div className="flex items-center gap-1 bg-primary text-primary-content text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm" title={`Tienes ${getMentionCount(note)} mención(es)`}>
-                                <AtSignIcon className="size-3" />
-                                {getMentionCount(note)}
-                              </div>
-                            )}
+                              {/* Dates Badge */}
+                              {(note.startDate || note.dueDate) && (
+                                <div
+                                  className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-sm border ${
+                                    note.completedAt
+                                      ? "bg-success/20 text-success border-success/30"
+                                      : note.dueDate && new Date(note.dueDate) < new Date()
+                                      ? "bg-error/20 text-error border-error/30"
+                                      : "bg-base-200 text-base-content/70 border-base-content/10"
+                                  }`}
+                                  title={
+                                    note.dueDate
+                                      ? `Vence: ${new Date(note.dueDate).toLocaleString()}`
+                                      : `Inicia: ${new Date(note.startDate).toLocaleString()}`
+                                  }
+                                >
+                                  <CalendarIcon className="size-3" />
+                                  {note.dueDate ? (
+                                    <span>
+                                      {new Date(note.dueDate).toLocaleDateString("es-ES", {
+                                        month: "short",
+                                        day: "numeric",
+                                      })}
+                                    </span>
+                                  ) : (
+                                    <span>
+                                      {new Date(note.startDate).toLocaleDateString("es-ES", {
+                                        month: "short",
+                                        day: "numeric",
+                                      })}
+                                    </span>
+                                  )}
+                                  {note.completedAt && <CheckIcon className="size-3" />}
+                                </div>
+                              )}
+                            </div>
+                          )}
 
-                            {/* Dates Badge */}
-                            {(note.startDate || note.dueDate) && (
-                              <div className={`flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-sm border ${
-                                note.completedAt ? "bg-success/20 text-success border-success/30" : 
-                                (note.dueDate && new Date(note.dueDate) < new Date()) ? "bg-error/20 text-error border-error/30" : "bg-base-200 text-base-content/70 border-base-content/10"
-                              }`} title={
-                                note.dueDate ? `Vence: ${new Date(note.dueDate).toLocaleString()}` : `Inicia: ${new Date(note.startDate).toLocaleString()}`
-                              }>
-                                <CalendarIcon className="size-3" />
-                                {note.dueDate ? (
-                                  <span>
-                                    {new Date(note.dueDate).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
-                                  </span>
-                                ) : (
-                                  <span>
-                                    {new Date(note.startDate).toLocaleDateString("es-ES", { month: "short", day: "numeric" })}
-                                  </span>
-                                )}
-                                {note.completedAt && <CheckIcon className="size-3" />}
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Footer: Assignee & Date */}
-                            <div className="pt-2 border-t border-base-content/10 flex items-center justify-between text-[11px] text-base-content/60">
-                              <div className="flex items-center gap-1.5 truncate" title={`Asignado a: ${note.user || "Sin asignar"}${userConfig?.jobTitle ? ` - ${userConfig.jobTitle}` : ""}`}>
-                                {note.user && note.user !== "Sin asignar" ? (
+                          {/* Footer: Assignee, Project & Date */}
+                          <div className="pt-2 border-t border-base-content/10 flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 text-[11px] text-base-content/60">
+                            <div
+                              className="flex items-center gap-1.5 min-w-0 flex-1"
+                              title={`Asignado a: ${note.user || "Sin asignar"}${userConfig?.jobTitle ? ` - ${userConfig.jobTitle}` : ""}`}
+                            >
+                              {note.user && note.user !== "Sin asignar" ? (
                                 <span
                                   className="w-5 h-5 rounded-full flex items-center justify-center font-bold text-white text-[9px] shadow-sm flex-shrink-0"
                                   style={{ backgroundColor: userColor }}
@@ -325,12 +383,45 @@ const NoteKanbanView = ({ notes = [], setNotes, statuses = [], priorities = [], 
                                   <UserIcon className="size-3" />
                                 </span>
                               )}
-                              <span className="truncate max-w-[100px] font-medium text-base-content/80">
+                              <span className="truncate font-medium text-base-content/80">
                                 {note.user || "Sin asignar"}
                               </span>
                             </div>
 
-                            <span>{formatDate(new Date(note.createdAt))}</span>
+                            <div className="flex items-center gap-1.5 flex-shrink-0 ml-auto">
+                              {projectItem && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (onSelectProject) {
+                                      onSelectProject(isProjectFiltered ? "" : projectItem._id);
+                                    }
+                                  }}
+                                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold transition-all max-w-[115px] cursor-pointer hover:brightness-95 ${
+                                    isProjectFiltered ? "ring-1 ring-primary shadow-xs" : ""
+                                  }`}
+                                  style={{
+                                    backgroundColor: (projectItem.color || "#6B7280") + "18",
+                                    color: projectItem.color || "#6B7280",
+                                    borderColor: (projectItem.color || "#6B7280") + "45",
+                                  }}
+                                  title={
+                                    isProjectFiltered
+                                      ? `Quitar filtro de proyecto (${projectItem.name})`
+                                      : `Filtrar por proyecto: ${projectItem.name}`
+                                  }
+                                >
+                                  <span
+                                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                                    style={{ backgroundColor: projectItem.color || "#6B7280" }}
+                                  />
+                                  <span className="truncate">{projectItem.name}</span>
+                                </button>
+                              )}
+                              <span className="whitespace-nowrap">{formatDate(new Date(note.createdAt))}</span>
+                            </div>
                           </div>
                         </div>
                       </div>

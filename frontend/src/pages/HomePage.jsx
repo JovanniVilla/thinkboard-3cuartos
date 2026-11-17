@@ -473,6 +473,9 @@ const HomePage = () => {
                   priorities={priorities}
                   values={values}
                   users={accounts}
+                  projects={projects}
+                  selectedProject={selectedProject}
+                  onSelectProject={handleSetSelectedProject}
                   highlightedNoteId={highlightedNoteId}
                 />
               )}
