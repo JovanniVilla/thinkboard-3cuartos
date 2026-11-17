@@ -20,6 +20,13 @@ const MarkdownRenderer = ({ content = "", className = "" }) => {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
+          a: (props) => {
+            const anchorProps = { ...props };
+            delete anchorProps.node;
+            return (
+              <a {...anchorProps} target="_blank" rel="noopener noreferrer" />
+            );
+          },
           input: ({ type, checked, ...props }) => {
             if (type === "checkbox") {
               return (
